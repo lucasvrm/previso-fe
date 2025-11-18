@@ -6,6 +6,7 @@ import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout'; // <-- Importa o novo Layout
 import LoginPage from './pages/Auth/LoginPage';
 import SignupPage from './pages/Auth/SignupPage';
+import TherapistSignupPage from './pages/Auth/TherapistSignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
 import PatientView from './pages/Therapist/PatientView';
@@ -30,6 +31,10 @@ function App() {
       <Route 
         path="/signup" 
         element={!user ? <SignupPage /> : <Navigate to="/dashboard" />} 
+      />
+      <Route 
+        path="/signup/therapist" 
+        element={!user ? <TherapistSignupPage /> : <Navigate to="/dashboard" />} 
       />
 
       {/* Rotas para usuários AUTENTICADOS, dentro do Layout */}

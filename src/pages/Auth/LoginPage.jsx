@@ -98,6 +98,13 @@ const LoginPage = () => {
             Criar conta
           </Link>
         </p>
+
+        <p className="text-center text-sm text-muted-foreground mt-2">
+          É um profissional de saúde mental?
+          <Link to="/signup/therapist" className="font-semibold text-primary hover:underline ml-1">
+            Cadastrar como terapeuta
+          </Link>
+        </p>
       </div>
     </div>
   );
