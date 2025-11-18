@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { getDaysInMonth, startOfMonth, format } from 'date-fns';
+import { getDaysInMonth, format } from 'date-fns';
 
 // Componente para um único dia no calendário
-const DayCell = ({ day, month, tookMeds, isToday }) => {
+const DayCell = ({ day, tookMeds, isToday }) => {
   let bgColor = 'bg-muted/40'; // Cor padrão para dia sem registro
   if (tookMeds === true) bgColor = 'bg-primary/80 text-primary-foreground'; // Adesão confirmada
   if (tookMeds === false) bgColor = 'bg-destructive/70 text-destructive-foreground'; // Falha registrada (se houver)
@@ -21,7 +21,6 @@ const AdherenceCalendar = ({ checkins }) => {
     if (!checkins) return { days: [], adherenceRate: 0 };
 
     const today = new Date();
-    const startOfThisMonth = startOfMonth(today);
     const totalDaysInMonth = getDaysInMonth(today);
     
     // Cria um mapa para acesso rápido aos dados de adesão por data

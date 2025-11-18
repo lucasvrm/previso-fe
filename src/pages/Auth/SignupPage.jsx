@@ -38,7 +38,7 @@ const SignupPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted p-4">
-      <div className="w-full max-w-md p-8 bg-card text-card-foreground rounded-lg shadow-md border">
+      <div className="w-full max-w-md p-8 bg-card text-card-foreground rounded-lg shadow-md border border-border">
         <h2 className="text-2xl font-semibold text-center mb-6 text-foreground">
           Previso - Criar conta
         </h2>
@@ -60,7 +60,7 @@ const SignupPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
+              className="w-full p-3 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
             />
           </div>
 
@@ -80,7 +80,7 @@ const SignupPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
+              className="w-full p-3 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
             />
           </div>
 
@@ -100,7 +100,7 @@ const SignupPage = () => {
               value={password2}
               onChange={(e) => setPassword2(e.target.value)}
               required
-              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
+              className="w-full p-3 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
             />
           </div>
 

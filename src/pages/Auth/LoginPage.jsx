@@ -32,53 +32,70 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-900">Login</h2>
-        <form className="space-y-6" onSubmit={handleLogin}>
+    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
+      <div className="w-full max-w-md p-8 bg-card text-card-foreground rounded-lg shadow-md border border-border">
+        <h2 className="text-2xl font-semibold text-center mb-6 text-foreground">
+          Previso - Login
+        </h2>
+
+        <form onSubmit={handleLogin} className="space-y-4" autoComplete="on">
           <div>
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-muted-foreground mb-1"
+            >
               Email
             </label>
             <input
               id="email"
+              name="email"
               type="email"
+              autoComplete="email"
+              placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full p-3 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
             />
           </div>
+
           <div>
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-muted-foreground mb-1"
+            >
               Senha
             </label>
             <input
               id="password"
+              name="password"
               type="password"
+              autoComplete="current-password"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full p-3 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-4 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300"
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full p-3 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
         </form>
-        <p className="text-sm text-center text-gray-600">
-          Não tem uma conta?{' '}
-          <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Cadastre-se
+
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Não tem conta?
+          <Link to="/signup" className="font-semibold text-primary hover:underline ml-1">
+            Criar conta
           </Link>
         </p>
       </div>
