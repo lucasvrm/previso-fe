@@ -106,7 +106,7 @@ const CorrelationScatterChart = ({
   };
 
   return (
-    <div className="p-4 border rounded-lg bg-card h-96">
+    <div className="p-4 border rounded-lg bg-card">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-base font-semibold text-foreground">{title}</h3>
         {correlation !== null && (
@@ -117,10 +117,10 @@ const CorrelationScatterChart = ({
         )}
       </div>
       
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={320}>
         <ScatterChart
           margin={{
-            top: 5, right: 20, left: 0, bottom: 20,
+            top: 5, right: 20, left: 0, bottom: 40,
           }}
         >
           <CartesianGrid 
@@ -141,7 +141,7 @@ const CorrelationScatterChart = ({
             label={{ 
               value: xLabel, 
               position: 'insideBottom', 
-              offset: -10,
+              offset: -15,
               style: { fontSize: 12, fill: 'hsl(var(--muted-foreground))' }
             }}
           />

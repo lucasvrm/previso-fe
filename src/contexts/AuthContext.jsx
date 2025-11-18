@@ -106,6 +106,7 @@ export function AuthProvider({ children }) {
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signUp,
     signOut: () => supabase.auth.signOut(),
+    logout: () => supabase.auth.signOut(),
   };
 
   return (
