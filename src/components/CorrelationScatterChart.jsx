@@ -51,7 +51,7 @@ const CorrelationScatterChart = ({
           date: checkin.checkin_date
         };
       })
-      .filter(point => point.x !== null && point.y !== null);
+      .filter(point => point.x != null && point.y != null); // Filters out both null and undefined
 
     // Calculate Pearson correlation coefficient
     let corr = null;

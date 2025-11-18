@@ -59,7 +59,7 @@ const MultiMetricChart = ({ title, data, metrics = [] }) => {
           <p className="text-sm font-semibold text-foreground mb-2">{label}</p>
           {payload.map((entry) => (
             <p key={entry.dataKey} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {entry.value !== null ? entry.value : 'N/A'}
+              {entry.name}: {entry.value != null ? entry.value : 'N/A'}
             </p>
           ))}
         </div>
