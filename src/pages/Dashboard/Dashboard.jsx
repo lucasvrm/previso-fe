@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [checkins, setCheckins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeSection, setActiveSection] = useState('overview');
 
   useEffect(() => {
     if (!user) {
@@ -35,7 +36,7 @@ const Dashboard = () => {
         if (!isMounted) return;
         if (error) throw error;
         setCheckins(data || []);
-      } catch (err) {
+      } catch {
         if (isMounted) setError('Não foi possível carregar seus dados.');
       } finally {
         if (isMounted) setLoading(false);
@@ -108,7 +109,14 @@ const Dashboard = () => {
             ]}
           />
         </div>
+      </div>
+    );
+  };
 
+  // Renderiza tendências
+  const renderTrends = () => {
+    return (
+      <div className="space-y-6">
         {/* Area trend charts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <AreaTrendChart 
@@ -124,48 +132,6 @@ const Dashboard = () => {
             dataKey="humor_data.anxietyStress"
             colorToken="hsl(var(--chart-5))"
             showAverage={true}
-          />
-        </div>
-
-        {/* Bar comparison charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <BarComparisonChart 
-            title="Gestão de Tarefas"
-            data={checkins}
-            metrics={[
-              { dataKey: 'energy_focus_data.tasksPlanned', name: 'Planejadas', color: 'hsl(var(--chart-1))' },
-              { dataKey: 'energy_focus_data.tasksCompleted', name: 'Concluídas', color: 'hsl(var(--primary))' }
-            ]}
-          />
-          <BarComparisonChart 
-            title="Atividade Física e Cafeína"
-            data={checkins}
-            metrics={[
-              { dataKey: 'routine_body_data.exerciseDurationMin', name: 'Exercício (min)', color: 'hsl(var(--chart-4))' },
-              { dataKey: 'sleep_data.caffeineDoses', name: 'Doses de Cafeína', color: 'hsl(var(--chart-3))' }
-            ]}
-          />
-        </div>
-
-        {/* Correlation scatter charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CorrelationScatterChart 
-            title="Correlação: Sono vs. Energia"
-            data={checkins}
-            xDataKey="sleep_data.sleepQuality"
-            yDataKey="energy_focus_data.energyLevel"
-            xLabel="Qualidade do Sono"
-            yLabel="Nível de Energia"
-            colorToken="hsl(var(--primary))"
-          />
-          <CorrelationScatterChart 
-            title="Correlação: Ativação vs. Ansiedade"
-            data={checkins}
-            xDataKey="humor_data.activation"
-            yDataKey="humor_data.anxietyStress"
-            xLabel="Ativação Mental"
-            yLabel="Ansiedade/Estresse"
-            colorToken="hsl(var(--chart-5))"
           />
         </div>
 
@@ -190,45 +156,159 @@ const Dashboard = () => {
     );
   };
 
-  return (
-    <div className="p-6 space-y-6">
-      {/* Seção de Estatísticas Rápidas */}
-      {!loading && !error && checkins.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-foreground mb-4">Resumo Estatístico</h2>
-          {renderStatisticsCards()}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <div className="p-6 bg-white rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Monitor de Humor & Energia</h3>
-            <HistoryChart checkins={checkins} />
-          </div>
-          <div className="p-6 bg-white rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Adesão à Medicação</h3>
-            <AdherenceCalendar checkins={checkins} />
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="p-6 bg-white rounded-lg shadow">
-            <CircadianRhythmChart checkins={checkins} />
-          </div>
-          <div className="p-6 bg-white rounded-lg shadow">
-            <EventList checkins={checkins} />
-          </div>
+  // Renderiza comparações
+  const renderComparisons = () => {
+    return (
+      <div className="space-y-6">
+        {/* Bar comparison charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <BarComparisonChart 
+            title="Gestão de Tarefas"
+            data={checkins}
+            metrics={[
+              { dataKey: 'energy_focus_data.tasksPlanned', name: 'Planejadas', color: 'hsl(var(--chart-1))' },
+              { dataKey: 'energy_focus_data.tasksCompleted', name: 'Concluídas', color: 'hsl(var(--primary))' }
+            ]}
+          />
+          <BarComparisonChart 
+            title="Atividade Física e Cafeína"
+            data={checkins}
+            metrics={[
+              { dataKey: 'routine_body_data.exerciseDurationMin', name: 'Exercício (min)', color: 'hsl(var(--chart-4))' },
+              { dataKey: 'sleep_data.caffeineDoses', name: 'Doses de Cafeína', color: 'hsl(var(--chart-3))' }
+            ]}
+          />
         </div>
       </div>
+    );
+  };
 
-      {/* Seção de Análises Avançadas */}
-      {!loading && !error && checkins.length > 0 && (
-        <div className="space-y-8">
-          <h2 className="text-xl font-semibold text-foreground">Análises Avançadas</h2>
-          {renderAdvancedCharts()}
+  // Renderiza correlações
+  const renderCorrelations = () => {
+    return (
+      <div className="space-y-6">
+        {/* Correlation scatter charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CorrelationScatterChart 
+            title="Correlação: Sono vs. Energia"
+            data={checkins}
+            xDataKey="sleep_data.sleepQuality"
+            yDataKey="energy_focus_data.energyLevel"
+            xLabel="Qualidade do Sono"
+            yLabel="Nível de Energia"
+            colorToken="hsl(var(--primary))"
+          />
+          <CorrelationScatterChart 
+            title="Correlação: Ativação vs. Ansiedade"
+            data={checkins}
+            xDataKey="humor_data.activation"
+            yDataKey="humor_data.anxietyStress"
+            xLabel="Ativação Mental"
+            yLabel="Ansiedade/Estresse"
+            colorToken="hsl(var(--chart-5))"
+          />
         </div>
-      )}
+      </div>
+    );
+  };
+
+  // Renderiza conteúdo baseado na seção ativa
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            {checkins.length > 0 && (
+              <div>
+                <h3 className="text-xl font-semibold text-foreground mb-4">Resumo Estatístico</h3>
+                {renderStatisticsCards()}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <div className="p-6 bg-white rounded-lg shadow">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Monitor de Humor & Energia</h3>
+                  <HistoryChart checkins={checkins} />
+                </div>
+                <div className="p-6 bg-white rounded-lg shadow">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Adesão à Medicação</h3>
+                  <AdherenceCalendar checkins={checkins} />
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="p-6 bg-white rounded-lg shadow">
+                  <CircadianRhythmChart checkins={checkins} />
+                </div>
+                <div className="p-6 bg-white rounded-lg shadow">
+                  <EventList checkins={checkins} />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'mood-energy':
+        return renderAdvancedCharts();
+
+      case 'trends':
+        return renderTrends();
+
+      case 'comparisons':
+        return renderComparisons();
+
+      case 'correlations':
+        return renderCorrelations();
+
+      default:
+        return null;
+    }
+  };
+
+  const tabs = [
+    { id: 'overview', label: 'Visão Geral' },
+    { id: 'mood-energy', label: 'Humor & Energia' },
+    { id: 'trends', label: 'Tendências' },
+    { id: 'comparisons', label: 'Comparações' },
+    { id: 'correlations', label: 'Correlações' }
+  ];
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-semibold text-foreground mb-2">
+          Meu Dashboard
+        </h2>
+        <p className="text-muted-foreground">
+          Acompanhe sua saúde mental e bem-estar
+        </p>
+      </div>
+
+      {/* Tabs Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-4 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSection(tab.id)}
+              className={`
+                px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
+                ${activeSection === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                }
+              `}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Content */}
+      {renderContent()}
     </div>
   );
 };
