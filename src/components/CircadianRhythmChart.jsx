@@ -4,11 +4,11 @@
 import React, { useMemo } from 'react';
 import { parse, differenceInMinutes } from 'date-fns';
 
-// Formata a data de YYYY-MM-DD para DD/MM
+// Format date from YYYY-MM-DD to DD/MM
 const formatDate = (dateString) => {
   if (!dateString) return '';
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}`;
+  const parts = dateString.split('-');
+  return `${parts[2]}/${parts[1]}`;
 };
 
 // --- (NOVA LÓGICA) ---

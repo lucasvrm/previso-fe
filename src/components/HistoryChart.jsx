@@ -14,8 +14,8 @@ import {
 
 // Formata a data de YYYY-MM-DD para DD/MM
 const formatDateTick = (dateString) => {
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}`;
+  const parts = dateString.split('-');
+  return `${parts[2]}/${parts[1]}`;
 };
 
 /**
