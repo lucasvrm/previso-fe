@@ -68,10 +68,10 @@ const TherapistDashboard = () => {
   if (loading) {
     return (
       <div className="p-6 space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+        <div className="h-8 bg-muted rounded w-1/4"></div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+            <div key={i} className="h-32 bg-muted rounded-lg"></div>
           ))}
         </div>
       </div>
@@ -90,7 +90,7 @@ const TherapistDashboard = () => {
       </div>
 
       {error && (
-        <div className="p-4 text-red-700 bg-red-100 rounded-lg">
+        <div className="p-4 text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">
           {error}
         </div>
       )}
@@ -105,7 +105,7 @@ const TherapistDashboard = () => {
 
         {patients.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               Nenhum paciente vinculado ainda.
             </p>
@@ -118,7 +118,7 @@ const TherapistDashboard = () => {
             {patients.map((patient) => (
               <div
                 key={patient.id}
-                className="rounded-lg border bg-white p-4 hover:shadow-md transition-shadow"
+                className="rounded-lg border border-border bg-card p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">

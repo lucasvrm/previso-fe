@@ -87,8 +87,8 @@ const PatientView = () => {
   if (loading) {
     return (
       <div className="p-6 space-y-6 animate-pulse">
-        <div className="bg-white rounded-lg shadow h-64"></div>
-        <div className="bg-white rounded-lg shadow h-64"></div>
+        <div className="bg-card rounded-lg shadow h-64"></div>
+        <div className="bg-card rounded-lg shadow h-64"></div>
       </div>
     );
   }
@@ -101,7 +101,7 @@ const PatientView = () => {
         </div>
         <button
           onClick={handleBack}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-gray-300 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -155,21 +155,21 @@ const PatientView = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
-                <div className="p-6 bg-white rounded-lg shadow">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Monitor de Humor & Energia</h3>
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Monitor de Humor & Energia</h3>
                   <HistoryChart checkins={checkins} />
                 </div>
-                <div className="p-6 bg-white rounded-lg shadow">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Adesão à Medicação</h3>
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Adesão à Medicação</h3>
                   <AdherenceCalendar checkins={checkins} />
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="p-6 bg-white rounded-lg shadow">
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
                   <CircadianRhythmChart checkins={checkins} />
                 </div>
-                <div className="p-6 bg-white rounded-lg shadow">
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
                   <EventList checkins={checkins} />
                 </div>
               </div>
@@ -360,7 +360,7 @@ const PatientView = () => {
 
       {/* Content */}
       {checkins.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-lg shadow">
+        <div className="p-12 text-center bg-card rounded-lg shadow border border-border">
           <p className="text-muted-foreground">
             Este paciente ainda não possui check-ins registrados.
           </p>

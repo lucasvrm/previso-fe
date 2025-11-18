@@ -59,7 +59,7 @@ const AdherenceCalendar = ({ checkins }) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Adesão à Medicação</h3>
+        <h3 className="text-lg font-semibold text-foreground">Adesão à Medicação</h3>
         <div className="text-right">
           <p className="font-bold text-2xl text-primary">{calendarData.adherenceRate}%</p>
           <p className="text-xs text-muted-foreground">no mês atual</p>
