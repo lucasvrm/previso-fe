@@ -30,7 +30,7 @@ const WellnessRadarChart = ({ title, data }) => {
     const calculateAverage = (checkins, jsonbKey, nestedKey) => {
       const values = checkins
         .map(c => c[jsonbKey] ? c[jsonbKey][nestedKey] : null)
-        .filter(v => v !== null);
+        .filter(v => v != null); // Filters out both null and undefined
       return values.length > 0 
         ? values.reduce((sum, val) => sum + val, 0) / values.length 
         : 0;
@@ -93,7 +93,7 @@ const WellnessRadarChart = ({ title, data }) => {
           </p>
           {payload.map((entry) => (
             <p key={entry.dataKey} className="text-sm" style={{ color: entry.stroke }}>
-              {entry.name}: {entry.value.toFixed(1)} / 4.0
+              {entry.name}: {entry.value != null ? entry.value.toFixed(1) : 'N/A'} / 4.0
             </p>
           ))}
         </div>

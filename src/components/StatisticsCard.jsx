@@ -29,7 +29,7 @@ const StatisticsCard = ({ title, data, dataKey }) => {
     // Extract all valid values
     const values = data
       .map(checkin => checkin[jsonbKey] ? checkin[jsonbKey][nestedKey] : null)
-      .filter(val => val !== null);
+      .filter(val => val != null); // Filters out both null and undefined
 
     if (values.length === 0) {
       return {
@@ -97,7 +97,7 @@ const StatisticsCard = ({ title, data, dataKey }) => {
         {/* Current Value */}
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-bold text-foreground tabular-nums">
-            {stats.current !== null ? stats.current.toFixed(1) : 'N/A'}
+            {stats.current != null ? stats.current.toFixed(1) : 'N/A'}
           </span>
           <span className="text-sm text-muted-foreground">atual</span>
           <div className={`ml-auto flex items-center gap-1 ${getTrendColor()}`}>
@@ -112,7 +112,7 @@ const StatisticsCard = ({ title, data, dataKey }) => {
         <div className="flex justify-between items-center pt-3 border-t">
           <span className="text-xs text-muted-foreground">Média (30d)</span>
           <span className="text-sm font-semibold text-foreground tabular-nums">
-            {stats.average !== null ? stats.average.toFixed(1) : 'N/A'}
+            {stats.average != null ? stats.average.toFixed(1) : 'N/A'}
           </span>
         </div>
 
@@ -120,7 +120,7 @@ const StatisticsCard = ({ title, data, dataKey }) => {
         <div className="flex justify-between items-center">
           <span className="text-xs text-muted-foreground">Variação</span>
           <span className="text-sm font-semibold text-foreground tabular-nums">
-            {stats.min !== null && stats.max !== null 
+            {stats.min != null && stats.max != null 
               ? `${stats.min.toFixed(1)} - ${stats.max.toFixed(1)}`
               : 'N/A'}
           </span>

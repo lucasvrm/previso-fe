@@ -49,7 +49,7 @@ const AreaTrendChart = ({
     }).reverse(); // Chronological order
 
     // Calculate average
-    const validValues = processed.filter(d => d.value !== null).map(d => d.value);
+    const validValues = processed.filter(d => d.value != null).map(d => d.value); // Filters out both null and undefined
     const avg = validValues.length > 0 
       ? validValues.reduce((sum, val) => sum + val, 0) / validValues.length 
       : 0;
@@ -66,7 +66,7 @@ const AreaTrendChart = ({
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-1">{label}</p>
           <p className="text-sm" style={{ color: payload[0].stroke }}>
-            Valor: {value !== null ? value.toFixed(1) : 'N/A'}
+            Valor: {value != null ? value.toFixed(1) : 'N/A'}
           </p>
           {showAverage && (
             <p className="text-xs text-muted-foreground mt-1">
