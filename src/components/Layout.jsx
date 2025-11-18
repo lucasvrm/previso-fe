@@ -18,17 +18,10 @@ const Layout = () => {
           {/* Logo ou título */}
           <h1 className="text-xl font-semibold text-foreground">Previso</h1>
           
-          {/* Container do usuário, theme toggle e botão */}
+          {/* Container do theme toggle e botão */}
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            {user && (
-              <>
-                <span className="text-sm text-muted-foreground hidden sm:block">
-                  {user.email}
-                </span>
-                <LogoutButton />
-              </>
-            )}
+            {user && <LogoutButton />}
           </div>
         </header>
 

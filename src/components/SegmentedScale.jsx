@@ -20,7 +20,7 @@ const SegmentedScale = ({ label, value, onChange, scaleMap }) => {
     return (
         // --- (MODIFICAÇÃO) Container não é mais um "card" ---
         <div> 
-            <label className="block text-base font-semibold text-foreground mb-2">
+            <label className="block text-sm font-semibold text-foreground mb-1.5">
               {label}
             </label>
             
@@ -39,7 +39,7 @@ const SegmentedScale = ({ label, value, onChange, scaleMap }) => {
                             onClick={() => onChange(index)}
                             // Padding (altura) reduzido
                             className={`
-                                flex-1 p-2 text-base font-semibold tabular-nums
+                                flex-1 p-1.5 text-sm font-semibold tabular-nums
                                 border-t border-b border-l 
                                 transition-colors ease-in-out duration-150
                                 focus:outline-none focus:ring-2 focus:ring-ring focus:z-10
@@ -60,7 +60,7 @@ const SegmentedScale = ({ label, value, onChange, scaleMap }) => {
             </div>
             
             {currentValue !== -1 && (
-                <p className="text-sm text-center text-muted-foreground italic mt-2">
+                <p className="text-xs text-center text-muted-foreground italic mt-1.5">
                     {descriptions[currentValue]}
                 </p>
             )}

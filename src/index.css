@@ -80,6 +80,17 @@
   .tabular-nums {
      font-variant-numeric: tabular-nums;
   }
+
+  /* Fix input text color for dark mode */
+  input, select, textarea {
+    color: hsl(var(--foreground));
+  }
+  
+  /* Fix option text color for dark mode */
+  option {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+  }
 }
 
 /* --- (NOVO) ESTILOS DO CALENDÁRIO HEATMAP --- */
