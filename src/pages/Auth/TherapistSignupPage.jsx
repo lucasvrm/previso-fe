@@ -1,9 +1,9 @@
-// src/pages/Auth/SignupPage.jsx
+// src/pages/Auth/TherapistSignupPage.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { Link } from 'react-router-dom';
 
-const SignupPage = () => {
+const TherapistSignupPage = () => {
   const { signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +23,7 @@ const SignupPage = () => {
     }
 
     setLoading(true);
-    const result = await signUp(email, password);
+    const result = await signUp(email, password, 'therapist');
     setLoading(false);
 
     if (result.error) {
@@ -31,7 +31,7 @@ const SignupPage = () => {
     } else {
       setMessage(
         result.message ||
-          'Conta criada com sucesso. Verifique seu e-mail para confirmar.'
+          'Conta de terapeuta criada com sucesso. Verifique seu e-mail para confirmar.'
       );
     }
   };
@@ -39,9 +39,12 @@ const SignupPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted p-4">
       <div className="w-full max-w-md p-8 bg-card text-card-foreground rounded-lg shadow-md border border-border">
-        <h2 className="text-2xl font-semibold text-center mb-6 text-foreground">
-          Previso - Criar conta
+        <h2 className="text-2xl font-semibold text-center mb-2 text-foreground">
+          Previso - Criar conta de Terapeuta
         </h2>
+        <p className="text-sm text-center text-muted-foreground mb-6">
+          Cadastre-se como profissional de saúde mental
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
           <div>
@@ -116,26 +119,27 @@ const SignupPage = () => {
             disabled={loading}
             className="w-full p-3 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Criando conta...' : 'Criar conta'}
+            {loading ? 'Criando conta...' : 'Criar conta de terapeuta'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Já tem conta?
-          <Link to="/login" className="font-semibold text-primary hover:underline ml-1">
-            Fazer login
-          </Link>
-        </p>
-
-        <p className="text-center text-sm text-muted-foreground mt-2">
-          É um profissional de saúde mental?
-          <Link to="/signup/therapist" className="font-semibold text-primary hover:underline ml-1">
-            Cadastrar como terapeuta
-          </Link>
-        </p>
+        <div className="mt-6 space-y-2">
+          <p className="text-center text-sm text-muted-foreground">
+            Deseja criar uma conta de paciente?
+            <Link to="/signup" className="font-semibold text-primary hover:underline ml-1">
+              Cadastrar como paciente
+            </Link>
+          </p>
+          <p className="text-center text-sm text-muted-foreground">
+            Já tem conta?
+            <Link to="/login" className="font-semibold text-primary hover:underline ml-1">
+              Fazer login
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
-export default SignupPage;
+export default TherapistSignupPage;
