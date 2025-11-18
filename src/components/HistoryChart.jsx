@@ -1,6 +1,3 @@
-// src/components/HistoryChart.jsx
-// (NOVO) Componente de gráfico de linha usando Recharts
-
 import React, { useMemo } from 'react';
 import { 
   LineChart, 
@@ -9,82 +6,74 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
+  Legend, // Importa a Legenda
   ResponsiveContainer 
 } from 'recharts';
 
 // Formata a data de YYYY-MM-DD para DD/MM
 const formatDateTick = (dateString) => {
+  if (!dateString) return '';
   const [year, month, day] = dateString.split('-');
   return `${day}/${month}`;
 };
 
 /**
- * @param {string} title - Título do gráfico (ex: "Ativação")
- * @param {array} data - Array de check-ins (vem do Supabase)
- * @param {string} dataKey - A chave JSONB a ser plotada (ex: "humor_data.activation")
- * @param {string} colorToken - A cor HSL da linha (ex: "hsl(var(--primary))")
+ * Gráfico especializado para exibir o histórico de Humor e Energia.
+ * @param {array} checkins - Array de check-ins (vem do Supabase, JÁ EM ORDEM ASCENDENTE)
  */
-const HistoryChart = ({ title, data, dataKey, colorToken }) => {
+const HistoryChart = ({ checkins }) => {
 
-  // O Recharts precisa dos dados em ordem cronológica (ascendente)
-  // Nossos dados vêm do Supabase em ordem descendente (recentes primeiro)
   const processedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!checkins || checkins.length === 0) return [];
 
-    // 1. Reverte a ordem
-    // 2. Extrai o dado (ex: humor_data.activation)
-    return data.map(checkin => {
-      const [jsonbKey, nestedKey] = dataKey.split('.');
-      
+    // Os dados já vêm ordenados do Dashboard.jsx (ascending: true)
+    // Apenas mapeamos para o formato que o Recharts espera.
+    return checkins.map(checkin => {
       return {
         // Formata a data para o Eixo X
-        date: formatDateTick(checkin.checkin_date),
-        // Pega o valor (ex: checkin['humor_data']['activation'])
-        value: checkin[jsonbKey] ? checkin[jsonbKey][nestedKey] : null,
+        name: formatDateTick(checkin.checkin_date),
+        // Pega os valores de humor e energia
+        Humor: checkin.humor_data?.moodLevel ?? null,
+        Energia: checkin.energy_focus_data?.energyLevel ?? null,
       };
-    }).reverse(); // Garante a ordem cronológica
+    }).filter(item => item.Humor !== null && item.Energia !== null); // Garante que ambos os dados existam
     
-  }, [data, dataKey]);
+  }, [checkins]);
+
+  if (processedData.length < 2) {
+    return <p className="text-sm text-center text-muted-foreground py-10">Dados insuficientes para exibir o histórico de humor e energia.</p>;
+  }
 
   return (
-    <div className="p-4 border rounded-lg bg-card h-80"> 
-      <h3 className="text-base font-semibold text-foreground mb-4">{title}</h3>
-      
+    // O container não precisa mais ter altura fixa, o gráfico se ajusta.
+    <div className="bg-card h-80"> 
       {/* Container responsivo do Recharts */}
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={processedData}
-          margin={{
-            top: 5, right: 20, left: -20, bottom: 20, // Ajusta margens
-          }}
+          margin={{ top: 5, right: 20, left: -10, bottom: 20 }}
         >
-          {/* Grid de fundo (baixa excitação) */}
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke="hsl(var(--border))" 
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           
-          {/* Eixo X (Data) */}
           <XAxis 
-            dataKey="date" 
+            dataKey="name" 
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            padding={{ left: 20, right: 20 }} // Espaçamento nas bordas
+            padding={{ left: 20, right: 20 }}
           />
           
-          {/* Eixo Y (Valores 0-4) */}
+          {/* O Eixo Y agora pode ser mais genérico, de 0 a 10 */}
           <YAxis 
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            domain={[0, 4]} // Força a escala 0-4
-            tickCount={5} // Garante os 5 ticks (0, 1, 2, 3, 4)
+            domain={[0, 10]}
+            tickCount={6}
           />
           
-          {/* Tooltip (o popup ao passar o mouse) */}
           <Tooltip 
             contentStyle={{ 
               backgroundColor: 'hsl(var(--card))', 
@@ -94,14 +83,27 @@ const HistoryChart = ({ title, data, dataKey, colorToken }) => {
             labelStyle={{ color: 'hsl(var(--foreground))' }}
           />
           
-          {/* A Linha */}
+          {/* Legenda para identificar as linhas */}
+          <Legend />
+          
+          {/* LINHA 1: Humor */}
           <Line 
-            type="monotone" // Curva suave
-            dataKey="value" 
-            stroke={colorToken} // Cor primária
-            strokeWidth={3}
-            dot={{ r: 4, fill: colorToken }} // Pontos
-            activeDot={{ r: 6 }} // Ponto ativo (hover)
+            type="monotone"
+            dataKey="Humor" 
+            stroke="#8884d8" // Cor roxa
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 6 }}
+          />
+          
+          {/* LINHA 2: Energia */}
+          <Line 
+            type="monotone"
+            dataKey="Energia" 
+            stroke="#82ca9d" // Cor verde
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 6 }}
           />
         </LineChart>
       </ResponsiveContainer>
