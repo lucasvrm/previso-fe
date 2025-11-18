@@ -4,41 +4,26 @@ This directory contains SQL migration files for setting up the Previso database 
 
 ## Files
 
-### 001_initial_schema.sql
-Complete database schema for a fresh installation. Use this if you're setting up the database from scratch.
-
-**Contains:**
-- `profiles` table with all columns
-- `check_ins` table with all JSONB data columns
-- Indexes for performance
-- Row Level Security (RLS) policies
-- Triggers for `updated_at` columns
-- Full documentation with comments
-
 ### 002_add_therapist_columns.sql
-Migration to add missing columns to existing tables. Use this if you already have tables and just need to add the therapist role functionality.
+Migration to add missing columns to your existing tables and configure Row Level Security.
+
+**Works with your existing structure:**
+- `profiles` table (id, role, username, created_at)
+- `check_ins` table (already has all JSONB columns)
+- `therapist_patients` junction table (therapist_id, patient_id, assigned_at)
 
 **Adds:**
-- `username` column to profiles
-- `role` column to profiles (with CHECK constraint)
-- `therapist_id` column to profiles (foreign key)
-- `updated_at` columns
-- All necessary indexes
-- RLS policies for therapist access
+- `email` column to profiles (for display purposes)
+- `updated_at` column to profiles
+- `updated_at` column to check_ins
+- Proper constraints and indexes
+- Foreign keys on therapist_patients
+- RLS policies for therapist access via therapist_patients
 - Triggers for automatic timestamp updates
 
 ## How to Use
 
-### Option 1: Fresh Installation
-If you're setting up the database for the first time:
-
-1. Go to your Supabase project dashboard
-2. Navigate to SQL Editor
-3. Copy and paste the contents of `001_initial_schema.sql`
-4. Run the query
-
-### Option 2: Existing Database
-If you already have tables and need to add missing columns:
+### For Your Existing Database
 
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
@@ -54,28 +39,43 @@ This migration uses `IF NOT EXISTS` checks, so it's safe to run even if some col
 | Column | Type | Description |
 |--------|------|-------------|
 | id | UUID | Primary key (references auth.users.id) |
-| email | TEXT | User's email address |
-| username | TEXT | Optional display name |
-| role | TEXT | User role: 'patient' or 'therapist' |
-| therapist_id | UUID | For patients: their therapist's ID. For therapists: NULL |
-| created_at | TIMESTAMP | Account creation timestamp |
-| updated_at | TIMESTAMP | Last update timestamp |
+| role | TEXT | User role: 'patient' or 'therapist' ✓ |
+| username | TEXT | Optional display name ✓ |
+| created_at | TIMESTAMP | Account creation timestamp ✓ |
+| email | TEXT | User's email address (NEW) |
+| updated_at | TIMESTAMP | Last update timestamp (NEW) |
+
+✓ = Already exists in your database
 
 ### check_ins table
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | References profiles.id |
-| checkin_date | DATE | Date of check-in (unique per user per day) |
-| sleep_data | JSONB | Sleep metrics (quality, hours, bed/wake times, etc.) |
-| humor_data | JSONB | Mood metrics (depression, activation, anxiety, etc.) |
-| energy_focus_data | JSONB | Energy and focus metrics |
-| routine_body_data | JSONB | Physical activity and social connection metrics |
-| appetite_impulse_data | JSONB | Appetite and impulse control metrics |
-| meds_context_data | JSONB | Medication adherence and contextual notes |
-| created_at | TIMESTAMP | Check-in creation timestamp |
-| updated_at | TIMESTAMP | Last update timestamp |
+| id | UUID | Primary key ✓ |
+| user_id | UUID | References profiles.id ✓ |
+| checkin_date | DATE | Date of check-in ✓ |
+| sleep_data | JSONB | Sleep metrics ✓ |
+| humor_data | JSONB | Mood metrics ✓ |
+| energy_focus_data | JSONB | Energy and focus metrics ✓ |
+| routine_body_data | JSONB | Physical activity metrics ✓ |
+| appetite_impulse_data | JSONB | Appetite metrics ✓ |
+| meds_context_data | JSONB | Medication adherence ✓ |
+| created_at | TIMESTAMP | Check-in creation timestamp ✓ |
+| updated_at | TIMESTAMP | Last update timestamp (NEW) |
+
+✓ = Already exists in your database
+
+### therapist_patients table (Junction Table)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| therapist_id | UUID | References therapist profile ✓ |
+| patient_id | UUID | References patient profile ✓ |
+| assigned_at | TIMESTAMP | When patient was assigned ✓ |
+
+✓ = Already exists in your database
+
+**This table links therapists to their patients.** Each patient can have one therapist, but each therapist can have multiple patients.
 
 ## JSONB Column Structures
 
@@ -151,28 +151,59 @@ This migration uses `IF NOT EXISTS` checks, so it's safe to run even if some col
 
 ## Row Level Security (RLS)
 
-The schema includes comprehensive RLS policies to ensure data security:
+The schema includes comprehensive RLS policies to ensure data security **using your therapist_patients junction table**:
 
 ### Profiles Table
 - Users can view and update their own profile
-- Therapists can view profiles of their patients (where `therapist_id` matches)
+- Therapists can view profiles of their patients (via therapist_patients table)
 
 ### Check-ins Table
 - Patients can view, insert, and update their own check-ins
-- Therapists can view check-ins of their patients
+- Therapists can view check-ins of their patients (via therapist_patients table)
+
+### Therapist_Patients Table
+- Therapists can view their patient assignments
+- Patients can view their therapist assignment
+
+## How Therapist-Patient Relationships Work
+
+Your database uses a **junction table approach** (therapist_patients) instead of a foreign key in profiles. This allows for:
+- More flexible relationship management
+- Easy reassignment of patients
+- Potential for future multi-therapist support
+
+**To link a patient to a therapist:**
+```sql
+INSERT INTO therapist_patients (therapist_id, patient_id)
+VALUES (
+  'therapist-uuid-here',
+  'patient-uuid-here'
+);
+```
+
+**To find all patients of a therapist:**
+```sql
+SELECT p.*
+FROM profiles p
+JOIN therapist_patients tp ON p.id = tp.patient_id
+WHERE tp.therapist_id = 'therapist-uuid-here';
+```
 
 ## Indexes
 
 The following indexes are created for optimal query performance:
 
 ### profiles table
-- `idx_profiles_therapist_id`: For therapist patient lookups
 - `idx_profiles_role`: For role-based queries
 
 ### check_ins table
 - `idx_check_ins_user_id`: For user-based queries
 - `idx_check_ins_date`: For date-based queries
 - `idx_check_ins_user_date`: Composite index for user + date queries
+
+### therapist_patients table (NEW)
+- `idx_therapist_patients_therapist`: For finding all patients of a therapist
+- `idx_therapist_patients_patient`: For finding the therapist of a patient
 
 ## Testing the Schema
 
@@ -201,25 +232,32 @@ WHERE tablename IN ('profiles', 'check_ins');
 
 ### Creating a Therapist
 ```sql
-INSERT INTO profiles (id, email, username, role, therapist_id)
+INSERT INTO profiles (id, email, username, role)
 VALUES (
   'therapist-uuid-here',
   'dr.silva@clinic.com',
   'Dr. Silva',
-  'therapist',
-  NULL
+  'therapist'
 );
 ```
 
 ### Creating a Patient
 ```sql
-INSERT INTO profiles (id, email, username, role, therapist_id)
+INSERT INTO profiles (id, email, username, role)
 VALUES (
   'patient-uuid-here',
   'patient@email.com',
   'João Silva',
-  'patient',
-  'therapist-uuid-here'  -- Links to the therapist
+  'patient'
+);
+```
+
+### Linking Patient to Therapist
+```sql
+INSERT INTO therapist_patients (therapist_id, patient_id)
+VALUES (
+  'therapist-uuid-here',  -- Dr. Silva's ID
+  'patient-uuid-here'     -- João Silva's ID
 );
 ```
 
@@ -228,14 +266,22 @@ VALUES (
 ### Issue: "role" constraint violation
 Make sure the role value is exactly 'patient' or 'therapist' (lowercase).
 
-### Issue: Foreign key constraint on therapist_id
-The therapist_id must reference an existing profile with role='therapist', or be NULL.
+### Issue: Foreign key constraint on therapist_patients
+Both therapist_id and patient_id must reference existing profiles with the appropriate roles.
+
+### Issue: Duplicate patient assignment
+Each patient can only be assigned to one therapist. The unique constraint ensures this.
 
 ### Issue: RLS policies blocking queries
 Make sure you're authenticated with Supabase (using `auth.uid()`). RLS policies rely on the authenticated user's ID.
 
-### Issue: Duplicate policy names
-If you're re-running the migration, the script drops existing policies before creating new ones. However, if you have custom policies with the same names, you may need to rename them first.
+### Issue: Therapist cannot see patient data
+Verify that there's a row in therapist_patients linking the therapist to the patient:
+```sql
+SELECT * FROM therapist_patients 
+WHERE therapist_id = 'therapist-uuid' 
+AND patient_id = 'patient-uuid';
+```
 
 ## Support
 

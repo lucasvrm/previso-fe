@@ -34,7 +34,21 @@ const PatientView = () => {
       }
 
       try {
-        // Fetch patient profile and verify therapist_id
+        // Verify that this patient belongs to this therapist via therapist_patients table
+        const { data: relationship, error: relationshipError } = await supabase
+          .from('therapist_patients')
+          .select('patient_id')
+          .eq('therapist_id', user.id)
+          .eq('patient_id', patientId)
+          .single();
+
+        if (relationshipError || !relationship) {
+          setError('Você não tem permissão para visualizar este paciente.');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch patient profile
         const { data: patientProfile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -42,13 +56,6 @@ const PatientView = () => {
           .single();
 
         if (profileError) throw profileError;
-
-        // Verify that this patient belongs to this therapist
-        if (patientProfile.therapist_id !== user.id) {
-          setError('Você não tem permissão para visualizar este paciente.');
-          setLoading(false);
-          return;
-        }
 
         setPatient(patientProfile);
 

@@ -37,13 +37,28 @@ setUserRole(profileData?.role);
 #### Component: TherapistDashboard.jsx
 
 ```javascript
-// Fetch patients linked to this therapist
+// Fetch patients linked to this therapist via therapist_patients table
 const { data, error } = await supabase
-  .from('profiles')
-  .select('id, email, username, created_at')
-  .eq('therapist_id', user.id)      // KEY: Only patients with therapist_id = current user
-  .eq('role', 'patient')            // Only patients, not other therapists
-  .order('created_at', { ascending: false });
+  .from('therapist_patients')
+  .select(`
+    patient_id,
+    assigned_at,
+    patient:profiles!therapist_patients_patient_id_fkey (
+      id,
+      email,
+      username,
+      created_at
+    )
+  `)
+  .eq('therapist_id', user.id);
+
+// Transform to extract patient info
+const patientsList = (data || []).map(item => ({
+  id: item.patient?.id || item.patient_id,
+  email: item.patient?.email,
+  username: item.patient?.username,
+  created_at: item.patient?.created_at || item.assigned_at
+})).filter(p => p.id);
 ```
 
 #### Render patient cards
@@ -89,22 +104,29 @@ const handleViewPatientDashboard = (patientId) => {
 const { patientId } = useParams();
 ```
 
-##### Step 2: Fetch patient profile
+##### Step 2: Verify therapist-patient relationship
+```javascript
+// CRITICAL: Verify via therapist_patients junction table
+const { data: relationship, error: relationshipError } = await supabase
+  .from('therapist_patients')
+  .select('patient_id')
+  .eq('therapist_id', user.id)
+  .eq('patient_id', patientId)
+  .single();
+
+if (relationshipError || !relationship) {
+  setError('Você não tem permissão para visualizar este paciente.');
+  return;
+}
+```
+
+##### Step 3: Fetch patient profile
 ```javascript
 const { data: patientProfile, error: profileError } = await supabase
   .from('profiles')
   .select('*')
   .eq('id', patientId)
   .single();
-```
-
-##### Step 3: Security verification
-```javascript
-// CRITICAL: Verify this patient belongs to this therapist
-if (patientProfile.therapist_id !== user.id) {
-  setError('Você não tem permissão para visualizar este paciente.');
-  return;
-}
 ```
 
 ##### Step 4: Fetch patient's check-ins
@@ -217,17 +239,28 @@ const renderContent = () => {
 
 ## Database Schema in Detail
 
-### profiles table structure
+### profiles table structure (YOUR EXISTING TABLE)
 ```sql
 CREATE TABLE profiles (
   id UUID PRIMARY KEY,              -- Matches auth.users.id
-  email TEXT NOT NULL,              -- User's email
-  username TEXT,                    -- Optional display name
   role TEXT NOT NULL,               -- 'patient' or 'therapist'
-  therapist_id UUID,                -- For patients: references therapist's id
+  username TEXT,                    -- Optional display name
   created_at TIMESTAMP DEFAULT NOW,
+  email TEXT,                       -- Added by migration
+  updated_at TIMESTAMP DEFAULT NOW  -- Added by migration
+);
+```
+
+### therapist_patients table structure (YOUR EXISTING JUNCTION TABLE)
+```sql
+CREATE TABLE therapist_patients (
+  therapist_id UUID,                -- References therapist profile
+  patient_id UUID,                  -- References patient profile
+  assigned_at TIMESTAMP DEFAULT NOW,
   
-  FOREIGN KEY (therapist_id) REFERENCES profiles(id)
+  FOREIGN KEY (therapist_id) REFERENCES profiles(id),
+  FOREIGN KEY (patient_id) REFERENCES profiles(id),
+  UNIQUE (patient_id)  -- Each patient can only have one therapist
 );
 ```
 
@@ -240,7 +273,6 @@ CREATE TABLE profiles (
   email: 'dr.silva@clinic.com',
   username: 'Dr. Silva',
   role: 'therapist',
-  therapist_id: null,  // Therapists don't have therapists
   created_at: '2024-01-01'
 }
 ```
@@ -252,7 +284,6 @@ CREATE TABLE profiles (
   email: 'joao@email.com',
   username: 'João Silva',
   role: 'patient',
-  therapist_id: 'therapist-uuid-123',  // Links to Dr. Silva
   created_at: '2024-11-01'
 },
 {
@@ -260,7 +291,22 @@ CREATE TABLE profiles (
   email: 'maria@email.com',
   username: 'Maria Santos',
   role: 'patient',
-  therapist_id: 'therapist-uuid-123',  // Also links to Dr. Silva
+  created_at: '2024-10-15'
+}
+```
+
+#### Therapist-Patient relationships (therapist_patients table)
+```javascript
+{
+  therapist_id: 'therapist-uuid-123',  // Dr. Silva
+  patient_id: 'patient-uuid-456',      // João Silva
+  assigned_at: '2024-11-01'
+},
+{
+  therapist_id: 'therapist-uuid-123',  // Dr. Silva
+  patient_id: 'patient-uuid-789',      // Maria Santos
+  assigned_at: '2024-10-15'
+}
   created_at: '2024-10-15'
 }
 ```
@@ -283,10 +329,17 @@ if (allowedRoles && !allowedRoles.includes(userRole)) {
 }
 ```
 
-### 3. Ownership Verification
+### 3. Ownership Verification (via therapist_patients table)
 ```javascript
 // In PatientView.jsx
-if (patientProfile.therapist_id !== user.id) {
+const { data: relationship } = await supabase
+  .from('therapist_patients')
+  .select('patient_id')
+  .eq('therapist_id', user.id)
+  .eq('patient_id', patientId)
+  .single();
+
+if (!relationship) {
   setError('Você não tem permissão para visualizar este paciente.');
   return;
 }
@@ -294,7 +347,8 @@ if (patientProfile.therapist_id !== user.id) {
 
 ### 4. Data Isolation
 ```javascript
-// Therapist query - only gets THEIR patients
+// Therapist query - only gets THEIR patients via junction table
+.from('therapist_patients')
 .eq('therapist_id', user.id)
 
 // Patient query - only gets THEIR check-ins

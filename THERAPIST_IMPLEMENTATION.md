@@ -16,7 +16,7 @@ This document describes the implementation of the Therapist role functionality a
 **Location**: `src/pages/Therapist/TherapistDashboard.jsx`
 
 **Features**:
-- Fetches all patients where `therapist_id` matches the logged-in therapist's user ID
+- Fetches all patients via the `therapist_patients` junction table
 - Displays patient list with cards showing:
   - Patient name (username or email prefix)
   - Email address
@@ -26,14 +26,21 @@ This document describes the implementation of the Therapist role functionality a
 - Displays empty state when no patients are linked
 - Provides informational cards about functionality and privacy
 
-**Database Query**:
+**Database Query** (using therapist_patients junction table):
 ```javascript
 const { data, error } = await supabase
-  .from('profiles')
-  .select('id, email, username, created_at')
-  .eq('therapist_id', user.id)
-  .eq('role', 'patient')
-  .order('created_at', { ascending: false });
+  .from('therapist_patients')
+  .select(`
+    patient_id,
+    assigned_at,
+    patient:profiles!therapist_patients_patient_id_fkey (
+      id,
+      email,
+      username,
+      created_at
+    )
+  `)
+  .eq('therapist_id', user.id);
 ```
 
 #### PatientView Component
@@ -41,16 +48,23 @@ const { data, error } = await supabase
 
 **Features**:
 - Displays a complete patient dashboard from the therapist's perspective
-- Verifies that the patient belongs to the logged-in therapist (security check)
+- Verifies that the patient belongs to the logged-in therapist via therapist_patients table
 - Uses the same tab-based interface as the patient dashboard
 - Includes a "Back" button to return to the patient list
 - Shows patient information in the header
 
-**Security**:
+**Security** (using therapist_patients junction table):
 ```javascript
-// Verify that this patient belongs to this therapist
-if (patientProfile.therapist_id !== user.id) {
-  setError('Você não tem permissão para visualizar este paciente.');
+// Verify relationship via junction table
+const { data: relationship, error } = await supabase
+  .from('therapist_patients')
+  .select('patient_id')
+  .eq('therapist_id', user.id)
+  .eq('patient_id', patientId)
+  .single();
+
+if (!relationship) {
+  setError('Unauthorized access');
   return;
 }
 ```
@@ -121,21 +135,35 @@ const tabs = [
 
 ## Database Schema Requirements
 
-The implementation assumes the following database structure:
+The implementation works with your existing database structure:
 
-### profiles table
-- `id` (UUID): Primary key, matches auth.users.id
-- `email` (TEXT): User's email
-- `username` (TEXT): Optional display name
-- `role` (TEXT): Either 'patient' or 'therapist'
-- `therapist_id` (UUID): For patients, references the therapist's user ID
-- `created_at` (TIMESTAMP): Account creation date
+### profiles table (EXISTING)
+- `id` (UUID): Primary key, matches auth.users.id ✓
+- `role` (TEXT): Either 'patient' or 'therapist' ✓
+- `username` (TEXT): Optional display name ✓
+- `created_at` (TIMESTAMP): Account creation date ✓
+- `email` (TEXT): User's email (added by migration)
+- `updated_at` (TIMESTAMP): Last update timestamp (added by migration)
 
-### check_ins table
-- `id` (UUID): Primary key
-- `user_id` (UUID): References profiles.id
-- `checkin_date` (DATE): Date of check-in
-- Various data fields (sleep_data, humor_data, energy_focus_data, etc.)
+### check_ins table (EXISTING)
+- `id` (UUID): Primary key ✓
+- `user_id` (UUID): References profiles.id ✓
+- `checkin_date` (DATE): Date of check-in ✓
+- `sleep_data` (JSONB): Sleep metrics ✓
+- `humor_data` (JSONB): Mood metrics ✓
+- `energy_focus_data` (JSONB): Energy and focus metrics ✓
+- `routine_body_data` (JSONB): Physical activity metrics ✓
+- `appetite_impulse_data` (JSONB): Appetite metrics ✓
+- `meds_context_data` (JSONB): Medication adherence ✓
+- `created_at` (TIMESTAMP): Check-in creation ✓
+- `updated_at` (TIMESTAMP): Last update (added by migration)
+
+### therapist_patients table (EXISTING - Junction Table)
+- `therapist_id` (UUID): References therapist's profile.id ✓
+- `patient_id` (UUID): References patient's profile.id ✓
+- `assigned_at` (TIMESTAMP): Assignment timestamp ✓
+
+**This junction table links therapists to their patients.** Each patient can have one therapist, but therapists can have multiple patients.
 
 ## Security Considerations
 
@@ -144,8 +172,9 @@ The implementation assumes the following database structure:
    - Therapist routes require `['therapist']` role
 
 2. **Data Isolation**:
-   - Therapists can only see patients where `therapist_id` matches their user ID
-   - PatientView verifies ownership before displaying data
+   - Therapists can only see patients linked via `therapist_patients` table
+   - PatientView verifies relationship in therapist_patients before displaying data
+   - Row Level Security (RLS) policies enforce access at database level
 
 3. **Authentication**:
    - All dashboard routes require authentication
