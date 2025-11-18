@@ -1,0 +1,87 @@
+/* src/index.css */
+/* (ATUALIZADO: Adiciona os estilos para o react-calendar-heatmap) */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Mapeia as cores HSL para o Tailwind (Light Mode) */
+    --background: 255 100% 100%; /* #FFFFFF */
+    --foreground: 209 69% 11%; /* #0B1B2B */
+    --card: 255 100% 100%;
+    --card-foreground: 209 69% 11%;
+    --popover: 255 100% 100%;
+    --popover-foreground: 209 69% 11%;
+    --primary: 210 63% 44%; /* #2A6CB6 (Sua cor de ação - Azul) */
+    --primary-foreground: 255 100% 100%; /* #FFFFFF */
+    --secondary: 210 17% 42%; /* #5A6F82 */
+    --secondary-foreground: 255 100% 100%;
+    --muted: 214 67% 97%; /* #F2F6FA */
+    --muted-foreground: 209 40% 36%; /* #4A5B6A */
+    --accent: 210 63% 44%;
+    --accent-foreground: 255 100% 100%;
+    --destructive: 3 80% 41%; /* #B3261E (Cor de Erro) */
+    --destructive-foreground: 255 100% 100%;
+    --border: 213 60% 92%; /* #E6EEF5 */
+    --input: 213 60% 92%;
+    --ring: 210 63% 44%;
+    --radius: 0.8rem;
+
+    /* Cores de Gráfico (Clínicas) */
+    --chart-1: 12 76% 61%;  /* (M3) */
+    --chart-2: 173 58% 39%; /* (E) */
+    --chart-3: 197 37% 24%; /* (D3) */
+    --chart-4: 43 74% 66%;  /* (H1) */
+    --chart-5: 27 87% 67%;  /* (M2) */
+  }
+
+  /* Definição do Dark Mode */
+  .dark {
+    /* ... (código do dark mode) ... */
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  .tabular-nums {
+     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --- (NOVO) ESTILOS DO CALENDÁRIO HEATMAP --- */
+/* Isso aplica o seu design system (Baixa Excitação) ao heatmap */
+
+.react-calendar-heatmap {
+  width: 100%;
+}
+
+/* Cor dos quadrados vazios (dias sem dados) */
+.react-calendar-heatmap .color-empty {
+  fill: hsl(var(--muted) / 0.5);
+}
+
+/* Cor dos rótulos dos meses (Jan, Fev) */
+.react-calendar-heatmap .react-calendar-heatmap-month-label {
+  font-size: 12px;
+  fill: hsl(var(--muted-foreground));
+}
+
+/* Nossas 3 cores clínicas de adesão */
+.react-calendar-heatmap .color-adherence-all {
+  fill: hsl(var(--chart-2)); /* Verde (Eutimia) */
+}
+.react-calendar-heatmap .color-adherence-partial {
+  fill: hsl(var(--chart-4)); /* Amarelo (Hipomania) */
+}
+.react-calendar-heatmap .color-adherence-none {
+  fill: hsl(var(--destructive)); /* Vermelho (Destrutivo) */
+}
