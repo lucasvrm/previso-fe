@@ -39,7 +39,32 @@
 
   /* Definição do Dark Mode */
   .dark {
-    /* ... (código do dark mode) ... */
+    --background: 209 69% 8%; /* #0A1419 - Azul muito escuro */
+    --foreground: 210 40% 96%; /* #F2F5F7 - Branco suave */
+    --card: 209 60% 12%; /* #131F28 */
+    --card-foreground: 210 40% 96%;
+    --popover: 209 60% 12%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 210 63% 55%; /* #4A8DD6 - Azul mais claro para melhor contraste */
+    --primary-foreground: 255 100% 100%;
+    --secondary: 210 17% 28%; /* #3E4B56 */
+    --secondary-foreground: 210 40% 96%;
+    --muted: 209 60% 15%; /* #1A2930 */
+    --muted-foreground: 210 30% 70%; /* #A8B8C7 */
+    --accent: 210 63% 55%;
+    --accent-foreground: 255 100% 100%;
+    --destructive: 3 80% 55%; /* #D9443C - Vermelho mais claro para dark mode */
+    --destructive-foreground: 255 100% 100%;
+    --border: 209 50% 20%; /* #243340 */
+    --input: 209 50% 20%;
+    --ring: 210 63% 55%;
+
+    /* Cores de Gráfico (ajustadas para dark mode) */
+    --chart-1: 12 76% 65%;  /* Mais claro */
+    --chart-2: 173 58% 45%; /* Mais claro */
+    --chart-3: 197 37% 35%; /* Mais claro */
+    --chart-4: 43 74% 70%;  /* Mais claro */
+    --chart-5: 27 87% 72%;  /* Mais claro */
   }
 
   body {

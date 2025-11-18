@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 
-// PONTO CRÍTICO: A palavra "export" DEVE estar aqui.
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -54,23 +53,58 @@ export function AuthProvider({ children }) {
     return () => {};
   }, []);
 
+  const signUp = async (email, password, role = 'patient') => {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({ 
+        email, 
+        password 
+      });
+      
+      if (authError) {
+        return { error: authError.message };
+      }
+      
+      if (authData.user) {
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({ 
+              id: authData.user.id, 
+              role: role, 
+              email: email 
+            });
+          
+          if (profileError) {
+            console.error('Erro ao criar perfil:', profileError);
+            return { 
+              error: 'Erro ao criar perfil do usuário. Por favor, contate o suporte.' 
+            };
+          }
+        } catch (err) {
+          console.error('Erro inesperado ao criar perfil:', err);
+          return { 
+            error: 'Erro ao criar perfil do usuário. Por favor, contate o suporte.' 
+          };
+        }
+      }
+      
+      return { 
+        data: authData,
+        message: 'Conta criada com sucesso. Verifique seu e-mail para confirmar.'
+      };
+    } catch (err) {
+      console.error('Erro inesperado no signup:', err);
+      return { error: 'Erro inesperado ao criar conta. Por favor, tente novamente.' };
+    }
+  };
+
   const value = {
     user,
     profile,
     userRole,
     loading,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
-    signUp: async (email, password, role = 'patient') => {
-        const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-        if (authError) throw authError;
-        if (authData.user) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert({ id: authData.user.id, role: role, email: email });
-            if (profileError) throw profileError;
-        }
-        return authData;
-    },
+    signUp,
     signOut: () => supabase.auth.signOut(),
   };
 

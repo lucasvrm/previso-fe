@@ -46,8 +46,8 @@ const Dashboard = () => {
     return () => { isMounted = false; };
   }, [user]);
 
-  if (loading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-white rounded-lg shadow h-64"></div><div className="bg-white rounded-lg shadow h-64"></div></div>; }
-  if (error) { return <div className="p-4 text-center text-red-700 bg-red-100 rounded-lg">{error}</div>; }
+  if (loading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-card rounded-lg shadow h-64"></div><div className="bg-card rounded-lg shadow h-64"></div></div>; }
+  if (error) { return <div className="p-4 text-center text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">{error}</div>; }
 
   // Renderiza cartões de estatísticas
   const renderStatisticsCards = () => {
@@ -227,21 +227,21 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-6">
-                <div className="p-6 bg-white rounded-lg shadow">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Monitor de Humor & Energia</h3>
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Monitor de Humor & Energia</h3>
                   <HistoryChart checkins={checkins} />
                 </div>
-                <div className="p-6 bg-white rounded-lg shadow">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Adesão à Medicação</h3>
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Adesão à Medicação</h3>
                   <AdherenceCalendar checkins={checkins} />
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="p-6 bg-white rounded-lg shadow">
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
                   <CircadianRhythmChart checkins={checkins} />
                 </div>
-                <div className="p-6 bg-white rounded-lg shadow">
+                <div className="p-6 bg-card rounded-lg shadow border border-border">
                   <EventList checkins={checkins} />
                 </div>
               </div>

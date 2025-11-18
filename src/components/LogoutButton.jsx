@@ -1,7 +1,7 @@
 import React from 'react';
-// CORREÇÃO: Atualizando o caminho do import para o hook
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 
 const LogoutButton = () => {
     const { signOut, user } = useAuth();
@@ -22,12 +22,12 @@ const LogoutButton = () => {
     return (
         <button 
             onClick={handleLogout} 
-            style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-md font-medium hover:bg-destructive/90 transition-colors"
         >
-            Sair
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sair</span>
         </button>
     );
 };
 
-// PONTO CRÍTICO DA CORREÇÃO: Usando "export default"
 export default LogoutButton;
