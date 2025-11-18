@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 
 // Format date from YYYY-MM-DD to DD/MM
-const formatDate = (dateString) => {
-// ... (funções auxiliares permanecem as mesmas)
 const formatDateLabel = (dateString) => {
   if (!dateString) return '';
   const parts = dateString.split('-');

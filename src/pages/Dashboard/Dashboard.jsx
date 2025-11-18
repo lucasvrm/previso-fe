@@ -1,34 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth.jsx'; // Importa o hook do novo local
-import { supabase } from '../../api/supabaseClient'; 
-
-// Importa os componentes de gráfico
-import HistoryChart from '../../components/HistoryChart.jsx';
-import CircadianRhythmChart from '../../components/CircadianRhythmChart.jsx';
-import EventList from '../../components/EventList.jsx';
-import MultiMetricChart from '../../components/MultiMetricChart.jsx';
-import BarComparisonChart from '../../components/BarComparisonChart.jsx';
-import AreaTrendChart from '../../components/AreaTrendChart.jsx';
-import CorrelationScatterChart from '../../components/CorrelationScatterChart.jsx';
-import StatisticsCard from '../../components/StatisticsCard.jsx';
-import WellnessRadarChart from '../../components/WellnessRadarChart.jsx'; 
-
-const DashboardPage = () => {
-  const { user } = useAuth(); 
-  const location = useLocation(); 
-
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [checkins, setCheckins] = useState([]); // Todos os 120 dias
-  const [recentCheckins, setRecentCheckins] = useState([]); // Últimos 30 dias
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../api/supabaseClient';
-
-// Usando os nomes corretos dos seus arquivos
+import HistoryChart from '../../components/HistoryChart';
 import CircadianRhythmChart from '../../components/CircadianRhythmChart';
 import EventList from '../../components/EventList';
-import HistoryChart from '../../components/HistoryChart'; // Corrigido
-import AdherenceCalendar from '../../components/AdherenceCalendar'; // Adicionado
+import AdherenceCalendar from '../../components/AdherenceCalendar';
+import MultiMetricChart from '../../components/MultiMetricChart';
+import BarComparisonChart from '../../components/BarComparisonChart';
+import AreaTrendChart from '../../components/AreaTrendChart';
+import CorrelationScatterChart from '../../components/CorrelationScatterChart';
+import StatisticsCard from '../../components/StatisticsCard';
+import WellnessRadarChart from '../../components/WellnessRadarChart';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -72,22 +54,22 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatisticsCard 
           title="Qualidade do Sono"
-          data={recentCheckins}
+          data={checkins}
           dataKey="sleep_data.sleepQuality"
         />
         <StatisticsCard 
           title="Nível de Energia"
-          data={recentCheckins}
+          data={checkins}
           dataKey="energy_focus_data.energyLevel"
         />
         <StatisticsCard 
           title="Ativação Mental"
-          data={recentCheckins}
+          data={checkins}
           dataKey="humor_data.activation"
         />
         <StatisticsCard 
           title="Conexão Social"
-          data={recentCheckins}
+          data={checkins}
           dataKey="routine_body_data.socialConnection"
         />
       </div>
@@ -101,14 +83,14 @@ const Dashboard = () => {
         {/* Wellness Radar - Visão Geral */}
         <WellnessRadarChart 
           title="Perfil de Bem-Estar Geral"
-          data={recentCheckins}
+          data={checkins}
         />
 
         {/* Multi-metric comparison charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <MultiMetricChart 
             title="Análise de Humor e Ativação"
-            data={recentCheckins}
+            data={checkins}
             metrics={[
               { dataKey: 'humor_data.activation', name: 'Ativação', color: 'hsl(var(--primary))' },
               { dataKey: 'humor_data.depressedMood', name: 'Humor Deprimido', color: 'hsl(var(--chart-3))' },
@@ -118,7 +100,7 @@ const Dashboard = () => {
           
           <MultiMetricChart 
             title="Energia, Foco e Motivação"
-            data={recentCheckins}
+            data={checkins}
             metrics={[
               { dataKey: 'energy_focus_data.energyLevel', name: 'Energia', color: 'hsl(var(--chart-4))' },
               { dataKey: 'energy_focus_data.motivationToStart', name: 'Motivação', color: 'hsl(var(--chart-1))' },
@@ -131,14 +113,14 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <AreaTrendChart 
             title="Tendência da Qualidade do Sono"
-            data={recentCheckins}
+            data={checkins}
             dataKey="sleep_data.sleepQuality"
             colorToken="hsl(var(--chart-2))"
             showAverage={true}
           />
           <AreaTrendChart 
             title="Tendência de Ansiedade/Estresse"
-            data={recentCheckins}
+            data={checkins}
             dataKey="humor_data.anxietyStress"
             colorToken="hsl(var(--chart-5))"
             showAverage={true}
@@ -149,7 +131,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <BarComparisonChart 
             title="Gestão de Tarefas"
-            data={recentCheckins}
+            data={checkins}
             metrics={[
               { dataKey: 'energy_focus_data.tasksPlanned', name: 'Planejadas', color: 'hsl(var(--chart-1))' },
               { dataKey: 'energy_focus_data.tasksCompleted', name: 'Concluídas', color: 'hsl(var(--primary))' }
@@ -157,7 +139,7 @@ const Dashboard = () => {
           />
           <BarComparisonChart 
             title="Atividade Física e Cafeína"
-            data={recentCheckins}
+            data={checkins}
             metrics={[
               { dataKey: 'routine_body_data.exerciseDurationMin', name: 'Exercício (min)', color: 'hsl(var(--chart-4))' },
               { dataKey: 'sleep_data.caffeineDoses', name: 'Doses de Cafeína', color: 'hsl(var(--chart-3))' }
@@ -169,7 +151,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CorrelationScatterChart 
             title="Correlação: Sono vs. Energia"
-            data={recentCheckins}
+            data={checkins}
             xDataKey="sleep_data.sleepQuality"
             yDataKey="energy_focus_data.energyLevel"
             xLabel="Qualidade do Sono"
@@ -178,7 +160,7 @@ const Dashboard = () => {
           />
           <CorrelationScatterChart 
             title="Correlação: Ativação vs. Ansiedade"
-            data={recentCheckins}
+            data={checkins}
             xDataKey="humor_data.activation"
             yDataKey="humor_data.anxietyStress"
             xLabel="Ativação Mental"
@@ -191,14 +173,14 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <AreaTrendChart 
             title="Conexão Social ao Longo do Tempo"
-            data={recentCheckins}
+            data={checkins}
             dataKey="routine_body_data.socialConnection"
             colorToken="hsl(var(--chart-1))"
             showAverage={true}
           />
           <AreaTrendChart 
             title="Raciocínio (Velocidade Mental)"
-            data={recentCheckins}
+            data={checkins}
             dataKey="routine_body_data.ruminationAxis"
             colorToken="hsl(var(--chart-4))"
             showAverage={true}
@@ -209,18 +191,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="space-y-6">
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Monitor de Humor & Energia</h3>
-          <HistoryChart checkins={checkins} />
-        </div>
-        <div className="p-6 bg-white rounded-lg shadow">
-           <h3 className="text-lg font-semibold text-gray-800 mb-4">Adesão à Medicação</h3>
-          <AdherenceCalendar checkins={checkins} />
-        </div>
-      )}
-
+    <div className="p-6 space-y-6">
       {/* Seção de Estatísticas Rápidas */}
       {!loading && !error && checkins.length > 0 && (
         <div>
@@ -229,25 +200,25 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Seção do Mapa de Ritmo */}
-      {!loading && !error && checkins.length > 0 && (
-        <CircadianRhythmChart checkins={checkins} />
-      )}
-
-      {/* Seção da Legenda de Eventos */}
-      <div className="bg-card p-6 rounded-lg border shadow-sm">
-        {loading && <div className="text-center text-muted-foreground">Carregando eventos...</div>}
-        {error && <div className="text-center text-destructive">{error}</div>}
-        {!loading && !error && (
-          <EventList checkins={recentCheckins} />
-        )}
-      </div>
-      <div className="space-y-6">
-        <div className="p-6 bg-white rounded-lg shadow">
-          <CircadianRhythmChart checkins={checkins} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div className="p-6 bg-white rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Monitor de Humor & Energia</h3>
+            <HistoryChart checkins={checkins} />
+          </div>
+          <div className="p-6 bg-white rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Adesão à Medicação</h3>
+            <AdherenceCalendar checkins={checkins} />
+          </div>
         </div>
-        <div className="p-6 bg-white rounded-lg shadow">
-          <EventList checkins={checkins} />
+
+        <div className="space-y-6">
+          <div className="p-6 bg-white rounded-lg shadow">
+            <CircadianRhythmChart checkins={checkins} />
+          </div>
+          <div className="p-6 bg-white rounded-lg shadow">
+            <EventList checkins={checkins} />
+          </div>
         </div>
       </div>
 
