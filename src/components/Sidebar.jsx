@@ -1,11 +1,25 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Settings, BarChart3 } from 'lucide-react';
+import { Home, Settings, BarChart3, User, UserCog } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 const Sidebar = () => {
+  const { user, userRole } = useAuth();
+
+  // Determine which icon to use based on role
+  const UserIcon = userRole === 'therapist' ? UserCog : User;
+
+  // Get display name for role
+  const getRoleLabel = () => {
+    if (!userRole) return 'Usuário';
+    if (userRole === 'therapist') return 'Terapeuta';
+    if (userRole === 'patient') return 'Paciente';
+    return userRole;
+  };
+
   return (
-    <aside className="w-64 h-screen bg-card border-r border-border" aria-label="Sidebar">
-      <div className="h-full px-3 py-4 overflow-y-auto">
+    <aside className="w-64 h-screen bg-card border-r border-border flex flex-col" aria-label="Sidebar">
+      <div className="flex-1 px-3 py-4 overflow-y-auto">
         <NavLink to="/dashboard" className="flex items-center ps-2.5 mb-5">
           <span className="self-center text-xl font-semibold whitespace-nowrap text-foreground">
             Previso
@@ -58,6 +72,29 @@ const Sidebar = () => {
             </NavLink>
           </li>
         </ul>
+      </div>
+      
+      {/* User info footer */}
+      <div className="px-3 py-4 border-t border-border">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <UserIcon className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">
+              {user?.email || 'Usuário'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {getRoleLabel()}
+            </p>
+            <NavLink 
+              to="/settings" 
+              className="text-xs text-primary hover:underline"
+            >
+              Editar perfil
+            </NavLink>
+          </div>
+        </div>
       </div>
     </aside>
   );

@@ -103,13 +103,13 @@ const WellnessRadarChart = ({ title, data }) => {
   };
 
   return (
-    <div className="p-4 border rounded-lg bg-card h-96">
+    <div className="p-4 border rounded-lg bg-card">
       <h3 className="text-base font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-xs text-muted-foreground mb-4">
         Comparação: Últimos 7 dias vs. 7 dias anteriores
       </p>
       
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={320}>
         <RadarChart data={radarData}>
           <PolarGrid stroke="hsl(var(--border))" />
           
@@ -133,7 +133,8 @@ const WellnessRadarChart = ({ title, data }) => {
           <Tooltip content={renderTooltip} />
           
           <Legend 
-            wrapperStyle={{ fontSize: '12px' }}
+            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+            verticalAlign="top"
           />
           
           {/* Previous period (7-14 days ago) */}

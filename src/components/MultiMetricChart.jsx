@@ -69,14 +69,14 @@ const MultiMetricChart = ({ title, data, metrics = [] }) => {
   };
 
   return (
-    <div className="p-4 border rounded-lg bg-card h-96">
+    <div className="p-4 border rounded-lg bg-card">
       <h3 className="text-base font-semibold text-foreground mb-4">{title}</h3>
       
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={320}>
         <LineChart
           data={processedData}
           margin={{
-            top: 5, right: 20, left: -20, bottom: 20,
+            top: 5, right: 20, left: -20, bottom: 5,
           }}
         >
           <CartesianGrid 
@@ -105,8 +105,9 @@ const MultiMetricChart = ({ title, data, metrics = [] }) => {
           <Tooltip content={renderTooltip} />
           
           <Legend 
-            wrapperStyle={{ fontSize: '12px' }}
+            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
             iconType="line"
+            verticalAlign="top"
           />
           
           {/* Render a line for each metric */}

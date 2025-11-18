@@ -10,6 +10,8 @@ import TherapistSignupPage from './pages/Auth/TherapistSignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
 import PatientView from './pages/Therapist/PatientView';
+import SettingsPage from './pages/Settings/SettingsPage';
+import CheckinWizard from './pages/Checkin/CheckinWizard';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -57,8 +59,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* Adicione outras rotas protegidas aqui, ex: /settings, /profile, etc. */}
-        {/* <Route path="/settings" element={<SettingsPage />} /> */}
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/checkin" element={<CheckinWizard />} />
       </Route>
       
       {/* Redirecionamento da raiz */}
