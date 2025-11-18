@@ -25,10 +25,10 @@ const HumorActivationForm = ({ data, onChange }) => {
     };
     
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* 1. Tristeza (Cinza) - Coluna 1 */}
-            <div className="p-4 border rounded-lg bg-muted/50">
+            <div className="p-3 border rounded-lg bg-muted/50">
                 <SegmentedScale
                     label="Tristeza/Apatia" 
                     value={humorData.depressedMood}
@@ -38,7 +38,7 @@ const HumorActivationForm = ({ data, onChange }) => {
             </div>
             
             {/* 2. Ansiedade (Branco) - Coluna 2 */}
-            <div className="p-4 border rounded-lg bg-card">
+            <div className="p-3 border rounded-lg bg-card">
                 <SegmentedScale
                     label="Ansiedade / Estresse"
                     value={humorData.anxietyStress}
@@ -48,7 +48,7 @@ const HumorActivationForm = ({ data, onChange }) => {
             </div>
 
             {/* 3. Ativação (Cinza) - Ocupa a largura inteira */}
-            <div className="md:col-span-2 p-4 border rounded-lg bg-muted/50">
+            <div className="md:col-span-2 p-3 border rounded-lg bg-muted/50">
                 <SegmentedScale
                     label="Ativação (Irritabilidade/Aceleração Mental)"
                     value={humorData.activation}

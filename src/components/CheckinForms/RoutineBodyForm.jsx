@@ -15,7 +15,7 @@ const SENSATION_OPTIONS = [
     'Náuseas', 'Fadiga inexplicável', 'Agitação'
 ];
 const TagButton = ({ label, isActive, onClick }) => (
-  <button type="button" onClick={onClick} className={`py-2 px-4 rounded-full border text-sm font-medium transition-colors duration-150
+  <button type="button" onClick={onClick} className={`py-1.5 px-3 rounded-full border text-xs font-medium transition-colors duration-150
       ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
     {label}
   </button>
@@ -49,12 +49,12 @@ const RoutineBodyForm = ({ data, onChange }) => {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* --- COLUNA 1 (Cinza, Branco) --- */}
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* 1. Conexão Social (Cinza) */}
-                <div className="p-4 border rounded-lg bg-muted/50">
+                <div className="p-3 border rounded-lg bg-muted/50">
                     <SegmentedScale
                         label="Nível de Conexão Social Saudável"
                         value={routineData.socialConnection}
@@ -64,7 +64,7 @@ const RoutineBodyForm = ({ data, onChange }) => {
                 </div>
 
                 {/* 2. Concentração (Branco) */}
-                <div className="p-4 border rounded-lg bg-card">
+                <div className="p-3 border rounded-lg bg-card">
                     <SegmentedScale
                         label="Dificuldade de Concentração (Memória)"
                         value={routineData.memoryConcentration}
@@ -74,8 +74,8 @@ const RoutineBodyForm = ({ data, onChange }) => {
                 </div>
                 
                 {/* 3. Sensações (Cinza) */}
-                <div className="p-4 border rounded-lg bg-muted/50">
-                    <label className="block text-base font-semibold text-foreground mb-3">
+                <div className="p-3 border rounded-lg bg-muted/50">
+                    <label className="block text-sm font-semibold text-foreground mb-2">
                       Sensações Corporais (Selecione)
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -92,17 +92,17 @@ const RoutineBodyForm = ({ data, onChange }) => {
             </div>
             
             {/* --- COLUNA 2 (Branco, Cinza) --- */}
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* 1. Exercício (Branco) */}
-                <div className="p-4 border rounded-lg bg-card space-y-4">
-                  <label className="block text-base font-semibold text-foreground">Exercício Físico</label>
+                <div className="p-3 border rounded-lg bg-card space-y-3">
+                  <label className="block text-sm font-semibold text-foreground">Exercício Físico</label>
                   <input
                       type="number"
                       placeholder="Duração em minutos"
                       value={routineData.exerciseDurationMin}
                       onChange={(e) => handleChange('exerciseDurationMin', parseInt(e.target.value) || 0)}
                       min="0"
-                      className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums"
+                      className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums text-sm"
                   />
                   {routineData.exerciseDurationMin > 0 && (
                       <SegmentedScale
@@ -115,7 +115,7 @@ const RoutineBodyForm = ({ data, onChange }) => {
                 </div>
                 
                 {/* 2. Raciocínio (Cinza) */}
-                <div className="p-4 border rounded-lg bg-muted/50">
+                <div className="p-3 border rounded-lg bg-muted/50">
                     <SegmentedScale
                         label="Raciocínio (Lento-Acelerado)" 
                         value={routineData.ruminationAxis}
