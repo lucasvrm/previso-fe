@@ -6,6 +6,7 @@ export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,18 +16,21 @@ export function AuthProvider({ children }) {
     const fetchUserProfile = async (userId) => {
       if (!userId) {
         setUserRole(null);
+        setProfile(null);
         return;
       }
       try {
-        const { data: profile, error } = await supabase
+        const { data: profileData, error } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', userId)
           .single();
         if (error) throw error;
-        setUserRole(profile?.role || null);
+        setProfile(profileData);
+        setUserRole(profileData?.role || null);
       } catch (error) {
         console.error('Erro ao buscar perfil do usuário:', error.message);
+        setProfile(null);
         setUserRole(null);
       }
     };
@@ -52,6 +56,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
+    profile,
     userRole,
     loading,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),

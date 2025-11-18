@@ -8,6 +8,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import SignupPage from './pages/Auth/SignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
+import PatientView from './pages/Therapist/PatientView';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -42,6 +43,14 @@ function App() {
         <Route 
           path="/dashboard"
           element={userRole === 'therapist' ? <TherapistDashboard /> : <PatientDashboard />}
+        />
+        <Route 
+          path="/therapist/patient/:patientId"
+          element={
+            <ProtectedRoute allowedRoles={['therapist']}>
+              <PatientView />
+            </ProtectedRoute>
+          }
         />
         {/* Adicione outras rotas protegidas aqui, ex: /settings, /profile, etc. */}
         {/* <Route path="/settings" element={<SettingsPage />} /> */}
