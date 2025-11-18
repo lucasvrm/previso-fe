@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 
+// Format date from YYYY-MM-DD to DD/MM
+const formatDate = (dateString) => {
 // ... (funções auxiliares permanecem as mesmas)
 const formatDateLabel = (dateString) => {
   if (!dateString) return '';
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}`;
+  const parts = dateString.split('-');
+  return `${parts[2]}/${parts[1]}`;
 };
 const timeToMinutes = (timeStr) => {
   if (!timeStr || !timeStr.includes(':')) return 0;
