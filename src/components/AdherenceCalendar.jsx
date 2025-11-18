@@ -1,79 +1,81 @@
-// src/components/AdherenceCalendar.jsx
-// (NOVO) Componente de Heatmap de Adesão à Medicação
-
 import React, { useMemo } from 'react';
-import CalendarHeatmap from 'react-calendar-heatmap';
-import 'react-calendar-heatmap/dist/styles.css'; // (Importa o layout base)
+import { getDaysInMonth, startOfMonth, format } from 'date-fns';
 
-// Função que define a cor (classe CSS) com base no valor
-const getClassForValue = (value) => {
-  if (!value || !value.adherence) {
-    return 'color-empty'; // Vazio
-  }
-  
-  switch (value.adherence) {
-    case 'all':
-      return 'color-adherence-all'; // Verde
-    case 'partial':
-      return 'color-adherence-partial'; // Amarelo
-    case 'none':
-      return 'color-adherence-none'; // Vermelho
-    default:
-      return 'color-empty';
-  }
-};
+// Componente para um único dia no calendário
+const DayCell = ({ day, month, tookMeds, isToday }) => {
+  let bgColor = 'bg-muted/40'; // Cor padrão para dia sem registro
+  if (tookMeds === true) bgColor = 'bg-primary/80 text-primary-foreground'; // Adesão confirmada
+  if (tookMeds === false) bgColor = 'bg-destructive/70 text-destructive-foreground'; // Falha registrada (se houver)
 
-/**
- * @param {array} checkins - Array de check-ins (vem do Supabase)
- */
-const AdherenceCalendar = ({ checkins }) => {
-
-  // O Heatmap precisa de dados em um formato específico.
-  // Processamos os check-ins para esse formato.
-  const processedData = useMemo(() => {
-    if (!checkins || checkins.length === 0) return [];
-
-    return checkins.map(checkin => {
-      // Pega o dado de adesão
-      const adherence = checkin.meds_context_data?.medicationAdherence;
-      
-      return {
-        date: checkin.checkin_date, // YYYY-MM-DD
-        adherence: adherence,
-      };
-    });
-  }, [checkins]);
-
-  // Define o range do calendário (últimos 120 dias)
-  const getStartDate = () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 120);
-    return date;
-  };
+  const border = isToday ? 'border-2 border-primary' : 'border border-transparent';
 
   return (
-    <div className="p-4 border rounded-lg bg-card">
-      <h3 className="text-base font-semibold text-foreground mb-4">Adesão à Medicação (Últimos 120 Dias)</h3>
-      <CalendarHeatmap
-        startDate={getStartDate()}
-        endDate={new Date()} // Hoje
-        values={processedData}
-        classForValue={getClassForValue} // Função que aplica as cores
+    <div className={`h-10 w-10 flex items-center justify-center rounded-lg ${bgColor} ${border}`}>
+      <span className="text-sm font-medium">{day}</span>
+    </div>
+  );
+};
+
+const AdherenceCalendar = ({ checkins }) => {
+  const calendarData = useMemo(() => {
+    if (!checkins) return { days: [], adherenceRate: 0 };
+
+    const today = new Date();
+    const startOfThisMonth = startOfMonth(today);
+    const totalDaysInMonth = getDaysInMonth(today);
+    
+    // Cria um mapa para acesso rápido aos dados de adesão por data
+    const adherenceMap = new Map();
+    let daysWithAdherence = 0;
+
+    checkins.forEach(c => {
+      // Normaliza a data para evitar problemas de fuso horário
+      const checkinDate = format(new Date(c.checkin_date + 'T00:00:00'), 'yyyy-MM-dd');
+      if (c.meds_context_data?.tookMedication) {
+        adherenceMap.set(checkinDate, true);
+        daysWithAdherence++;
+      }
+    });
+
+    const days = [];
+    for (let i = 1; i <= totalDaysInMonth; i++) {
+      const dayDate = new Date(today.getFullYear(), today.getMonth(), i);
+      const formattedDate = format(dayDate, 'yyyy-MM-dd');
+      days.push({
+        day: i,
+        month: today.getMonth(),
+        tookMeds: adherenceMap.get(formattedDate), // Pode ser true, false ou undefined
+        isToday: format(today, 'yyyy-MM-dd') === formattedDate
+      });
+    }
+
+    const adherenceRate = (daysWithAdherence / totalDaysInMonth) * 100;
+
+    return { days, adherenceRate: adherenceRate.toFixed(0) };
+
+  }, [checkins]);
+  
+  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Adesão à Medicação</h3>
+        <div className="text-right">
+          <p className="font-bold text-2xl text-primary">{calendarData.adherenceRate}%</p>
+          <p className="text-xs text-muted-foreground">no mês atual</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-2 text-center">
+        {/* Cabeçalho dos dias da semana */}
+        {weekdays.map(day => <div key={day} className="font-bold text-xs text-muted-foreground">{day}</div>)}
         
-        // Tooltip (o que aparece ao passar o mouse)
-        tooltipDataAttrs={value => {
-          if (!value || !value.date) return null;
-          let adherenceLabel = 'Sem dados';
-          if (value.adherence === 'all') adherenceLabel = 'Tomei todos';
-          if (value.adherence === 'partial') adherenceLabel = 'Tomei parte';
-          if (value.adherence === 'none') adherenceLabel = 'Não tomei';
-          
-          return {
-            'data-tooltip-id': 'heatmap-tooltip',
-            'data-tooltip-content': `${value.date}: ${adherenceLabel}`,
-          };
-        }}
-      />
+        {/* Dias do mês */}
+        {calendarData.days.map(d => (
+          <DayCell key={d.day} {...d} />
+        ))}
+      </div>
     </div>
   );
 };

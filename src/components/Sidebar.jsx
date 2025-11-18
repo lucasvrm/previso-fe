@@ -1,59 +1,54 @@
-// src/components/Sidebar.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.jsx';
+import { Home, Settings, BarChart3 } from 'lucide-react';
 
 const Sidebar = () => {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('[Sidebar] erro ao fazer logout:', error);
-    }
+  // Estilo base para os links
+  const linkStyle = "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group";
+  
+  // Estilo para o link ativo (quando a rota corresponde)
+  const activeLinkStyle = {
+    backgroundColor: '#e5e7eb', // um cinza claro para indicar atividade
   };
 
-  const base =
-    'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium';
-  const inactive = 'text-gray-600 hover:bg-gray-100';
-  const active = 'bg-blue-50 text-blue-700';
-
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-white">
-      <div className="px-4 py-4 border-b">
-        <span className="text-xl font-bold">Previso</span>
-      </div>
-
-      <nav className="flex-1 px-2 py-4 space-y-1">
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `${base} ${isActive ? active : inactive}`
-          }
-        >
-          Dashboard
+    <aside className="w-64 h-screen" aria-label="Sidebar">
+      <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+        <NavLink to="/dashboard" className="flex items-center ps-2.5 mb-5">
+          <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Previso</span>
         </NavLink>
-
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `${base} ${isActive ? active : inactive}`
-          }
-        >
-          Configurações
-        </NavLink>
-      </nav>
-
-      <div className="border-t px-4 py-4 text-xs text-gray-600">
-        <div className="mb-1 truncate">{user?.email}</div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-2 flex items-center gap-2 text-red-600 font-semibold hover:underline"
-        >
-          Sair (Logout)
-        </button>
+        <ul className="space-y-2 font-medium">
+          <li>
+            <NavLink 
+              to="/dashboard" 
+              className={linkStyle}
+              style={({ isActive }) => isActive ? activeLinkStyle : undefined}
+            >
+              <Home className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span className="ms-3">Dashboard</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink 
+              to="/checkin" 
+              className={linkStyle}
+              style={({ isActive }) => isActive ? activeLinkStyle : undefined}
+            >
+              <BarChart3 className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span className="flex-1 ms-3 whitespace-nowrap">Check-in</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink 
+              to="/settings" 
+              className={linkStyle}
+              style={({ isActive }) => isActive ? activeLinkStyle : undefined}
+            >
+              <Settings className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span className="flex-1 ms-3 whitespace-nowrap">Configurações</span>
+            </NavLink>
+          </li>
+        </ul>
       </div>
     </aside>
   );
