@@ -34,10 +34,9 @@ google_credentials.json
 client_secret.json
 token.json
 
-# Arquivos temporários do Supabase (gerados pelo CLI)
-supabase/.temp
-
 # Exclusão de arquivos LM
 scripts/*
+supabase/.temp
 supabase/seed.sql
 supabase/migrations/*
+md_files*
