@@ -1,0 +1,2 @@
+node scripts/sync_google_docs.js
+# Se o script falhar (exit code 1), o commit será abortado.
