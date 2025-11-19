@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Settings, BarChart3, User, UserCog } from 'lucide-react';
+import { Home, Settings, BarChart3, User, UserCog, FileText } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const Sidebar = () => {
@@ -41,21 +41,40 @@ const Sidebar = () => {
               <span className="ms-3">Dashboard</span>
             </NavLink>
           </li>
-          <li>
-            <NavLink 
-              to="/checkin" 
-              className={({ isActive }) =>
-                `flex items-center p-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`
-              }
-            >
-              <BarChart3 className="w-5 h-5" />
-              <span className="flex-1 ms-3 whitespace-nowrap">Check-in</span>
-            </NavLink>
-          </li>
+          {userRole === 'patient' && (
+            <li>
+              <NavLink 
+                to="/checkin" 
+                className={({ isActive }) =>
+                  `flex items-center p-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`
+                }
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span className="flex-1 ms-3 whitespace-nowrap">Check-in</span>
+              </NavLink>
+            </li>
+          )}
+          {userRole === 'therapist' && (
+            <li>
+              <NavLink 
+                to="/therapist/reports" 
+                className={({ isActive }) =>
+                  `flex items-center p-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`
+                }
+              >
+                <FileText className="w-5 h-5" />
+                <span className="flex-1 ms-3 whitespace-nowrap">Relatórios</span>
+              </NavLink>
+            </li>
+          )}
           <li>
             <NavLink 
               to="/settings" 

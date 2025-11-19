@@ -1,5 +1,5 @@
 // src/components/Dashboard/DashboardViewer.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import HistoryChart from '../Charts/HistoryChart';
 import CircadianRhythmChart from '../Charts/CircadianRhythmChart';
 import EventList from '../UI/EventList';
