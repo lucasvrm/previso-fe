@@ -46,35 +46,35 @@ const WellnessRadarChart = ({ title, data }) => {
       },
       {
         subject: 'Energia',
-        current: calculateAverage(recentData, 'energy_focus_data', 'energyLevel'),
-        previous: calculateAverage(previousData, 'energy_focus_data', 'energyLevel'),
+        current: calculateAverage(recentData, 'symptoms_data', 'energyLevel'),
+        previous: calculateAverage(previousData, 'symptoms_data', 'energyLevel'),
         fullMark: 4
       },
       {
         subject: 'Humor',
         // Inverted: lower depressed mood is better
-        current: 4 - calculateAverage(recentData, 'humor_data', 'depressedMood'),
-        previous: 4 - calculateAverage(previousData, 'humor_data', 'depressedMood'),
+        current: 4 - calculateAverage(recentData, 'mood_data', 'depressedMood'),
+        previous: 4 - calculateAverage(previousData, 'mood_data', 'depressedMood'),
         fullMark: 4
       },
       {
         subject: 'Foco',
         // Inverted: lower distractibility is better
-        current: 4 - calculateAverage(recentData, 'energy_focus_data', 'distractibility'),
-        previous: 4 - calculateAverage(previousData, 'energy_focus_data', 'distractibility'),
+        current: 4 - calculateAverage(recentData, 'symptoms_data', 'distractibility'),
+        previous: 4 - calculateAverage(previousData, 'symptoms_data', 'distractibility'),
         fullMark: 4
       },
       {
         subject: 'Social',
-        current: calculateAverage(recentData, 'routine_body_data', 'socialConnection'),
-        previous: calculateAverage(previousData, 'routine_body_data', 'socialConnection'),
+        current: calculateAverage(recentData, 'risk_routine_data', 'socialConnection'),
+        previous: calculateAverage(previousData, 'risk_routine_data', 'socialConnection'),
         fullMark: 4
       },
       {
         subject: 'Calma',
         // Inverted: lower anxiety is better
-        current: 4 - calculateAverage(recentData, 'humor_data', 'anxietyStress'),
-        previous: 4 - calculateAverage(previousData, 'humor_data', 'anxietyStress'),
+        current: 4 - calculateAverage(recentData, 'mood_data', 'anxietyStress'),
+        previous: 4 - calculateAverage(previousData, 'mood_data', 'anxietyStress'),
         fullMark: 4
       }
     ];

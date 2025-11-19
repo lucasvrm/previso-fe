@@ -16,9 +16,9 @@ import MedsContextForm from '../../components/CheckinForms/MedsContextForm.jsx';
 
 const STEPS = [
     { name: "1. Sono & Ritmo", component: SleepForm, key: 'sleep_data' },
-    { name: "2. Humor & Ativação", component: HumorActivationForm, key: 'humor_data' },
-    { name: "3. Energia & Foco", component: EnergyFocusForm, key: 'energy_focus_data' },
-    { name: "4. Social, Corpo & Rotina", component: RoutineBodyForm, key: 'routine_body_data' },
+    { name: "2. Humor & Ativação", component: HumorActivationForm, key: 'mood_data' },
+    { name: "3. Energia & Foco", component: EnergyFocusForm, key: 'symptoms_data' },
+    { name: "4. Social, Corpo & Rotina", component: RoutineBodyForm, key: 'risk_routine_data' },
     { name: "5. Apetite & Impulso", component: AppetiteImpulseForm, key: 'appetite_impulse_data' },
     { name: "6. Medicação & Contexto", component: MedsContextForm, key: 'meds_context_data' },
 ];
