@@ -8,6 +8,8 @@ import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 const energiaMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Altíssimo."];
 const distrairMap = ["Ausente.", "Baixa.", "Média.", "Alta.", "Crítica."];
 const motivacaoMap = ["Ausente.", "Baixa.", "Média.", "Alta.", "Altíssima."];
+const velocidadeMap = ["Muito Lento.", "Lento.", "Normal.", "Rápido.", "Muito Rápido."];
+const libidoMap = ["Ausente.", "Baixa.", "Normal.", "Alta.", "Muito Alta."];
 
 // Componente NumberInput
 const NumberInput = ({ label, value, onChange }) => (
@@ -23,6 +25,8 @@ const EnergyFocusForm = ({ data, onChange }) => {
         energyLevel: data.energyLevel !== undefined ? data.energyLevel : 2,
         distractibility: data.distractibility !== undefined ? data.distractibility : 2,
         motivationToStart: data.motivationToStart !== undefined ? data.motivationToStart : 2,
+        thoughtSpeed: data.thoughtSpeed !== undefined ? data.thoughtSpeed : 2,
+        libido: data.libido !== undefined ? data.libido : 2,
         tasksPlanned: data.tasksPlanned || 0,
         tasksCompleted: data.tasksCompleted || 0,
     });
@@ -47,7 +51,7 @@ const EnergyFocusForm = ({ data, onChange }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* --- COLUNA 1 (Cinza, Branco) --- */}
+            {/* --- COLUNA 1 (Cinza, Branco, Cinza) --- */}
             <div className="space-y-4">
                 {/* 1. Energia (Cinza) */}
                 <div className="p-3 border rounded-lg bg-muted/50">
@@ -67,9 +71,18 @@ const EnergyFocusForm = ({ data, onChange }) => {
                         scaleMap={motivacaoMap} 
                     />
                 </div>
+                {/* 3. Velocidade do Pensamento (Cinza) - NOVO */}
+                <div className="p-3 border rounded-lg bg-muted/50">
+                    <SegmentedScale
+                        label="Velocidade do Pensamento"
+                        value={energyData.thoughtSpeed}
+                        onChange={(v) => handleChange('thoughtSpeed', v)}
+                        scaleMap={velocidadeMap} 
+                    />
+                </div>
             </div>
 
-            {/* --- COLUNA 2 (Cinza, Branco) --- */}
+            {/* --- COLUNA 2 (Cinza, Branco, Cinza) --- */}
             <div className="space-y-4">
                 {/* 1. Distraibilidade (Cinza) */}
                 <div className="p-3 border rounded-lg bg-muted/50">
@@ -102,6 +115,16 @@ const EnergyFocusForm = ({ data, onChange }) => {
                             {calculateExecutionRate()}
                         </span>
                     </div>
+                </div>
+
+                {/* 3. Libido (Cinza) - NOVO */}
+                <div className="p-3 border rounded-lg bg-muted/50">
+                    <SegmentedScale
+                        label="Libido"
+                        value={energyData.libido}
+                        onChange={(v) => handleChange('libido', v)}
+                        scaleMap={libidoMap} 
+                    />
                 </div>
             </div>
         </div>
