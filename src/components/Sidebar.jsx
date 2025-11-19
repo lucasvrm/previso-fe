@@ -1,10 +1,11 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Settings, BarChart3, User, UserCog, FileText, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const Sidebar = () => {
   const { user, userRole, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Determine which icon to use based on role
   const UserIcon = userRole === 'therapist' ? UserCog : User;
@@ -20,6 +21,7 @@ const Sidebar = () => {
   const handleLogout = async () => {
     try {
       await logout();
+      navigate('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }

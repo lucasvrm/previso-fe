@@ -107,7 +107,7 @@ const BarComparisonChart = ({ title, data, metrics = [] }) => {
             <Tooltip content={renderTooltip} />
             
             <Legend 
-              wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+              wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
               iconType="rect"
               verticalAlign="top"
             />

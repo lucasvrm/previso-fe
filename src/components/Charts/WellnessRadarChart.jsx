@@ -164,7 +164,7 @@ const WellnessRadarChart = ({ title, data }) => {
           <Tooltip content={renderTooltip} />
           
           <Legend 
-            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+            wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }}
             verticalAlign="top"
           />
           

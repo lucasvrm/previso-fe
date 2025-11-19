@@ -1,15 +1,18 @@
 // src/components/Header.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Phone, X } from 'lucide-react';
 
 const Header = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [showSOSModal, setShowSOSModal] = useState(false);
 
   const handleLogout = async () => {
     try {
       await logout();
+      navigate('/login');
     } catch (error) {
       console.error('[Header] erro ao fazer logout:', error);
     }
