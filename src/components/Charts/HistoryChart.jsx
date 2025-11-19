@@ -33,8 +33,8 @@ const HistoryChart = ({ checkins }) => {
         // Formata a data para o Eixo X
         name: formatDateTick(checkin.checkin_date),
         // Pega os valores de humor e energia
-        Humor: checkin.humor_data?.moodLevel ?? null,
-        Energia: checkin.energy_focus_data?.energyLevel ?? null,
+        Humor: checkin.mood_data?.moodLevel ?? null,
+        Energia: checkin.symptoms_data?.energyLevel ?? null,
       };
     }).filter(item => item.Humor !== null && item.Energia !== null); // Garante que ambos os dados existam
     

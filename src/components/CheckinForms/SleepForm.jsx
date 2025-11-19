@@ -11,6 +11,7 @@ const higieneMap = [
     "Muito boa: sem latência e sem despertares."
 ];
 const qualidadeMap = ["Péssima.", "Ruim.", "Média.", "Boa.", "Excelente."];
+const necessidadeMap = ["Nenhuma (posso ficar sem).", "Muito baixa.", "Normal.", "Alta.", "Crítica (extremamente cansado)."];
 
 // --- (MODIFICAÇÃO) Componentes "Nus" ---
 const TimeInput = ({ label, value, onChange }) => (
@@ -42,6 +43,7 @@ const SleepForm = ({ data, onChange }) => {
         wakeTime: data.wakeTime || '07:00',
         sleepQuality: data.sleepQuality !== undefined ? data.sleepQuality : 2,
         sleepHygiene: data.sleepHygiene !== undefined ? data.sleepHygiene : 2,
+        perceivedSleepNeed: data.perceivedSleepNeed !== undefined ? data.perceivedSleepNeed : 2,
         hasNapped: data.hasNapped || false,
         nappingDurationMin: data.nappingDurationMin || 0,
         caffeineDoses: data.caffeineDoses || 0,
@@ -102,9 +104,19 @@ const SleepForm = ({ data, onChange }) => {
                     scaleMap={higieneMap} 
                 />
             </div>
+
+            {/* 4. Necessidade Percebida de Sono (Branco) - NOVO */}
+            <div className="p-3 border rounded-lg bg-card">
+                <SegmentedScale
+                    label="Necessidade Percebida de Sono"
+                    value={sleepData.perceivedSleepNeed}
+                    onChange={(v) => handleChange('perceivedSleepNeed', v)}
+                    scaleMap={necessidadeMap} 
+                />
+            </div>
             
-            {/* 4. Soneca (Branco) */}
-            <div className="p-3 border rounded-lg bg-card space-y-3">
+            {/* 5. Soneca (Cinza) */}
+            <div className="p-3 border rounded-lg bg-muted/50 space-y-3">
                 <ToggleInput
                   label="Soneca Durante o Dia?"
                   checked={sleepData.hasNapped}
@@ -122,8 +134,8 @@ const SleepForm = ({ data, onChange }) => {
                 )}
             </div>
 
-            {/* 5. Cafeína (Cinza) */}
-            <div className="p-3 border rounded-lg bg-muted/50">
+            {/* 6. Cafeína (Branco) */}
+            <div className="p-3 border rounded-lg bg-card">
                  <NumberInput
                     label="Total de Doses de Cafeína (Cafés, Chás, etc.)"
                     value={sleepData.caffeineDoses}

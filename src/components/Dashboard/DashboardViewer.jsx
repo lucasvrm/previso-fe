@@ -49,17 +49,17 @@ const DashboardViewer = ({
         <StatisticsCard 
           title="Nível de Energia"
           data={checkins}
-          dataKey="energy_focus_data.energyLevel"
+          dataKey="symptoms_data.energyLevel"
         />
         <StatisticsCard 
           title="Ativação Mental"
           data={checkins}
-          dataKey="humor_data.activation"
+          dataKey="mood_data.activation"
         />
         <StatisticsCard 
           title="Conexão Social"
           data={checkins}
-          dataKey="routine_body_data.socialConnection"
+          dataKey="risk_routine_data.socialConnection"
         />
       </div>
     );
@@ -81,9 +81,9 @@ const DashboardViewer = ({
             title="Análise de Humor e Ativação"
             data={checkins}
             metrics={[
-              { dataKey: 'humor_data.activation', name: 'Ativação', color: 'hsl(var(--primary))' },
-              { dataKey: 'humor_data.depressedMood', name: 'Humor Deprimido', color: 'hsl(var(--chart-3))' },
-              { dataKey: 'humor_data.anxietyStress', name: 'Ansiedade', color: 'hsl(var(--chart-5))' }
+              { dataKey: 'mood_data.activation', name: 'Ativação', color: 'hsl(var(--primary))' },
+              { dataKey: 'mood_data.depressedMood', name: 'Humor Deprimido', color: 'hsl(var(--chart-3))' },
+              { dataKey: 'mood_data.anxietyStress', name: 'Ansiedade', color: 'hsl(var(--chart-5))' }
             ]}
           />
           
@@ -91,9 +91,9 @@ const DashboardViewer = ({
             title="Energia, Foco e Motivação"
             data={checkins}
             metrics={[
-              { dataKey: 'energy_focus_data.energyLevel', name: 'Energia', color: 'hsl(var(--chart-4))' },
-              { dataKey: 'energy_focus_data.motivationToStart', name: 'Motivação', color: 'hsl(var(--chart-1))' },
-              { dataKey: 'energy_focus_data.distractibility', name: 'Distraibilidade', color: 'hsl(var(--destructive))' }
+              { dataKey: 'symptoms_data.energyLevel', name: 'Energia', color: 'hsl(var(--chart-4))' },
+              { dataKey: 'symptoms_data.motivationToStart', name: 'Motivação', color: 'hsl(var(--chart-1))' },
+              { dataKey: 'symptoms_data.distractibility', name: 'Distraibilidade', color: 'hsl(var(--destructive))' }
             ]}
           />
         </div>
@@ -117,7 +117,7 @@ const DashboardViewer = ({
           <AreaTrendChart 
             title="Tendência de Ansiedade/Estresse"
             data={checkins}
-            dataKey="humor_data.anxietyStress"
+            dataKey="mood_data.anxietyStress"
             colorToken="hsl(var(--chart-5))"
             showAverage={true}
           />
@@ -128,14 +128,14 @@ const DashboardViewer = ({
           <AreaTrendChart 
             title="Conexão Social ao Longo do Tempo"
             data={checkins}
-            dataKey="routine_body_data.socialConnection"
+            dataKey="risk_routine_data.socialConnection"
             colorToken="hsl(var(--chart-1))"
             showAverage={true}
           />
           <AreaTrendChart 
             title="Raciocínio (Velocidade Mental)"
             data={checkins}
-            dataKey="routine_body_data.ruminationAxis"
+            dataKey="risk_routine_data.ruminationAxis"
             colorToken="hsl(var(--chart-4))"
             showAverage={true}
           />
@@ -154,15 +154,15 @@ const DashboardViewer = ({
             title="Gestão de Tarefas"
             data={checkins}
             metrics={[
-              { dataKey: 'energy_focus_data.tasksPlanned', name: 'Planejadas', color: 'hsl(var(--chart-1))' },
-              { dataKey: 'energy_focus_data.tasksCompleted', name: 'Concluídas', color: 'hsl(var(--primary))' }
+              { dataKey: 'symptoms_data.tasksPlanned', name: 'Planejadas', color: 'hsl(var(--chart-1))' },
+              { dataKey: 'symptoms_data.tasksCompleted', name: 'Concluídas', color: 'hsl(var(--primary))' }
             ]}
           />
           <BarComparisonChart 
             title="Atividade Física e Cafeína"
             data={checkins}
             metrics={[
-              { dataKey: 'routine_body_data.exerciseDurationMin', name: 'Exercício (min)', color: 'hsl(var(--chart-4))' },
+              { dataKey: 'risk_routine_data.exerciseDurationMin', name: 'Exercício (min)', color: 'hsl(var(--chart-4))' },
               { dataKey: 'sleep_data.caffeineDoses', name: 'Doses de Cafeína', color: 'hsl(var(--chart-3))' }
             ]}
           />
@@ -181,7 +181,7 @@ const DashboardViewer = ({
             title="Correlação: Sono vs. Energia"
             data={checkins}
             xDataKey="sleep_data.sleepQuality"
-            yDataKey="energy_focus_data.energyLevel"
+            yDataKey="symptoms_data.energyLevel"
             xLabel="Qualidade do Sono"
             yLabel="Nível de Energia"
             colorToken="hsl(var(--primary))"
@@ -189,8 +189,8 @@ const DashboardViewer = ({
           <CorrelationScatterChart 
             title="Correlação: Ativação vs. Ansiedade"
             data={checkins}
-            xDataKey="humor_data.activation"
-            yDataKey="humor_data.anxietyStress"
+            xDataKey="mood_data.activation"
+            yDataKey="mood_data.anxietyStress"
             xLabel="Ativação Mental"
             yLabel="Ansiedade/Estresse"
             colorToken="hsl(var(--chart-5))"

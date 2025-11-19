@@ -14,6 +14,10 @@ const SENSATION_OPTIONS = [
     'Dores de cabeça', 'Tensão muscular', 'Palpitações',
     'Náuseas', 'Fadiga inexplicável', 'Agitação'
 ];
+const IMPULSIVE_BEHAVIORS = [
+    'Gastos excessivos', 'Brigas/Conflitos', 'Uso de substâncias',
+    'Direção perigosa', 'Comportamento sexual de risco', 'Outros comportamentos impulsivos'
+];
 const TagButton = ({ label, isActive, onClick }) => (
   <button type="button" onClick={onClick} className={`py-1.5 px-3 rounded-full border text-xs font-medium transition-colors duration-150
       ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
@@ -29,7 +33,9 @@ const RoutineBodyForm = ({ data, onChange }) => {
         exerciseFeeling: data.exerciseFeeling !== undefined ? data.exerciseFeeling : 2,
         memoryConcentration: data.memoryConcentration !== undefined ? data.memoryConcentration : 2,
         ruminationAxis: data.ruminationAxis !== undefined ? data.ruminationAxis : 2,
-        bodySensations: data.bodySensations || [] 
+        bodySensations: data.bodySensations || [],
+        dietTracking: data.dietTracking !== undefined ? data.dietTracking : 0,
+        impulsiveBehaviors: data.impulsiveBehaviors || []
     });
 
     useEffect(() => {
@@ -46,6 +52,14 @@ const RoutineBodyForm = ({ data, onChange }) => {
             ? currentSensations.filter(item => item !== sensation)
             : [...currentSensations, sensation];
         handleChange('bodySensations', newSensations);
+    };
+
+    const handleImpulsiveTagClick = (behavior) => {
+        const currentBehaviors = routineData.impulsiveBehaviors;
+        const newBehaviors = currentBehaviors.includes(behavior)
+            ? currentBehaviors.filter(item => item !== behavior)
+            : [...currentBehaviors, behavior];
+        handleChange('impulsiveBehaviors', newBehaviors);
     };
 
     return (
@@ -143,6 +157,83 @@ const RoutineBodyForm = ({ data, onChange }) => {
                         onChange={(v) => handleChange('ruminationAxis', v)}
                         scaleMap={raciocinioMap} 
                     />
+                </div>
+            </div>
+
+            {/* --- LINHA COMPLETA (Novos Campos) --- */}
+            {/* Rastreio de Dieta (Branco) - NOVO */}
+            <div className="md:col-span-2 p-3 border rounded-lg bg-card">
+                <label className="block text-sm font-semibold text-foreground mb-3">Rastreio de Dieta</label>
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        type="button"
+                        onClick={() => handleChange('dietTracking', 0)}
+                        className={`
+                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
+                            ${routineData.dietTracking === 0 
+                                ? 'bg-gray-600 text-white shadow-md' 
+                                : 'bg-muted text-foreground hover:bg-muted/80'
+                            }
+                        `}
+                    >
+                        <span>—</span> Não estou em dieta
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleChange('dietTracking', 1)}
+                        className={`
+                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
+                            ${routineData.dietTracking === 1 
+                                ? 'bg-green-600 text-white shadow-md' 
+                                : 'bg-muted text-foreground hover:bg-muted/80'
+                            }
+                        `}
+                    >
+                        <span>✓</span> Segui a dieta
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleChange('dietTracking', 2)}
+                        className={`
+                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
+                            ${routineData.dietTracking === 2 
+                                ? 'bg-yellow-600 text-white shadow-md' 
+                                : 'bg-muted text-foreground hover:bg-muted/80'
+                            }
+                        `}
+                    >
+                        <span>⚠</span> Deslize leve
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleChange('dietTracking', 3)}
+                        className={`
+                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
+                            ${routineData.dietTracking === 3 
+                                ? 'bg-red-600 text-white shadow-md' 
+                                : 'bg-muted text-foreground hover:bg-muted/80'
+                            }
+                        `}
+                    >
+                        <span>✗</span> Exagero
+                    </button>
+                </div>
+            </div>
+
+            {/* Comportamentos Impulsivos (Cinza) - NOVO */}
+            <div className="md:col-span-2 p-3 border rounded-lg bg-muted/50">
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Comportamentos Impulsivos (Selecione se aplicável)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                    {IMPULSIVE_BEHAVIORS.map(behavior => (
+                        <TagButton
+                            key={behavior}
+                            label={behavior}
+                            isActive={routineData.impulsiveBehaviors.includes(behavior)}
+                            onClick={() => handleImpulsiveTagClick(behavior)}
+                        />
+                    ))}
                 </div>
             </div>
         </div>

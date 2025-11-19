@@ -26,7 +26,6 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
         compulsionEpisode: data.compulsionEpisode || false,
         compulsionIntensity: data.compulsionIntensity !== undefined ? data.compulsionIntensity : 0,
         sexualRiskBehavior: data.sexualRiskBehavior || false,
-        dietAdherence: data.dietAdherence || 'normal', // New field: 'followed', 'slight_slip', 'excess', 'normal'
     });
 
     useEffect(() => {
@@ -87,65 +86,6 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
                   checked={appetiteData.sexualRiskBehavior}
                   onChange={(v) => handleChange('sexualRiskBehavior', v)}
                 />
-            </div>
-            
-            {/* 5. Diet Adherence (Branco) - NEW */}
-            <div className="p-3 border rounded-lg bg-card col-span-1 md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground mb-3">Adesão à Dieta</label>
-                <div className="flex gap-2 flex-wrap">
-                    <button
-                        type="button"
-                        onClick={() => handleChange('dietAdherence', 'followed')}
-                        className={`
-                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
-                            ${appetiteData.dietAdherence === 'followed' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }
-                        `}
-                    >
-                        <span>✓</span> Segui a dieta
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleChange('dietAdherence', 'slight_slip')}
-                        className={`
-                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
-                            ${appetiteData.dietAdherence === 'slight_slip' 
-                                ? 'bg-yellow-600 text-white' 
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }
-                        `}
-                    >
-                        <span>⚠</span> Deslize leve
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleChange('dietAdherence', 'excess')}
-                        className={`
-                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
-                            ${appetiteData.dietAdherence === 'excess' 
-                                ? 'bg-red-600 text-white' 
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }
-                        `}
-                    >
-                        <span>✗</span> Exagero
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleChange('dietAdherence', 'normal')}
-                        className={`
-                            flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all
-                            ${appetiteData.dietAdherence === 'normal' 
-                                ? 'bg-gray-600 text-white' 
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }
-                        `}
-                    >
-                        <span>—</span> Não estou em dieta
-                    </button>
-                </div>
             </div>
         </div>
     );

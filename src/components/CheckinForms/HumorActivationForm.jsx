@@ -8,12 +8,14 @@ import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 const tristezaMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Crítico."];
 const ansiedadeMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Crítico."];
 const ativacaoMap = ["Ausente.", "Baixa.", "Média.", "Alta.", "Altíssima."];
+const elevacaoMap = ["Ausente.", "Leve.", "Moderada.", "Alta.", "Euforia Intensa."];
 
 const HumorActivationForm = ({ data, onChange }) => {
     const [humorData, setHumorData] = useState({
         depressedMood: data.depressedMood !== undefined ? data.depressedMood : 2,
         anxietyStress: data.anxietyStress !== undefined ? data.anxietyStress : 2,
         activation: data.activation !== undefined ? data.activation : 2,
+        elevation: data.elevation !== undefined ? data.elevation : 0,
     });
 
     useEffect(() => {
@@ -54,6 +56,16 @@ const HumorActivationForm = ({ data, onChange }) => {
                     value={humorData.activation}
                     onChange={(v) => handleChange('activation', v)}
                     scaleMap={ativacaoMap} 
+                />
+            </div>
+
+            {/* 4. Elevação/Euforia (Branco) - NOVO - Ocupa largura inteira */}
+            <div className="md:col-span-2 p-3 border rounded-lg bg-card">
+                <SegmentedScale
+                    label="Elevação/Euforia"
+                    value={humorData.elevation}
+                    onChange={(v) => handleChange('elevation', v)}
+                    scaleMap={elevacaoMap} 
                 />
             </div>
         </div>
