@@ -30,9 +30,19 @@ const SettingsPage = () => {
 
       if (funcError) {
         console.error("Erro ao invocar função:", funcError);
-        setError("Erro ao enviar o convite. Tente novamente.");
+        // Check if it's a 403 error (user not found or not a therapist)
+        if (funcError.message?.includes('403') || funcError.status === 403) {
+          setError("Usuário não encontrado ou não é terapeuta. Verifique o e-mail e tente novamente.");
+        } else {
+          setError("Erro ao enviar o convite. Tente novamente.");
+        }
       } else if (data?.error) {
-        setError(data.error);
+        // Handle backend error messages
+        if (data.error.includes('not found') || data.error.includes('not a therapist')) {
+          setError("Usuário não encontrado ou não é terapeuta. Verifique o e-mail e tente novamente.");
+        } else {
+          setError(data.error);
+        }
       } else {
         setSuccess(data?.message || 'Terapeuta convidado com sucesso!');
         setEmail(''); 

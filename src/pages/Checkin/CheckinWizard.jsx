@@ -27,23 +27,43 @@ const STEPS = [
 const getPastDates = () => {
     const dates = [];
     const today = new Date();
-    const dayNames = ["D-5", "D-4 (Anteanteanteontem)", "D-3 (Anteanteontem)", "D-2 (Anteontem)", "D-1 (Ontem)"];
     
-    for (let i = 1; i <= 5; i++) {
-        const pastDate = new Date(today);
-        pastDate.setDate(today.getDate() - i);
-        const yyyy = pastDate.getFullYear();
-        const mm = String(pastDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(pastDate.getDate()).padStart(2, '0');
-        const dateString = `${yyyy}-${mm}-${dd}`;
-        const displayDate = `${dd}/${mm}/${yyyy}`;
-        
-        dates.push({
-            value: dateString, 
-            label: `${dayNames[5-i]}: ${displayDate}`
-        });
-    }
-    return dates.reverse(); 
+    // Get today
+    const todayDate = new Date(today);
+    const todayYYYY = todayDate.getFullYear();
+    const todayMM = String(todayDate.getMonth() + 1).padStart(2, '0');
+    const todayDD = String(todayDate.getDate()).padStart(2, '0');
+    dates.push({
+        value: `${todayYYYY}-${todayMM}-${todayDD}`,
+        label: 'Hoje',
+        shortLabel: 'Hoje'
+    });
+    
+    // Get yesterday
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yYYYY = yesterday.getFullYear();
+    const yMM = String(yesterday.getMonth() + 1).padStart(2, '0');
+    const yDD = String(yesterday.getDate()).padStart(2, '0');
+    dates.push({
+        value: `${yYYYY}-${yMM}-${yDD}`,
+        label: 'Ontem',
+        shortLabel: 'Ontem'
+    });
+    
+    // Get day before yesterday
+    const dayBefore = new Date(today);
+    dayBefore.setDate(today.getDate() - 2);
+    const dYYYY = dayBefore.getFullYear();
+    const dMM = String(dayBefore.getMonth() + 1).padStart(2, '0');
+    const dDD = String(dayBefore.getDate()).padStart(2, '0');
+    dates.push({
+        value: `${dYYYY}-${dMM}-${dDD}`,
+        label: 'Anteontem',
+        shortLabel: 'D-2'
+    });
+    
+    return dates;
 };
 // ------------------------------------
 
@@ -124,26 +144,34 @@ const CheckinWizard = () => {
         <div className="bg-card p-4 sm:p-6 rounded-lg border shadow-sm">
             
             {currentStep === 0 && (
-                <div className="mb-4 p-3 bg-muted/50 border rounded-lg">
+                <div className="mb-4 p-4 bg-muted/50 border rounded-lg">
                     <label 
-                      htmlFor="checkin-date" 
-                      className="flex items-center text-sm font-semibold text-foreground mb-2"
+                      className="flex items-center text-sm font-semibold text-foreground mb-3"
                     >
                       <CalendarDays className="h-4 w-4 mr-2 text-primary" />
                       Para qual dia é este check-in?
                     </label>
-                    <select
-                        id="checkin-date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full p-2.5 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-sm"
-                    >
+                    <div className="flex gap-2 flex-wrap">
                         {pastDates.map(date => (
-                            <option key={date.value} value={date.value}>
-                                {date.label}
-                            </option>
+                            <button
+                                key={date.value}
+                                type="button"
+                                onClick={() => setSelectedDate(date.value)}
+                                className={`
+                                    px-4 py-2 rounded-lg font-medium text-sm transition-all
+                                    ${selectedDate === date.value 
+                                        ? 'bg-primary text-primary-foreground shadow-md' 
+                                        : 'bg-background border border-border text-foreground hover:bg-muted'
+                                    }
+                                `}
+                            >
+                                {date.shortLabel}
+                            </button>
                         ))}
-                    </select>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                        Datas futuras não são permitidas
+                    </p>
                 </div>
             )}
             
