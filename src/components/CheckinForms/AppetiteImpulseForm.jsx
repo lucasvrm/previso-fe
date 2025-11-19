@@ -2,7 +2,7 @@
 // (ATUALIZADO: Wrappers de Card aplicados no Grid - CORRIGIDO)
 
 import React, { useEffect, useState } from 'react';
-import SegmentedScale from '../SegmentedScale'; // Importa a versão "nua"
+import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 
 // Mapas de Escala
 const apetiteMap = ["Ausente.", "Baixo.", "Normal.", "Alto.", "Compulsão."];

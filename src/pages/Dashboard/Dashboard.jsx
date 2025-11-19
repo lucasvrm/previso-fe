@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../api/supabaseClient';
-import HistoryChart from '../../components/HistoryChart';
-import CircadianRhythmChart from '../../components/CircadianRhythmChart';
-import EventList from '../../components/EventList';
-import AdherenceCalendar from '../../components/AdherenceCalendar';
-import MultiMetricChart from '../../components/MultiMetricChart';
-import BarComparisonChart from '../../components/BarComparisonChart';
-import AreaTrendChart from '../../components/AreaTrendChart';
-import CorrelationScatterChart from '../../components/CorrelationScatterChart';
-import StatisticsCard from '../../components/StatisticsCard';
-import WellnessRadarChart from '../../components/WellnessRadarChart';
+import { fetchCheckins } from '../../services/checkinService';
+import HistoryChart from '../../components/Charts/HistoryChart';
+import CircadianRhythmChart from '../../components/Charts/CircadianRhythmChart';
+import EventList from '../../components/UI/EventList';
+import AdherenceCalendar from '../../components/UI/AdherenceCalendar';
+import MultiMetricChart from '../../components/Charts/MultiMetricChart';
+import BarComparisonChart from '../../components/Charts/BarComparisonChart';
+import AreaTrendChart from '../../components/Charts/AreaTrendChart';
+import CorrelationScatterChart from '../../components/Charts/CorrelationScatterChart';
+import StatisticsCard from '../../components/UI/StatisticsCard';
+import WellnessRadarChart from '../../components/Charts/WellnessRadarChart';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -27,15 +27,10 @@ const Dashboard = () => {
     let isMounted = true; 
     const fetchCheckinData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('check_ins')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('checkin_date', { ascending: true }) 
-          .limit(30);
+        const { data, error } = await fetchCheckins(user.id, 30);
         if (!isMounted) return;
         if (error) throw error;
-        setCheckins(data || []);
+        setCheckins(data);
       } catch {
         if (isMounted) setError('Não foi possível carregar seus dados.');
       } finally {

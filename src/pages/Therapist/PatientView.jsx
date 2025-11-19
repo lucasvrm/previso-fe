@@ -2,18 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../api/supabaseClient';
+import { fetchCheckins } from '../../services/checkinService';
+import { fetchPatientProfile, verifyPatientTherapistRelationship } from '../../services/patientService';
 import { ArrowLeft, User } from 'lucide-react';
-import HistoryChart from '../../components/HistoryChart';
-import CircadianRhythmChart from '../../components/CircadianRhythmChart';
-import EventList from '../../components/EventList';
-import AdherenceCalendar from '../../components/AdherenceCalendar';
-import MultiMetricChart from '../../components/MultiMetricChart';
-import BarComparisonChart from '../../components/BarComparisonChart';
-import AreaTrendChart from '../../components/AreaTrendChart';
-import CorrelationScatterChart from '../../components/CorrelationScatterChart';
-import StatisticsCard from '../../components/StatisticsCard';
-import WellnessRadarChart from '../../components/WellnessRadarChart';
+import HistoryChart from '../../components/Charts/HistoryChart';
+import CircadianRhythmChart from '../../components/Charts/CircadianRhythmChart';
+import EventList from '../../components/UI/EventList';
+import AdherenceCalendar from '../../components/UI/AdherenceCalendar';
+import MultiMetricChart from '../../components/Charts/MultiMetricChart';
+import BarComparisonChart from '../../components/Charts/BarComparisonChart';
+import AreaTrendChart from '../../components/Charts/AreaTrendChart';
+import CorrelationScatterChart from '../../components/Charts/CorrelationScatterChart';
+import StatisticsCard from '../../components/UI/StatisticsCard';
+import WellnessRadarChart from '../../components/Charts/WellnessRadarChart';
 
 const PatientView = () => {
   const { patientId } = useParams();
@@ -34,41 +35,27 @@ const PatientView = () => {
       }
 
       try {
-        // Verify that this patient belongs to this therapist via therapist_patients table
-        const { data: relationship, error: relationshipError } = await supabase
-          .from('therapist_patients')
-          .select('patient_id')
-          .eq('therapist_id', user.id)
-          .eq('patient_id', patientId)
-          .single();
+        // Verify that this patient belongs to this therapist
+        const { isValid, error: relationshipError } = await verifyPatientTherapistRelationship(user.id, patientId);
 
-        if (relationshipError || !relationship) {
+        if (relationshipError || !isValid) {
           setError('Você não tem permissão para visualizar este paciente.');
           setLoading(false);
           return;
         }
 
         // Fetch patient profile
-        const { data: patientProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', patientId)
-          .single();
+        const { data: patientProfile, error: profileError } = await fetchPatientProfile(patientId);
 
         if (profileError) throw profileError;
 
         setPatient(patientProfile);
 
         // Fetch patient's check-ins
-        const { data: checkinsData, error: checkinsError } = await supabase
-          .from('check_ins')
-          .select('*')
-          .eq('user_id', patientId)
-          .order('checkin_date', { ascending: true })
-          .limit(30);
+        const { data: checkinsData, error: checkinsError } = await fetchCheckins(patientId, 30);
 
         if (checkinsError) throw checkinsError;
-        setCheckins(checkinsData || []);
+        setCheckins(checkinsData);
       } catch (err) {
         console.error('Error fetching patient data:', err);
         setError('Não foi possível carregar os dados do paciente.');

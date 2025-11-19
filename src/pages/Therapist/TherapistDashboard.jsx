@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { supabase } from '../../api/supabaseClient';
+import { fetchTherapistPatients } from '../../services/patientService';
 import { Users, Eye, Activity } from 'lucide-react';
 
 const TherapistDashboard = () => {
@@ -24,32 +24,9 @@ const TherapistDashboard = () => {
       }
 
       try {
-        // Fetch all patients via the therapist_patients junction table
-        const { data, error } = await supabase
-          .from('therapist_patients')
-          .select(`
-            patient_id,
-            assigned_at,
-            patient:profiles!therapist_patients_patient_id_fkey (
-              id,
-              email,
-              username,
-              created_at
-            )
-          `)
-          .eq('therapist_id', user.id);
-
+        const { data, error } = await fetchTherapistPatients(user.id);
         if (error) throw error;
-        
-        // Transform the data to extract patient info
-        const patientsList = (data || []).map(item => ({
-          id: item.patient?.id || item.patient_id,
-          email: item.patient?.email,
-          username: item.patient?.username,
-          created_at: item.patient?.created_at || item.assigned_at
-        })).filter(p => p.id); // Filter out any null results
-
-        setPatients(patientsList);
+        setPatients(data);
       } catch (err) {
         console.error('Error fetching patients:', err);
         setError('Não foi possível carregar a lista de pacientes.');

@@ -2,7 +2,7 @@
 // (ATUALIZADO: Wrappers de Card aplicados no Grid)
 
 import React, { useEffect, useState } from 'react';
-import SegmentedScale from '../SegmentedScale'; // Importa a versão "nua"
+import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 
 // Mapas de Escala
 const conexaoMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Altíssimo."];
