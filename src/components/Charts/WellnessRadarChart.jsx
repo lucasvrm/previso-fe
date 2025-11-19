@@ -36,32 +36,12 @@ const WellnessRadarChart = ({ title, data }) => {
         : 0;
     };
 
-    // Define the dimensions we want to show
+    // Define the dimensions we want to show - Recalibrated for clinical domains
     const dimensions = [
       {
         subject: 'Sono',
         current: calculateAverage(recentData, 'sleep_data', 'sleepQuality'),
         previous: calculateAverage(previousData, 'sleep_data', 'sleepQuality'),
-        fullMark: 4
-      },
-      {
-        subject: 'Energia',
-        current: calculateAverage(recentData, 'symptoms_data', 'energyLevel'),
-        previous: calculateAverage(previousData, 'symptoms_data', 'energyLevel'),
-        fullMark: 4
-      },
-      {
-        subject: 'Humor',
-        // Inverted: lower depressed mood is better
-        current: 4 - calculateAverage(recentData, 'mood_data', 'depressedMood'),
-        previous: 4 - calculateAverage(previousData, 'mood_data', 'depressedMood'),
-        fullMark: 4
-      },
-      {
-        subject: 'Foco',
-        // Inverted: lower distractibility is better
-        current: 4 - calculateAverage(recentData, 'symptoms_data', 'distractibility'),
-        previous: 4 - calculateAverage(previousData, 'symptoms_data', 'distractibility'),
         fullMark: 4
       },
       {
@@ -71,7 +51,58 @@ const WellnessRadarChart = ({ title, data }) => {
         fullMark: 4
       },
       {
-        subject: 'Calma',
+        subject: 'Impulsividade',
+        // Inverted: lower is better (based on dietTracking and impulsive behaviors count)
+        current: (() => {
+          const avgDiet = calculateAverage(recentData, 'risk_routine_data', 'dietTracking');
+          const avgBehaviors = recentData
+            .map(c => c.risk_routine_data?.impulsiveBehaviors?.length || 0)
+            .reduce((sum, val) => sum + val, 0) / (recentData.length || 1);
+          // Normalize: diet is 0-3, behaviors could be 0-6, combine and invert
+          return 4 - Math.min(4, (avgDiet + avgBehaviors / 2) / 2);
+        })(),
+        previous: (() => {
+          const avgDiet = calculateAverage(previousData, 'risk_routine_data', 'dietTracking');
+          const avgBehaviors = previousData
+            .map(c => c.risk_routine_data?.impulsiveBehaviors?.length || 0)
+            .reduce((sum, val) => sum + val, 0) / (previousData.length || 1);
+          return 4 - Math.min(4, (avgDiet + avgBehaviors / 2) / 2);
+        })(),
+        fullMark: 4
+      },
+      {
+        subject: 'Cognição',
+        // Average of thoughtSpeed and inverted distractibility
+        current: (() => {
+          const thoughtSpeed = calculateAverage(recentData, 'symptoms_data', 'thoughtSpeed');
+          const focus = 4 - calculateAverage(recentData, 'symptoms_data', 'distractibility');
+          return (thoughtSpeed + focus) / 2;
+        })(),
+        previous: (() => {
+          const thoughtSpeed = calculateAverage(previousData, 'symptoms_data', 'thoughtSpeed');
+          const focus = 4 - calculateAverage(previousData, 'symptoms_data', 'distractibility');
+          return (thoughtSpeed + focus) / 2;
+        })(),
+        fullMark: 4
+      },
+      {
+        subject: 'Humor',
+        // Balance between elevation and depression (inverted)
+        current: (() => {
+          const elevation = calculateAverage(recentData, 'mood_data', 'elevation');
+          const depression = 4 - calculateAverage(recentData, 'mood_data', 'depressedMood');
+          // Ideal is moderate: not depressed, not manic
+          return Math.min(depression, 4 - Math.max(0, elevation - 1));
+        })(),
+        previous: (() => {
+          const elevation = calculateAverage(previousData, 'mood_data', 'elevation');
+          const depression = 4 - calculateAverage(previousData, 'mood_data', 'depressedMood');
+          return Math.min(depression, 4 - Math.max(0, elevation - 1));
+        })(),
+        fullMark: 4
+      },
+      {
+        subject: 'Ansiedade',
         // Inverted: lower anxiety is better
         current: 4 - calculateAverage(recentData, 'mood_data', 'anxietyStress'),
         previous: 4 - calculateAverage(previousData, 'mood_data', 'anxietyStress'),
