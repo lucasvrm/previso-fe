@@ -15,21 +15,21 @@ const qualidadeMap = ["Péssima.", "Ruim.", "Média.", "Boa.", "Excelente."];
 // --- (MODIFICAÇÃO) Componentes "Nus" ---
 const TimeInput = ({ label, value, onChange }) => (
   <div className="w-full">
-    <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
+    <label className="block text-xs font-medium text-muted-foreground mb-1">{label}</label>
     <input type="time" value={value} onChange={(e) => onChange(e.target.value)}
-      className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none" />
+      className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-sm" />
   </div>
 );
 const NumberInput = ({ label, value, onChange }) => (
   <div className="w-full">
-    <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
+    <label className="block text-xs font-medium text-muted-foreground mb-1">{label}</label>
     <input type="number" value={value} onChange={(e) => onChange(parseInt(e.target.value) || 0)} min="0"
-      className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums" />
+      className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums text-sm" />
   </div>
 );
 const ToggleInput = ({ label, checked, onChange }) => (
   <div className="flex items-center justify-between h-full">
-    <label className="text-base font-semibold text-foreground mr-4">{label}</label>
+    <label className="text-sm font-semibold text-foreground mr-4">{label}</label>
     <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
       className="h-5 w-5 rounded text-primary focus:ring-primary" />
   </div>
@@ -59,13 +59,13 @@ const SleepForm = ({ data, onChange }) => {
 
     return (
         // --- (CORREÇÃO) Grid de 2 Colunas com Wrappers de Card ---
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* --- COLUNA 1 --- */}
             {/* 1. Horários (Cinza) */}
-            <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
-                <label className="block text-base font-semibold text-foreground">Horários</label>
-                <div className="flex flex-col sm:flex-row gap-4">
+            <div className="p-3 border rounded-lg bg-muted/50 space-y-3">
+                <label className="block text-sm font-semibold text-foreground">Horários</label>
+                <div className="flex flex-col sm:flex-row gap-3">
                     <TimeInput 
                       label="Hora de Deitar"
                       value={sleepData.bedTime}
@@ -77,13 +77,13 @@ const SleepForm = ({ data, onChange }) => {
                       onChange={(v) => handleChange('wakeTime', v)}
                     />
                 </div>
-                <p className="text-lg font-semibold text-center text-muted-foreground tabular-nums">
+                <p className="text-base font-semibold text-center text-muted-foreground tabular-nums">
                     {calculateDuration()}
                 </p>
             </div>
 
             {/* 2. Qualidade (Branco) */}
-            <div className="p-4 border rounded-lg bg-card">
+            <div className="p-3 border rounded-lg bg-card">
                 <SegmentedScale
                     label="Qualidade Percebida do Sono"
                     value={sleepData.sleepQuality}
@@ -94,7 +94,7 @@ const SleepForm = ({ data, onChange }) => {
             
             {/* --- COLUNA 2 --- */}
             {/* 3. Higiene (Cinza) */}
-            <div className="p-4 border rounded-lg bg-muted/50">
+            <div className="p-3 border rounded-lg bg-muted/50">
                 <SegmentedScale
                     label="Higiene do Sono (Latência, Despertares, Telas)"
                     value={sleepData.sleepHygiene}
@@ -104,7 +104,7 @@ const SleepForm = ({ data, onChange }) => {
             </div>
             
             {/* 4. Soneca (Branco) */}
-            <div className="p-4 border rounded-lg bg-card space-y-4">
+            <div className="p-3 border rounded-lg bg-card space-y-3">
                 <ToggleInput
                   label="Soneca Durante o Dia?"
                   checked={sleepData.hasNapped}
@@ -112,7 +112,7 @@ const SleepForm = ({ data, onChange }) => {
                 />
                 
                 {sleepData.hasNapped && (
-                    <div className="pt-4 border-t">
+                    <div className="pt-3 border-t">
                         <NumberInput
                           label="Duração da Soneca (minutos)"
                           value={sleepData.nappingDurationMin}
@@ -123,7 +123,7 @@ const SleepForm = ({ data, onChange }) => {
             </div>
 
             {/* 5. Cafeína (Cinza) */}
-            <div className="p-4 border rounded-lg bg-muted/50">
+            <div className="p-3 border rounded-lg bg-muted/50">
                  <NumberInput
                     label="Total de Doses de Cafeína (Cafés, Chás, etc.)"
                     value={sleepData.caffeineDoses}

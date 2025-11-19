@@ -18,21 +18,27 @@ const SettingsPage = () => {
     setError(null);
     setSuccess(null);
 
-    const { data, error: funcError } = await supabase.functions.invoke(
-      'invite-therapist', 
-      { body: { therapist_email: email } }
-    );
+    try {
+      const { data, error: funcError } = await supabase.functions.invoke(
+        'invite-therapist', 
+        { body: { therapist_email: email } }
+      );
 
-    setLoading(false);
+      setLoading(false);
 
-    if (funcError) {
-      console.error("Erro ao invocar função:", funcError);
-      setError("Erro ao enviar o convite. Tente novamente.");
-    } else if (data.error) {
-      setError(data.error);
-    } else {
-      setSuccess(data.message);
-      setEmail(''); 
+      if (funcError) {
+        console.error("Erro ao invocar função:", funcError);
+        setError("Erro ao enviar o convite. Tente novamente.");
+      } else if (data?.error) {
+        setError(data.error);
+      } else {
+        setSuccess(data?.message || 'Terapeuta convidado com sucesso!');
+        setEmail(''); 
+      }
+    } catch (err) {
+      console.error("Erro na requisição:", err);
+      setLoading(false);
+      setError("Erro ao enviar o convite. Verifique sua conexão.");
     }
   };
 
