@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -10,9 +10,6 @@ const LoginPage = () => {
 
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,7 +19,7 @@ const LoginPage = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) throw error;
-      navigate(from, { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       console.error("Erro no login:", err.message);
       setError('Falha ao fazer login. Verifique seu e-mail e senha.');
@@ -99,12 +96,12 @@ const LoginPage = () => {
           </Link>
         </p>
 
-        <p className="text-center text-sm text-muted-foreground mt-2">
-          É um profissional de saúde mental?
-          <Link to="/signup/therapist" className="font-semibold text-primary hover:underline ml-1">
+        <div className="flex flex-col items-center gap-2 text-center text-sm text-muted-foreground mt-2">
+          <p>É um profissional de saúde mental?</p>
+          <Link to="/signup/therapist" className="font-semibold text-primary hover:underline">
             Cadastrar como terapeuta
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );
