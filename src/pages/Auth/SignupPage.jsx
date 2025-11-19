@@ -8,6 +8,7 @@ const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [isTherapist, setIsTherapist] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,8 @@ const SignupPage = () => {
     }
 
     setLoading(true);
-    const result = await signUp(email, password);
+    const role = isTherapist ? 'therapist' : 'patient';
+    const result = await signUp(email, password, role);
     setLoading(false);
 
     if (result.error) {
@@ -104,6 +106,23 @@ const SignupPage = () => {
             />
           </div>
 
+          {/* Professional Health Toggle */}
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-md">
+            <input
+              id="isTherapist"
+              type="checkbox"
+              checked={isTherapist}
+              onChange={(e) => setIsTherapist(e.target.checked)}
+              className="h-5 w-5 rounded text-primary focus:ring-primary"
+            />
+            <label
+              htmlFor="isTherapist"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Sou Profissional de Saúde Mental (Terapeuta)
+            </label>
+          </div>
+
           {error && (
             <p className="text-sm font-medium text-destructive">{error}</p>
           )}
@@ -124,15 +143,6 @@ const SignupPage = () => {
           Já tem conta?
           <Link to="/login" className="font-semibold text-primary hover:underline ml-1">
             Fazer login
-          </Link>
-        </p>
-
-        <p className="text-center text-sm text-muted-foreground mt-2">
-          É um profissional de saúde mental?
-        </p>
-        <p className="text-center text-sm text-muted-foreground">
-          <Link to="/signup/therapist" className="font-semibold text-primary hover:underline">
-            Cadastrar como Terapeuta
           </Link>
         </p>
       </div>

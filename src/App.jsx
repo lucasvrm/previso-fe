@@ -10,6 +10,7 @@ import TherapistSignupPage from './pages/Auth/TherapistSignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
 import PatientView from './pages/Therapist/PatientView';
+import ClinicalReports from './pages/Therapist/ClinicalReports';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
 
@@ -56,6 +57,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['therapist']}>
               <PatientView />
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/therapist/reports"
+          element={
+            <ProtectedRoute allowedRoles={['therapist']}>
+              <ClinicalReports />
             </ProtectedRoute>
           }
         />

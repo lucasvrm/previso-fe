@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { supabase } from '../../api/supabaseClient';
-import { Users, Eye, Activity } from 'lucide-react';
+import { fetchTherapistPatients } from '../../services/patientService';
+import { fetchCheckins, analyzePatientRisk } from '../../services/checkinService';
+import { Users, Eye, Activity, AlertTriangle, TrendingUp } from 'lucide-react';
 
 const TherapistDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [patients, setPatients] = useState([]);
+  const [patientsAtRisk, setPatientsAtRisk] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,39 +19,33 @@ const TherapistDashboard = () => {
     (user?.email ? user.email.split('@')[0] : 'Terapeuta');
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchPatientsAndAnalyzeRisk = async () => {
       if (!user?.id) {
         setLoading(false);
         return;
       }
 
       try {
-        // Fetch all patients via the therapist_patients junction table
-        const { data, error } = await supabase
-          .from('therapist_patients')
-          .select(`
-            patient_id,
-            assigned_at,
-            patient:profiles!therapist_patients_patient_id_fkey (
-              id,
-              email,
-              username,
-              created_at
-            )
-          `)
-          .eq('therapist_id', user.id);
-
+        const { data, error } = await fetchTherapistPatients(user.id);
         if (error) throw error;
-        
-        // Transform the data to extract patient info
-        const patientsList = (data || []).map(item => ({
-          id: item.patient?.id || item.patient_id,
-          email: item.patient?.email,
-          username: item.patient?.username,
-          created_at: item.patient?.created_at || item.assigned_at
-        })).filter(p => p.id); // Filter out any null results
+        setPatients(data);
 
-        setPatients(patientsList);
+        // Fetch check-ins for each patient and analyze risk
+        const riskAnalysis = await Promise.all(
+          data.map(async (patient) => {
+            const { data: checkins } = await fetchCheckins(patient.id, 7);
+            const risk = analyzePatientRisk(checkins);
+            return {
+              ...patient,
+              risk,
+              checkins
+            };
+          })
+        );
+
+        // Filter patients with risks
+        const atRisk = riskAnalysis.filter(p => p.risk.hasRisk);
+        setPatientsAtRisk(atRisk);
       } catch (err) {
         console.error('Error fetching patients:', err);
         setError('Não foi possível carregar a lista de pacientes.');
@@ -58,7 +54,7 @@ const TherapistDashboard = () => {
       }
     };
 
-    fetchPatients();
+    fetchPatientsAndAnalyzeRisk();
   }, [user]);
 
   const handleViewPatientDashboard = (patientId) => {
@@ -92,6 +88,64 @@ const TherapistDashboard = () => {
       {error && (
         <div className="p-4 text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">
           {error}
+        </div>
+      )}
+
+      {/* Patients at Risk Section */}
+      {patientsAtRisk.length > 0 && (
+        <div className="rounded-xl border-2 border-orange-500 bg-orange-50 dark:bg-orange-950/20 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100">
+              Pacientes em Risco ({patientsAtRisk.length})
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {patientsAtRisk.map((patient) => (
+              <div
+                key={patient.id}
+                className="rounded-lg border border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-900 p-4"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">
+                      {patient.username || patient.email?.split('@')[0] || 'Paciente'}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {patient.email}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    patient.risk.riskLevel === 'high' 
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' 
+                      : patient.risk.riskLevel === 'medium'
+                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  }`}>
+                    {patient.risk.riskLevel === 'high' ? 'Alto' : patient.risk.riskLevel === 'medium' ? 'Médio' : 'Baixo'}
+                  </span>
+                </div>
+                <div className="mb-3">
+                  <p className="text-sm font-medium text-foreground mb-1">Critérios de Alerta:</p>
+                  <ul className="space-y-1">
+                    {patient.risk.reasons.map((reason, idx) => (
+                      <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <span className="text-orange-600 dark:text-orange-400 mt-0.5">•</span>
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  onClick={() => handleViewPatientDashboard(patient.id)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+                >
+                  <Eye className="h-4 w-4" />
+                  Ver Dashboard
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

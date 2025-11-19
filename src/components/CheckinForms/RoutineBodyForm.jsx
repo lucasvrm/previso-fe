@@ -2,7 +2,7 @@
 // (ATUALIZADO: Wrappers de Card aplicados no Grid)
 
 import React, { useEffect, useState } from 'react';
-import SegmentedScale from '../SegmentedScale'; // Importa a versão "nua"
+import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 
 // Mapas de Escala
 const conexaoMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Altíssimo."];
@@ -95,15 +95,36 @@ const RoutineBodyForm = ({ data, onChange }) => {
             <div className="space-y-4">
                 {/* 1. Exercício (Branco) */}
                 <div className="p-3 border rounded-lg bg-card space-y-3">
-                  <label className="block text-sm font-semibold text-foreground">Exercício Físico</label>
-                  <input
-                      type="number"
-                      placeholder="Duração em minutos"
-                      value={routineData.exerciseDurationMin}
-                      onChange={(e) => handleChange('exerciseDurationMin', parseInt(e.target.value) || 0)}
-                      min="0"
-                      className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums text-sm"
-                  />
+                  <label className="block text-sm font-semibold text-foreground">Exercício Físico (minutos)</label>
+                  <div className="flex gap-2 flex-wrap">
+                      {[0, 15, 30, 45, 60].map(minutes => (
+                          <button
+                              key={minutes}
+                              type="button"
+                              onClick={() => handleChange('exerciseDurationMin', minutes)}
+                              className={`
+                                  px-4 py-2 rounded-md font-medium text-sm transition-all
+                                  ${routineData.exerciseDurationMin === minutes 
+                                      ? 'bg-primary text-primary-foreground' 
+                                      : 'bg-muted text-foreground hover:bg-muted/80'
+                                  }
+                              `}
+                          >
+                              {minutes === 0 ? 'Nenhum' : `${minutes}min`}
+                          </button>
+                      ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <label className="text-xs text-muted-foreground">Outro:</label>
+                      <input
+                          type="number"
+                          placeholder="Ex: 20"
+                          value={routineData.exerciseDurationMin}
+                          onChange={(e) => handleChange('exerciseDurationMin', parseInt(e.target.value) || 0)}
+                          min="0"
+                          className="flex-1 p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums text-sm"
+                      />
+                  </div>
                   {routineData.exerciseDurationMin > 0 && (
                       <SegmentedScale
                           label="Como se sentiu após o exercício?"
