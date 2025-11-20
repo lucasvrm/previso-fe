@@ -31,17 +31,24 @@ export const fetchCheckins = async (userId, limit = 30) => {
  */
 export const fetchLatestCheckin = async (userId) => {
   try {
-    const { data, error } = await supabase
-      .from('check_ins')
-      .select('*')
-      .eq('user_id', userId)
-      .order('checkin_date', { ascending: false })
-      .limit(1);
+    // Use our API endpoint instead of direct Supabase access
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
+    const endpoint = `${apiUrl}/data/latest_checkin/${userId}`;
 
-    if (error) throw error;
-    return { data: data && data.length > 0 ? data[0] : null, error: null };
+    console.log(`Fetching latest check-in from API: ${endpoint}`);
+
+    const response = await fetch(endpoint);
+
+    if (!response.ok) {
+      throw new Error(`API responded with status ${response.status}`);
+    }
+
+    const checkinData = await response.json();
+
+    // The API returns null if there's no data, so we handle that
+    return { data: checkinData, error: null };
   } catch (error) {
-    console.error('Error fetching latest check-in:', error);
+    console.error('Error fetching latest check-in from API:', error);
     return { data: null, error };
   }
 };
