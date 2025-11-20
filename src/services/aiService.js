@@ -36,3 +36,47 @@ export const predictCrisisRisk = async (formData) => {
     return { probability: 0, risk_level: "UNKNOWN", error: true, errorMessage: error.message };
   }
 };
+
+/**
+ * Chama a API de IA para obter a previsão do estado clínico diário.
+ * @param {object} features - Um objeto contendo as features do último check-in.
+ * @param {string} patientId - O ID do paciente/usuário.
+ * @returns {Promise<object|null>} O objeto de predição da API ou null em caso de erro.
+ */
+export async function getAIDailyPrediction(features, patientId) {
+  // A URL da sua API, que deve vir de uma variável de ambiente.
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
+
+  const endpoint = `${apiUrl}/predict/state`;
+
+  const requestBody = {
+    patient_id: patientId,
+    features: features,
+  };
+
+  console.log("Enviando para a API de predição:", requestBody);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Erro da API:', errorData);
+      throw new Error(`A API respondeu com o status ${response.status}`);
+    }
+
+    const prediction = await response.json();
+    console.log("Predição recebida da API:", prediction);
+    return prediction;
+
+  } catch (error) {
+    console.error('Falha ao buscar a predição da IA:', error);
+    return null;
+  }
+}
