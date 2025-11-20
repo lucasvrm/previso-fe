@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { fetchCheckins } from '../../services/checkinService';
+import { fetchCheckins, fetchLatestCheckin } from '../../services/checkinService';
 import DashboardViewer from '../../components/Dashboard/DashboardViewer';
 import DailyPredictionCard from '../../components/DailyPredictionCard';
 import { AlertTriangle } from 'lucide-react';
@@ -8,6 +8,7 @@ import { AlertTriangle } from 'lucide-react';
 const Dashboard = () => {
   const { user } = useAuth();
   const [checkins, setCheckins] = useState([]);
+  const [latestCheckin, setLatestCheckin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState('overview');
@@ -20,11 +21,21 @@ const Dashboard = () => {
     let isMounted = true; 
     const fetchCheckinData = async () => {
       try {
-        const { data, error } = await fetchCheckins(user.id, 30);
+        // Fetch both historical check-ins for charts and the latest check-in for the prediction card
+        const [checkinsResult, latestResult] = await Promise.all([
+          fetchCheckins(user.id, 30),
+          fetchLatestCheckin(user.id)
+        ]);
+        
         if (!isMounted) return;
-        if (error) throw error;
-        setCheckins(data);
-      } catch {
+        
+        if (checkinsResult.error) throw checkinsResult.error;
+        if (latestResult.error) throw latestResult.error;
+        
+        setCheckins(checkinsResult.data);
+        setLatestCheckin(latestResult.data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
         if (isMounted) setError('Não foi possível carregar seus dados.');
       } finally {
         if (isMounted) setLoading(false);
@@ -38,7 +49,8 @@ const Dashboard = () => {
   const maniaAlert = useMemo(() => {
     if (!checkins || checkins.length === 0) return false;
     
-    const recentCheckins = checkins.slice(0, 3); // Last 3 days
+    // Get the last 3 check-ins (most recent) since they're ordered ascending
+    const recentCheckins = checkins.slice(-3);
     if (recentCheckins.length < 3) return false;
     
     const hasManiaIndicators = recentCheckins.every(checkin => {
@@ -48,8 +60,8 @@ const Dashboard = () => {
       // Calculate hours slept (simplified - assuming bedTime and wakeTime exist)
       let hoursSlept = 7; // default
       if (sleepData.bedTime && sleepData.wakeTime) {
-        const bedHour = parseInt(sleepData.bedTime.split(':')[0]);
-        const wakeHour = parseInt(sleepData.wakeTime.split(':')[0]);
+        const bedHour = parseInt(sleepData.bedTime.split(':')[0], 10);
+        const wakeHour = parseInt(sleepData.wakeTime.split(':')[0], 10);
         hoursSlept = wakeHour > bedHour ? wakeHour - bedHour : (24 - bedHour) + wakeHour;
       }
       
@@ -60,16 +72,6 @@ const Dashboard = () => {
     });
     
     return hasManiaIndicators;
-  }, [checkins]);
-
-  // Get the latest check-in sorted by date
-  const latestCheckin = useMemo(() => {
-    if (!checkins || checkins.length === 0) return null;
-    
-    // Sort by checkin_date in descending order and get the first one
-    return [...checkins].sort((a, b) => 
-      new Date(b.checkin_date) - new Date(a.checkin_date)
-    )[0];
   }, [checkins]);
 
   if (loading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-card rounded-lg shadow h-64"></div><div className="bg-card rounded-lg shadow h-64"></div></div>; }
