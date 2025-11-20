@@ -16,17 +16,15 @@ const SettingsPage = () => {
 
   const handleInvite = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
+      setLoading(true);
       const { data, error: funcError } = await supabase.functions.invoke(
         'invite-therapist', 
         { body: { therapist_email: email } }
       );
-
-      setLoading(false);
 
       if (funcError) {
         console.error("Erro ao invocar função:", funcError);
@@ -49,8 +47,9 @@ const SettingsPage = () => {
       }
     } catch (err) {
       console.error("Erro na requisição:", err);
-      setLoading(false);
       setError("Erro ao enviar o convite. Verifique sua conexão.");
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -24,17 +24,21 @@ const SignupPage = () => {
     }
 
     setLoading(true);
-    const role = isTherapist ? 'therapist' : 'patient';
-    const result = await signUp(email, password, role);
-    setLoading(false);
+    
+    try {
+      const role = isTherapist ? 'therapist' : 'patient';
+      const result = await signUp(email, password, role);
 
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage(
-        result.message ||
-          'Conta criada com sucesso. Verifique seu e-mail para confirmar.'
-      );
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMessage(
+          result.message ||
+            'Conta criada com sucesso. Verifique seu e-mail para confirmar.'
+        );
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
