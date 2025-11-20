@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchCheckins } from '../../services/checkinService';
 import DashboardViewer from '../../components/Dashboard/DashboardViewer';
+import DailyPredictionCard from '../../components/DailyPredictionCard';
 import { AlertTriangle } from 'lucide-react';
 
 const Dashboard = () => {
@@ -61,6 +62,16 @@ const Dashboard = () => {
     return hasManiaIndicators;
   }, [checkins]);
 
+  // Get the latest check-in sorted by date
+  const latestCheckin = useMemo(() => {
+    if (!checkins || checkins.length === 0) return null;
+    
+    // Sort by checkin_date in descending order and get the first one
+    return [...checkins].sort((a, b) => 
+      new Date(b.checkin_date) - new Date(a.checkin_date)
+    )[0];
+  }, [checkins]);
+
   if (loading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-card rounded-lg shadow h-64"></div><div className="bg-card rounded-lg shadow h-64"></div></div>; }
   if (error) { return <div className="p-4 text-center text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">{error}</div>; }
 
@@ -94,6 +105,18 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Daily Prediction Card */}
+      {latestCheckin ? (
+        <DailyPredictionCard 
+          latestCheckin={latestCheckin} 
+          userId={user?.id} 
+        />
+      ) : (
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <p className="text-gray-600">Você ainda não fez nenhum check-in.</p>
         </div>
       )}
 
