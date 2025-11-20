@@ -70,6 +70,8 @@ function App() {
         />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/checkin" element={<CheckinWizard />} />
+        {/* NOVA ROTA: Teste de IA Isolado */}
+        <Route path="/ai-test" element={<AITestingPage />} />
       </Route>
       
       {/* Redirecionamento da raiz */}
