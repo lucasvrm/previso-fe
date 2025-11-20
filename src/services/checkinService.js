@@ -25,6 +25,28 @@ export const fetchCheckins = async (userId, limit = 30) => {
 };
 
 /**
+ * Fetch the latest check-in for a specific user
+ * @param {string} userId - The user ID to fetch the latest check-in for
+ * @returns {Promise<{data: object|null, error: Error|null}>}
+ */
+export const fetchLatestCheckin = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('check_ins')
+      .select('*')
+      .eq('user_id', userId)
+      .order('checkin_date', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    return { data: data && data.length > 0 ? data[0] : null, error: null };
+  } catch (error) {
+    console.error('Error fetching latest check-in:', error);
+    return { data: null, error };
+  }
+};
+
+/**
  * Get check-ins count for a user in the last N days
  * @param {string} userId - The user ID
  * @param {number} days - Number of days to look back (default: 7)
