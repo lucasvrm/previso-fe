@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-// Caminho corrigido: Alterado de '../../' para '../' (um nível acima)
-import { predictCrisisRisk } from '../services/aiService'; 
+// Caminho corrigido para acessar services a partir de pages/Checkin
+import { predictCrisisRisk } from '../../services/aiService'; 
 import { Zap, AlertTriangle, CheckCircle, Loader } from 'lucide-react'; // Ícones lucide-react
 
 // --- DADOS DE TESTE MÍNIMOS ---
