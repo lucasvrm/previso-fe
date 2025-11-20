@@ -34,7 +34,8 @@ const Dashboard = () => {
         
         setCheckins(checkinsResult.data);
         setLatestCheckin(latestResult.data);
-      } catch {
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
         if (isMounted) setError('Não foi possível carregar seus dados.');
       } finally {
         if (isMounted) setLoading(false);
@@ -59,8 +60,8 @@ const Dashboard = () => {
       // Calculate hours slept (simplified - assuming bedTime and wakeTime exist)
       let hoursSlept = 7; // default
       if (sleepData.bedTime && sleepData.wakeTime) {
-        const bedHour = parseInt(sleepData.bedTime.split(':')[0]);
-        const wakeHour = parseInt(sleepData.wakeTime.split(':')[0]);
+        const bedHour = parseInt(sleepData.bedTime.split(':')[0], 10);
+        const wakeHour = parseInt(sleepData.wakeTime.split(':')[0], 10);
         hoursSlept = wakeHour > bedHour ? wakeHour - bedHour : (24 - bedHour) + wakeHour;
       }
       
