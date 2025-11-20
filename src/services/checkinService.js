@@ -40,7 +40,7 @@ export const fetchLatestCheckin = async (userId) => {
     const response = await fetch(endpoint);
 
     if (!response.ok) {
-      throw new Error(`API responded with status ${response.status}`);
+      throw new Error(`API responded with status ${response.status} (${response.statusText}) for endpoint: ${endpoint}`);
     }
 
     const checkinData = await response.json();
