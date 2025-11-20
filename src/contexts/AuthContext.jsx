@@ -90,6 +90,26 @@ export function AuthProvider({ children }) {
               error: 'Erro ao configurar perfil do usuário. Por favor, contate o suporte.' 
             };
           }
+
+          // CRITICAL FIX: After successfully updating the profile role,
+          // fetch the updated profile and update local state immediately
+          // This ensures the UI reflects the correct role (therapist/patient)
+          try {
+            const { data: updatedProfile, error: fetchError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', authData.user.id)
+              .single();
+            
+            if (!fetchError && updatedProfile) {
+              setProfile(updatedProfile);
+              setUserRole(updatedProfile.role);
+            }
+          } catch (fetchErr) {
+            console.error('Erro ao buscar perfil atualizado:', fetchErr);
+            // Don't fail the signup if we can't fetch the profile
+            // The onAuthStateChange listener will handle it eventually
+          }
         } catch (err) {
           console.error('Erro inesperado ao criar perfil:', err);
           return { 
