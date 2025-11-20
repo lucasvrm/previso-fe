@@ -13,6 +13,7 @@ import PatientView from './pages/Therapist/PatientView';
 import ClinicalReports from './pages/Therapist/ClinicalReports';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
+import AITestingPage from './pages/Checkin/AITestingPage'; // <--- CORREÇÃO AQUI
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
