@@ -23,16 +23,20 @@ const TherapistSignupPage = () => {
     }
 
     setLoading(true);
-    const result = await signUp(email, password, 'therapist');
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage(
-        result.message ||
-          'Conta de terapeuta criada com sucesso. Verifique seu e-mail para confirmar.'
-      );
+    
+    try {
+      const result = await signUp(email, password, 'therapist');
+      
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMessage(
+          result.message ||
+            'Conta de terapeuta criada com sucesso. Verifique seu e-mail para confirmar.'
+        );
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

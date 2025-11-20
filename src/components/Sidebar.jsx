@@ -21,9 +21,11 @@ const Sidebar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+    } finally {
+      // Always navigate to login, even if logout had an error
+      navigate('/login');
     }
   };
 
