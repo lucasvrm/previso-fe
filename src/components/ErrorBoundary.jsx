@@ -1,5 +1,8 @@
 import React from 'react';
 
+// Cache environment check at module level for better performance
+const isDev = import.meta.env.DEV;
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -69,7 +72,7 @@ class ErrorBoundary extends React.Component {
               <li>Se o console do navegador possui mais detalhes sobre o erro</li>
             </ul>
 
-            {import.meta.env.DEV && this.state.error && (
+            {isDev && this.state.error && (
               <details style={{ 
                 marginTop: '20px',
                 backgroundColor: '#1a1a1a',

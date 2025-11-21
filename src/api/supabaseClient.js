@@ -27,7 +27,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   throw new Error('Variáveis de ambiente do Supabase não configuradas. Verifique .env.local');
 }
 
-// Only create client if we have valid credentials
+// Only create client if we have valid credentials (after validation)
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 console.log('[Supabase] ✓ Client inicializado com sucesso');

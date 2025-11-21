@@ -14,6 +14,9 @@ console.log('[main.jsx] Variáveis de ambiente:', {
   VITE_API_URL: import.meta.env.VITE_API_URL ? '✓ definida' : '✗ não definida'
 });
 
+// Cache environment check at module level for better performance
+const isDev = import.meta.env.DEV;
+
 // Global error handlers to catch unhandled promise rejections and errors
 window.addEventListener('unhandledrejection', (event) => {
   console.error('[Global] Unhandled promise rejection:', event.reason);
@@ -99,8 +102,9 @@ function displayErrorOnScreen(errorMessage) {
   container.appendChild(reloadButton);
   
   errorDiv.appendChild(container);
-  document.body.innerHTML = '';
-  document.body.appendChild(errorDiv);
+  
+  // Clear body safely without removing event listeners that might cause memory leaks
+  document.body.replaceChildren(errorDiv);
 }
 
 // Wrap the entire rendering in a try-catch block
@@ -137,7 +141,6 @@ try {
   
   // Display error directly in the DOM
   // In production, avoid showing full stack trace for security reasons
-  const isDev = import.meta.env.DEV;
   const errorDetail = isDev ? `${error.message}\n\nStack trace:\n${error.stack}` : error.message;
   displayErrorOnScreen(errorDetail);
 }
