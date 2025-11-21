@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../api/supabaseClient';
-import AreaTrendChart from '../../components/AreaTrendChart';
+// Substitua a import incorreta por:
+import AreaTrendChart from '../../components/Charts/AreaTrendChart';
 import WellnessRadarChart from '../../components/WellnessRadarChart';
 import CorrelationScatterChart from '../../components/CorrelationScatterChart';
 import StatisticsCard from '../../components/StatisticsCard';
