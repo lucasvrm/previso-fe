@@ -1,12 +1,12 @@
 // src/components/Admin/DataStats.jsx
 // Component for admin to view database statistics
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../api/supabaseClient';
 import { Users, Activity, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 
-const DataStats = () => {
+const DataStats = forwardRef((props, ref) => {
   const { userRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,6 +55,11 @@ const DataStats = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  // Expose refresh method to parent component via ref
+  useImperativeHandle(ref, () => ({
+    refresh: fetchStats
+  }));
 
   const handleRefresh = () => {
     fetchStats();
@@ -145,6 +150,6 @@ const DataStats = () => {
       )}
     </div>
   );
-};
+});
 
 export default DataStats;
