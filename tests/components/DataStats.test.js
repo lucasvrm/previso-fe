@@ -8,9 +8,20 @@ import { supabase } from '../../src/api/supabaseClient';
 jest.mock('../../src/hooks/useAuth');
 jest.mock('../../src/api/supabaseClient');
 
+// Mock API URL
+const MOCK_API_URL = 'https://bipolar-engine.onrender.com';
+
+jest.mock('../../src/utils/apiConfig', () => ({
+  getApiUrl: jest.fn(() => MOCK_API_URL)
+}));
+
+// Mock fetch
+global.fetch = jest.fn();
+
 describe('DataStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    global.fetch.mockClear();
   });
 
   test('should not render for non-admin users', () => {
@@ -27,11 +38,21 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock successful API calls
-    const mockFrom = jest.fn(() => ({
-      select: jest.fn(() => Promise.resolve({ count: 0, error: null }))
-    }));
-    supabase.from = mockFrom;
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
+
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ total_users: 0, total_checkins: 0 })
+    });
 
     render(<DataStats />);
     
@@ -44,14 +65,21 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock successful API calls with specific counts
-    const mockSelect = jest.fn()
-      .mockResolvedValueOnce({ count: 25, error: null }) // profiles count
-      .mockResolvedValueOnce({ count: 150, error: null }); // check_ins count
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
 
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ total_users: 25, total_checkins: 150 })
+    });
 
     render(<DataStats />);
 
@@ -72,11 +100,19 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock API calls that never resolve
-    const mockSelect = jest.fn(() => new Promise(() => {}));
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
+
+    // Mock fetch that never resolves
+    global.fetch.mockImplementation(() => new Promise(() => {}));
 
     render(<DataStats />);
     
@@ -88,13 +124,28 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock API error
-    const mockSelect = jest.fn()
-      .mockResolvedValueOnce({ count: null, error: { message: 'Database error' } });
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
 
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
+    global.fetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: {
+        get: jest.fn((header) => {
+          if (header === 'content-type') return 'application/json';
+          return null;
+        })
+      },
+      json: async () => ({ detail: 'Database error' })
+    });
 
     render(<DataStats />);
 
@@ -108,16 +159,27 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock successful API calls
-    const mockSelect = jest.fn()
-      .mockResolvedValueOnce({ count: 10, error: null }) // initial profiles
-      .mockResolvedValueOnce({ count: 50, error: null }) // initial check_ins
-      .mockResolvedValueOnce({ count: 15, error: null }) // refreshed profiles
-      .mockResolvedValueOnce({ count: 75, error: null }); // refreshed check_ins
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
 
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
+    // Mock successful API calls
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ total_users: 10, total_checkins: 50 })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ total_users: 15, total_checkins: 75 })
+      });
 
     render(<DataStats />);
 
@@ -138,7 +200,7 @@ describe('DataStats', () => {
     });
 
     // Verify API was called twice (initial + refresh)
-    expect(mockSelect).toHaveBeenCalledTimes(4);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   test('should disable refresh button while loading', async () => {
@@ -146,16 +208,26 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
+
     // Mock API calls with delay
-    const mockSelect = jest.fn(() => 
+    global.fetch.mockImplementation(() => 
       new Promise(resolve => 
-        setTimeout(() => resolve({ count: 10, error: null }), 100)
+        setTimeout(() => resolve({
+          ok: true,
+          json: async () => ({ total_users: 10, total_checkins: 10 })
+        }), 100)
       )
     );
-
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
 
     render(<DataStats />);
 
@@ -172,14 +244,21 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock API calls with large numbers
-    const mockSelect = jest.fn()
-      .mockResolvedValueOnce({ count: 1234, error: null })
-      .mockResolvedValueOnce({ count: 5678, error: null });
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
 
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ total_users: 1234, total_checkins: 5678 })
+    });
 
     render(<DataStats />);
 
@@ -195,14 +274,21 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock API calls returning null counts
-    const mockSelect = jest.fn()
-      .mockResolvedValueOnce({ count: null, error: null })
-      .mockResolvedValueOnce({ count: null, error: null });
+    const mockSession = {
+      access_token: 'test-token-123'
+    };
+    
+    supabase.auth = {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: mockSession },
+        error: null
+      })
+    };
 
-    supabase.from = jest.fn(() => ({
-      select: mockSelect
-    }));
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ total_users: null, total_checkins: null })
+    });
 
     render(<DataStats />);
 

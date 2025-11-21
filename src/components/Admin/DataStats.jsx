@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../api/supabaseClient';
+import { getApiUrl } from '../../utils/apiConfig';
 import { Users, Activity, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 
 const DataStats = forwardRef((props, ref) => {
@@ -20,29 +21,47 @@ const DataStats = forwardRef((props, ref) => {
     setError(null);
 
     try {
-      // Fetch total users count from profiles table
-      const { count: usersCount, error: usersError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      if (usersError) {
-        console.error('Error fetching users count:', usersError);
-        throw usersError;
+      // Get the current session to obtain the access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Erro ao obter sessão de autenticação. Faça login novamente.');
       }
 
-      // Fetch total check-ins count from check_ins table
-      const { count: checkinsCount, error: checkinsError } = await supabase
-        .from('check_ins')
-        .select('*', { count: 'exact', head: true });
+      const apiUrl = getApiUrl();
+      const endpoint = `${apiUrl}/api/admin/stats`;
 
-      if (checkinsError) {
-        console.error('Error fetching check-ins count:', checkinsError);
-        throw checkinsError;
+      // Fetch statistics from API endpoint
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Erro na API (${response.status})`;
+        
+        // Try to parse error response if it's JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          } catch (jsonError) {
+            console.error('Failed to parse error response:', jsonError);
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       setStats({
-        totalUsers: usersCount || 0,
-        totalCheckins: checkinsCount || 0
+        totalUsers: data.total_users || 0,
+        totalCheckins: data.total_checkins || 0
       });
     } catch (err) {
       console.error('Error fetching statistics:', err);
