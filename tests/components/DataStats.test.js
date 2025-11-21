@@ -29,9 +29,7 @@ describe('DataStats', () => {
 
     // Mock successful API calls
     const mockFrom = jest.fn(() => ({
-      select: jest.fn(() => ({
-        promise: Promise.resolve({ count: 0, error: null })
-      }))
+      select: jest.fn(() => Promise.resolve({ count: 0, error: null }))
     }));
     supabase.from = mockFrom;
 
