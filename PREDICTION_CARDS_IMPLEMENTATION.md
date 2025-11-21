@@ -7,7 +7,7 @@ This document describes the implementation of the multi-type prediction cards fe
 The feature displays multiple prediction cards on the user dashboard, each representing a different type of clinical prediction:
 - **Mood State** (estado de humor)
 - **Relapse Risk** (risco de recaída)
-- **Suicidality Risk** (risco de suicidabilidade)
+- **Suicidality Risk** (risco de suicidalidade)
 - **Medication Adherence Risk** (risco de não-adesão à medicação)
 - **Sleep Disturbance Risk** (risco de distúrbios do sono)
 
