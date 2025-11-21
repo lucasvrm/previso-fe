@@ -13,6 +13,12 @@ const DataCleanup = ({ onCleanupSuccess }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
+  // Confirmation message constant
+  const CLEANUP_CONFIRMATION_MESSAGE = 
+    'ATENÇÃO: Esta ação removerá TODOS os usuários e check-ins gerados sinteticamente.\n\n' +
+    'Esta operação NÃO pode ser desfeita.\n\n' +
+    'Tem certeza de que deseja continuar?';
+
   // Only show this component to admin users
   if (userRole !== 'admin') {
     return null;
@@ -20,11 +26,7 @@ const DataCleanup = ({ onCleanupSuccess }) => {
 
   const handleCleanup = async () => {
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      'ATENÇÃO: Esta ação removerá TODOS os usuários e check-ins gerados sinteticamente.\n\n' +
-      'Esta operação NÃO pode ser desfeita.\n\n' +
-      'Tem certeza de que deseja continuar?'
-    );
+    const confirmed = window.confirm(CLEANUP_CONFIRMATION_MESSAGE);
 
     if (!confirmed) {
       return;
@@ -58,8 +60,20 @@ const DataCleanup = ({ onCleanupSuccess }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || errorData.message || `Erro na API (${response.status})`);
+        let errorMessage = `Erro na API (${response.status})`;
+        
+        // Try to parse error response if it's JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          } catch (jsonError) {
+            console.error('Failed to parse error response:', jsonError);
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

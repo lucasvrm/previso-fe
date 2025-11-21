@@ -228,6 +228,12 @@ describe('DataCleanup', () => {
     global.fetch.mockResolvedValue({
       ok: false,
       status: 500,
+      headers: {
+        get: jest.fn((header) => {
+          if (header === 'content-type') return 'application/json';
+          return null;
+        })
+      },
       json: async () => ({ detail: 'Erro interno do servidor' })
     });
 
@@ -370,6 +376,12 @@ describe('DataCleanup', () => {
     global.fetch.mockResolvedValue({
       ok: false,
       status: 500,
+      headers: {
+        get: jest.fn((header) => {
+          if (header === 'content-type') return 'application/json';
+          return null;
+        })
+      },
       json: async () => ({ detail: 'Server error' })
     });
 
