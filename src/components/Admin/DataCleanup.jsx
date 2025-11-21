@@ -3,8 +3,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../api/supabaseClient';
-import { getApiUrl } from '../../utils/apiConfig';
+import { api, ApiError } from '../../api/apiClient';
 import { Trash2, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 
 // Confirmation message constant
@@ -37,46 +36,7 @@ const DataCleanup = ({ onCleanupSuccess }) => {
     setLoading(true);
 
     try {
-      // Get the current session to obtain the access token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        setError('Erro ao obter sessão de autenticação. Faça login novamente.');
-        setLoading(false);
-        return;
-      }
-
-      const apiUrl = getApiUrl();
-      const endpoint = `${apiUrl}/api/admin/cleanup-data`;
-
-      // Make the API call with authentication
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ confirm: true })
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Erro na API (${response.status})`;
-        
-        // Try to parse error response if it's JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.detail || errorData.message || errorMessage;
-          } catch (jsonError) {
-            console.error('Failed to parse error response:', jsonError);
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
+      const result = await api.post('/api/admin/cleanup-data', { confirm: true });
       
       setSuccess(
         result.message || 
@@ -89,7 +49,19 @@ const DataCleanup = ({ onCleanupSuccess }) => {
       }
     } catch (err) {
       console.error('Erro ao limpar dados:', err);
-      setError(err.message || 'Erro ao limpar dados. Verifique sua conexão e tente novamente.');
+      
+      // Handle specific error types
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError('Sessão expirada. Por favor, faça login novamente.');
+        } else if (err.status === 403) {
+          setError('Você não tem permissão para realizar esta ação.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Erro ao limpar dados. Verifique sua conexão e tente novamente.');
+      }
     } finally {
       setLoading(false);
     }

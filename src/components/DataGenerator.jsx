@@ -3,8 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../api/supabaseClient';
-import { getApiUrl } from '../utils/apiConfig';
+import { api, ApiError } from '../api/apiClient';
 import { Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DataGenerator = () => {
@@ -30,34 +29,11 @@ const DataGenerator = () => {
     const fetchUsers = async () => {
       setLoadingUsers(true);
       try {
-        // Get the current session to obtain the access token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          console.error('Error getting session:', sessionError);
-          return;
-        }
-
-        const apiUrl = getApiUrl();
-        const endpoint = `${apiUrl}/api/admin/users`;
-
-        const response = await fetch(endpoint, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        });
-
-        if (!response.ok) {
-          console.error('Failed to fetch users:', response.status);
-          return;
-        }
-
-        const data = await response.json();
+        const data = await api.get('/api/admin/users');
         setUsers(data.users || []);
       } catch (err) {
         console.error('Error fetching users:', err);
+        // Silently fail - user list is not critical
       } finally {
         setLoadingUsers(false);
       }
@@ -85,18 +61,6 @@ const DataGenerator = () => {
         return;
       }
 
-      // Get the current session to obtain the access token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        setError('Erro ao obter sessão de autenticação. Faça login novamente.');
-        setLoading(false);
-        return;
-      }
-
-      const apiUrl = getApiUrl();
-      const endpoint = `${apiUrl}/api/admin/generate-data`;
-
       // Prepare payload - send null or empty string for userId if "new user" is selected
       const payload = {
         user_id: config.userId || null,
@@ -105,33 +69,7 @@ const DataGenerator = () => {
         include_medications: config.includeMedications
       };
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Erro na API (${response.status})`;
-        
-        // Try to parse error response if it's JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.detail || errorData.message || errorMessage;
-          } catch (jsonError) {
-            console.error('Failed to parse error response:', jsonError);
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const data = await api.post('/api/admin/generate-data', payload);
       
       setSuccess(
         data.message || 
@@ -147,7 +85,19 @@ const DataGenerator = () => {
       });
     } catch (err) {
       console.error('Erro na requisição:', err);
-      setError(err.message || 'Erro ao gerar dados. Verifique sua conexão e tente novamente.');
+      
+      // Handle specific error types
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError('Sessão expirada. Por favor, faça login novamente.');
+        } else if (err.status === 403) {
+          setError('Você não tem permissão para realizar esta ação.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Erro ao gerar dados. Verifique sua conexão e tente novamente.');
+      }
     } finally {
       setLoading(false);
     }

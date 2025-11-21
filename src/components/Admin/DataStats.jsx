@@ -3,8 +3,7 @@
 
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../api/supabaseClient';
-import { getApiUrl } from '../../utils/apiConfig';
+import { api, ApiError } from '../../api/apiClient';
 import { Users, Activity, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 
 const DataStats = forwardRef((props, ref) => {
@@ -21,43 +20,7 @@ const DataStats = forwardRef((props, ref) => {
     setError(null);
 
     try {
-      // Get the current session to obtain the access token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('Erro ao obter sessão de autenticação. Faça login novamente.');
-      }
-
-      const apiUrl = getApiUrl();
-      const endpoint = `${apiUrl}/api/admin/stats`;
-
-      // Fetch statistics from API endpoint
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Erro na API (${response.status})`;
-        
-        // Try to parse error response if it's JSON
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.detail || errorData.message || errorMessage;
-          } catch (jsonError) {
-            console.error('Failed to parse error response:', jsonError);
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const data = await api.get('/api/admin/stats');
 
       setStats({
         totalUsers: data.total_users || 0,
@@ -65,7 +28,19 @@ const DataStats = forwardRef((props, ref) => {
       });
     } catch (err) {
       console.error('Error fetching statistics:', err);
-      setError(err.message || 'Erro ao carregar estatísticas. Tente novamente.');
+      
+      // Handle specific error types
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError('Sessão expirada. Por favor, faça login novamente.');
+        } else if (err.status === 403) {
+          setError('Você não tem permissão para visualizar estas estatísticas.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Erro ao carregar estatísticas. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }

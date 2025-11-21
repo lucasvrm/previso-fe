@@ -2,21 +2,12 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DataCleanup from '../../src/components/Admin/DataCleanup';
 import { useAuth } from '../../src/hooks/useAuth';
-import { supabase } from '../../src/api/supabaseClient';
+import { api, ApiError } from '../../src/api/apiClient';
 
 // Mock dependencies
 jest.mock('../../src/hooks/useAuth');
-jest.mock('../../src/api/supabaseClient');
-
-// Mock API URL
-const MOCK_API_URL = 'https://bipolar-engine.onrender.com';
-
-jest.mock('../../src/utils/apiConfig', () => ({
-  getApiUrl: jest.fn(() => MOCK_API_URL)
-}));
-
-// Mock fetch
-global.fetch = jest.fn();
+jest.mock('../../src/api/apiClient');
+jest.mock('../../src/contexts/AuthContext');
 
 // Mock window.confirm
 const originalConfirm = window.confirm;
@@ -25,7 +16,6 @@ describe('DataCleanup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.confirm = jest.fn();
-    global.fetch.mockClear();
   });
 
   afterEach(() => {
@@ -70,7 +60,7 @@ describe('DataCleanup', () => {
     expect(window.confirm).toHaveBeenCalled();
     
     // Verify that no API call was made
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(api.post).not.toHaveBeenCalled();
   });
 
   test('should show error if session is not available', async () => {
@@ -80,13 +70,9 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    // Mock getSession to return no session
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: null },
-        error: null
-      })
-    };
+    // Mock API to throw 401 error
+    const mockError = new ApiError('Sessão expirada. Por favor, faça login novamente.', 401);
+    api.post.mockRejectedValue(mockError);
 
     render(<DataCleanup />);
     
@@ -94,10 +80,8 @@ describe('DataCleanup', () => {
     fireEvent.click(cleanupButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Erro ao obter sessão de autenticação/)).toBeInTheDocument();
+      expect(screen.getByText(/Sessão expirada/)).toBeInTheDocument();
     });
-
-    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   test('should call API with correct parameters on successful confirmation', async () => {
@@ -107,21 +91,7 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ message: 'Dados removidos com sucesso!' })
-    });
+    api.post.mockResolvedValue({ message: 'Dados removidos com sucesso!' });
 
     render(<DataCleanup />);
     
@@ -129,17 +99,7 @@ describe('DataCleanup', () => {
     fireEvent.click(cleanupButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/cleanup-data'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer test-token-123'
-          },
-          body: JSON.stringify({ confirm: true })
-        })
-      );
+      expect(api.post).toHaveBeenCalledWith('/api/admin/cleanup-data', { confirm: true });
     });
   });
 
@@ -150,21 +110,7 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ message: 'Dados removidos com sucesso!' })
-    });
+    api.post.mockResolvedValue({ message: 'Dados removidos com sucesso!' });
 
     render(<DataCleanup />);
     
@@ -183,21 +129,7 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ message: 'Success' })
-    });
+    api.post.mockResolvedValue({ message: 'Success' });
 
     const mockCallback = jest.fn();
 
@@ -218,28 +150,8 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
-    global.fetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      headers: {
-        get: jest.fn((header) => {
-          if (header === 'content-type') return 'application/json';
-          return null;
-        })
-      },
-      json: async () => ({ detail: 'Erro interno do servidor' })
-    });
+    const mockError = new ApiError('Erro no servidor. Tente novamente mais tarde.', 500);
+    api.post.mockRejectedValue(mockError);
 
     render(<DataCleanup />);
     
@@ -247,7 +159,7 @@ describe('DataCleanup', () => {
     fireEvent.click(cleanupButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Erro interno do servidor/)).toBeInTheDocument();
+      expect(screen.getByText(/Erro no servidor/)).toBeInTheDocument();
     });
   });
 
@@ -258,24 +170,10 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
     // Mock a delayed response
-    global.fetch.mockImplementation(() => 
+    api.post.mockImplementation(() => 
       new Promise(resolve => 
-        setTimeout(() => resolve({
-          ok: true,
-          json: async () => ({ message: 'Success' })
-        }), 100)
+        setTimeout(() => resolve({ message: 'Success' }), 100)
       )
     );
 
@@ -297,24 +195,10 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
     // Mock a delayed response
-    global.fetch.mockImplementation(() => 
+    api.post.mockImplementation(() => 
       new Promise(resolve => 
-        setTimeout(() => resolve({
-          ok: true,
-          json: async () => ({ message: 'Success' })
-        }), 100)
+        setTimeout(() => resolve({ message: 'Success' }), 100)
       )
     );
 
@@ -336,18 +220,7 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
-    global.fetch.mockRejectedValue(new Error('Network error'));
+    api.post.mockRejectedValue(new Error('Network error'));
 
     render(<DataCleanup />);
     
@@ -355,7 +228,7 @@ describe('DataCleanup', () => {
     fireEvent.click(cleanupButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Network error/)).toBeInTheDocument();
+      expect(screen.getByText(/Erro ao limpar dados/)).toBeInTheDocument();
     });
   });
 
@@ -366,28 +239,8 @@ describe('DataCleanup', () => {
 
     window.confirm.mockReturnValue(true);
     
-    const mockSession = {
-      access_token: 'test-token-123'
-    };
-    
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: mockSession },
-        error: null
-      })
-    };
-
-    global.fetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      headers: {
-        get: jest.fn((header) => {
-          if (header === 'content-type') return 'application/json';
-          return null;
-        })
-      },
-      json: async () => ({ detail: 'Server error' })
-    });
+    const mockError = new ApiError('Server error', 500);
+    api.post.mockRejectedValue(mockError);
 
     const mockCallback = jest.fn();
 
@@ -401,5 +254,25 @@ describe('DataCleanup', () => {
     });
 
     expect(mockCallback).not.toHaveBeenCalled();
+  });
+  
+  test('should show 403 error message when user lacks permission', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    window.confirm.mockReturnValue(true);
+    
+    const mockError = new ApiError('Acesso negado. Você não tem permissão para realizar esta ação.', 403);
+    api.post.mockRejectedValue(mockError);
+
+    render(<DataCleanup />);
+    
+    const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
+    fireEvent.click(cleanupButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Você não tem permissão/)).toBeInTheDocument();
+    });
   });
 });
