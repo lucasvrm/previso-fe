@@ -9,6 +9,7 @@ import SignupPage from './pages/Auth/SignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
 import PatientView from './pages/Therapist/PatientView';
+import TrendsPage from './pages/Trends/TrendsPage';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -43,6 +44,10 @@ function App() {
         <Route 
           path="/dashboard"
           element={userRole === 'therapist' ? <TherapistDashboard /> : <PatientDashboard />}
+        />
+        <Route 
+          path="/trends"
+          element={<TrendsPage />}
         />
         <Route 
           path="/therapist/patient/:patientId"
