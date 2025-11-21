@@ -74,14 +74,34 @@ const SettingsPage = () => {
 
   return (
     <div className="w-full space-y-8">
-      {/* Data Statistics - Only for admin */}
-      <DataStats ref={dataStatsRef} />
+      {/* Admin Components Grid - Only for admin */}
+      {userRole === 'admin' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Row 1, Column 1: Data Statistics */}
+          <div className="flex">
+            <DataStats ref={dataStatsRef} />
+          </div>
 
-      {/* Data Generator Tool - Only for admin */}
-      <DataGenerator />
+          {/* Row 1, Column 2: Data Generator Tool */}
+          <div className="flex">
+            <DataGenerator />
+          </div>
 
-      {/* Data Cleanup Tool - Only for admin */}
-      <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
+          {/* Row 2, Column 1: Data Cleanup Tool */}
+          <div className="md:col-span-1">
+            <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
+          </div>
+        </div>
+      )}
+
+      {/* Non-admin components remain the same */}
+      {userRole !== 'admin' && (
+        <>
+          <DataStats ref={dataStatsRef} />
+          <DataGenerator />
+          <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
+        </>
+      )}
 
       {/* Therapist ID Card - Only for therapists */}
       {userRole === 'therapist' && (

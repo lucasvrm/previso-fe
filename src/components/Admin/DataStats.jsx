@@ -65,7 +65,7 @@ const DataStats = forwardRef((props, ref) => {
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 p-6 rounded-lg border-2 border-blue-500/20 shadow-sm max-w-2xl">
+    <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 p-6 rounded-lg border-2 border-blue-500/20 shadow-sm h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Activity className="h-6 w-6 text-blue-600" />
