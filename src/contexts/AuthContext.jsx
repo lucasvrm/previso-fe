@@ -74,54 +74,21 @@ export function AuthProvider({ children }) {
       console.log('[AuthContext] Starting auth initialization...');
       console.time('[AuthContext] getSession call');
       
-      // OPTIMIZATION: Try to read session from localStorage first (synchronous)
-      // Supabase stores the session in localStorage, so we can read it immediately
-      // Only do this optimization in browser environment (not in tests)
-      if (typeof window !== 'undefined' && window.localStorage && !process.env.JEST_WORKER_ID) {
-        try {
-          // Supabase uses a specific localStorage key pattern
-          // We'll scan for any key that matches the Supabase auth token pattern
-          const keys = Object.keys(localStorage);
-          const authTokenKey = keys.find(key => key.includes('auth-token'));
-          
-          if (authTokenKey) {
-            const storedSession = localStorage.getItem(authTokenKey);
-            if (storedSession) {
-              try {
-                const sessionData = JSON.parse(storedSession);
-                if (sessionData?.currentSession?.user) {
-                  console.log('[AuthContext] Found cached session in localStorage, setting user optimistically');
-                  setUser(sessionData.currentSession.user);
-                  // Set loading to false immediately to show UI faster
-                  // We'll validate and fetch profile in the background
-                  setLoading(false);
-                }
-              } catch (parseError) {
-                console.warn('[AuthContext] Failed to parse localStorage session:', parseError);
-              }
-            }
-          }
-        } catch (localStorageError) {
-          console.warn('[AuthContext] Failed to read from localStorage:', localStorageError);
-        }
-      }
-      
-      // Now validate the session asynchronously
+      // Get the session from Supabase (uses localStorage internally)
       const { data: { session } } = await supabase.auth.getSession();
       console.timeEnd('[AuthContext] getSession call');
       
       setUser(session?.user ?? null);
       
+      // OPTIMIZATION: Set loading to false immediately after getting session
+      // This allows the UI to render while profile fetches in parallel
+      setLoading(false);
+      console.timeEnd('[AuthContext] Total auth initialization');
+      
       // Fetch profile in parallel (don't block on it)
+      // Profile will update asynchronously when ready
       if (session?.user?.id) {
-        fetchUserProfile(session.user.id).finally(() => {
-          // Ensure loading is false even if profile fetch fails
-          setLoading(false);
-          console.timeEnd('[AuthContext] Total auth initialization');
-        });
-      } else {
-        setLoading(false);
-        console.timeEnd('[AuthContext] Total auth initialization');
+        fetchUserProfile(session.user.id);
       }
 
       const { data: authListener } = supabase.auth.onAuthStateChange(
