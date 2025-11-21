@@ -7,7 +7,20 @@
     <title>previso-fe</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial loading placeholder to prevent white screen -->
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0a0a0a; color: #ffffff; font-family: system-ui, -apple-system, sans-serif;">
+        <div style="text-align: center;">
+          <div style="width: 48px; height: 48px; border: 4px solid #333; border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+          <p style="font-size: 16px; font-weight: 500;">Carregando Previso...</p>
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
