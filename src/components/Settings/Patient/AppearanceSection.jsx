@@ -22,10 +22,10 @@ const AppearanceSection = ({ settings, onUpdate }) => {
     if (onUpdate) {
       onUpdate({ ...settings, font_size: size });
     }
-    // Apply font size to document
-    document.documentElement.classList.remove('text-sm', 'text-base', 'text-lg');
-    if (size === 'small') document.documentElement.classList.add('text-sm');
-    else if (size === 'large') document.documentElement.classList.add('text-lg');
+    // Apply font size via CSS custom property instead of direct DOM manipulation
+    document.documentElement.style.setProperty('--base-font-size', 
+      size === 'small' ? '14px' : size === 'large' ? '18px' : '16px'
+    );
   };
 
   return (
