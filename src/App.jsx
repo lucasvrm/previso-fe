@@ -37,7 +37,14 @@ function App() {
 
   if (loading) {
     console.log('[App] Estado: Carregando autenticação...');
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><h2>Carregando...</h2></div>;
+    return (
+      <div className="flex justify-center items-center h-screen bg-background">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-border border-t-primary rounded-full spinner mx-auto mb-4"></div>
+          <h2 className="text-lg font-medium text-foreground">Carregando...</h2>
+        </div>
+      </div>
+    );
   }
   
   console.log('[App] ✓ Renderizando rotas...');

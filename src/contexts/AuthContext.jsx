@@ -11,8 +11,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-
+    console.time('[AuthContext] Total auth initialization');
+    
     const fetchUserProfile = async (userId) => {
       if (!userId) {
         setUserRole(null);
@@ -20,11 +20,14 @@ export function AuthProvider({ children }) {
         return;
       }
       try {
+        console.time('[AuthContext] Fetch user profile');
         const { data: profileData, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .single();
+        console.timeEnd('[AuthContext] Fetch user profile');
+        
         if (error) {
           console.error('[AuthContext] Erro ao buscar perfil via Supabase:', error);
           console.log('[AuthContext] Tentando fallback: buscar via API...');
@@ -68,15 +71,34 @@ export function AuthProvider({ children }) {
     let subscription = null;
     
     const initAuth = async () => {
+      console.log('[AuthContext] Starting auth initialization...');
+      console.time('[AuthContext] getSession call');
+      
+      // Get the session from Supabase (uses localStorage internally)
       const { data: { session } } = await supabase.auth.getSession();
+      console.timeEnd('[AuthContext] getSession call');
+      
       setUser(session?.user ?? null);
-      await fetchUserProfile(session?.user?.id);
+      
+      // OPTIMIZATION: Set loading to false immediately after getting session
+      // This allows the UI to render while profile fetches in parallel
       setLoading(false);
+      console.timeEnd('[AuthContext] Total auth initialization');
+      
+      // Fetch profile in parallel (don't block on it)
+      // Profile will update asynchronously when ready
+      if (session?.user?.id) {
+        fetchUserProfile(session.user.id);
+      }
 
       const { data: authListener } = supabase.auth.onAuthStateChange(
         async (_event, session) => {
+          console.log('[AuthContext] Auth state changed:', _event);
           setUser(session?.user ?? null);
-          await fetchUserProfile(session?.user?.id);
+          // Fetch profile without blocking (consistent with initial auth flow)
+          if (session?.user?.id) {
+            fetchUserProfile(session.user.id);
+          }
         }
       );
       
