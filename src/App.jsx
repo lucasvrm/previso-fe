@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 
 // Layout e Páginas
 import Layout from './components/Layout'; // <-- Importa o novo Layout
+import SettingsLayout from './layouts/SettingsLayout'; // <-- Layout para Settings
 import LoginPage from './pages/Auth/LoginPage';
 import SignupPage from './pages/Auth/SignupPage';
 import TherapistSignupPage from './pages/Auth/TherapistSignupPage';
@@ -16,6 +17,10 @@ import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
 import AITestingPage from './pages/Checkin/AITestingPage'; // <--- CORREÇÃO AQUI
 import AnalysesPage from './pages/Analyses/AnalysesPage';
+
+// Admin components for nested settings routes
+import SystemStats from './components/admin/SystemStats';
+import DataManagement from './components/admin/DataManagement';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -85,7 +90,37 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/settings" element={<SettingsPage />} />
+        
+        {/* Settings routes with nested structure */}
+        <Route path="/settings" element={<SettingsLayout />}>
+          {/* Redirect /settings to /settings/dashboard for admin */}
+          <Route 
+            index 
+            element={
+              userRole === 'admin' 
+                ? <Navigate to="/settings/dashboard" replace /> 
+                : <SettingsPage />
+            } 
+          />
+          {/* Admin-only nested routes */}
+          <Route 
+            path="dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SystemStats />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="data" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DataManagement />
+              </ProtectedRoute>
+            } 
+          />
+        </Route>
+        
         <Route path="/checkin" element={<CheckinWizard />} />
         <Route path="/analyses" element={<AnalysesPage />} />
         {/* NOVA ROTA: Teste de IA Isolado */}
