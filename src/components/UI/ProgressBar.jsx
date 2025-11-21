@@ -39,8 +39,7 @@ const ProgressBar = ({
           className="progress-fill h-full rounded-full transition-all duration-300 ease-in-out"
           style={{ 
             width: `${percentage}%`, 
-            backgroundColor: color,
-            height: height 
+            backgroundColor: color
           }}
         />
       </div>

@@ -17,7 +17,7 @@ const PREDICTION_CONFIG = {
     color: '#f59e0b', // Amber
   },
   suicidality_risk: {
-    label: 'Risco de Suicidabilidade',
+    label: 'Risco de Suicidalidade',
     description: 'Avaliação de risco de ideação suicida',
     color: '#ef4444', // Red
     sensitive: true,

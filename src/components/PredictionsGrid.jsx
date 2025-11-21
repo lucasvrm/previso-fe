@@ -35,6 +35,7 @@ const PredictionsGrid = ({ userId }) => {
   const [windowDays, setWindowDays] = useState(3); // Default to 3 days
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Key to force refresh
 
   useEffect(() => {
     if (!userId) {
@@ -71,16 +72,15 @@ const PredictionsGrid = ({ userId }) => {
     };
 
     loadPredictions();
-  }, [userId, windowDays]);
+  }, [userId, windowDays, refreshKey]); // Add refreshKey to dependencies
 
   const handleWindowChange = (newWindow) => {
     setWindowDays(newWindow);
   };
 
   const handleRefresh = () => {
-    // Force a reload by toggling loading
-    setLoading(true);
-    setTimeout(() => setLoading(false), 100);
+    // Force a reload by incrementing the refresh key
+    setRefreshKey(prev => prev + 1);
   };
 
   if (loading) {
