@@ -3,8 +3,9 @@
 
 import React, { useRef } from 'react';
 import DataGenerator from '../DataGenerator';
-import DataCleanup from '../Admin/DataCleanup';
-import DataStats from '../Admin/DataStats';
+import DangerZone from '../Admin/DangerZone';
+import ExportData from '../Admin/ExportData';
+import TestPatientFlag from '../Admin/TestPatientFlag';
 
 const DataManagement = () => {
   const dataStatsRef = useRef(null);
@@ -18,14 +19,16 @@ const DataManagement = () => {
 
   return (
     <div className="w-full space-y-4" data-testid="data-management-page">
+      {/* First Row: Data Generation and Danger Zone */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Data Generator Tool */}
         <DataGenerator />
+        <DangerZone onCleanupSuccess={handleCleanupSuccess} />
+      </div>
 
-        {/* Data Cleanup Tool - Spans full width on desktop */}
-        <div className="md:col-span-2">
-          <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
-        </div>
+      {/* Second Row: Export Data and Test Patient Flag */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ExportData />
+        <TestPatientFlag />
       </div>
     </div>
   );

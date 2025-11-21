@@ -45,7 +45,7 @@ const SettingsLayout = () => {
               data-testid="tab-data"
             >
               <Database className="h-4 w-4" />
-              Gestão de Dados
+              Dados Sintéticos
             </NavLink>
           </nav>
         )}

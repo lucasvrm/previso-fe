@@ -31,7 +31,7 @@ describe('DataGenerator', () => {
     render(<DataGenerator />);
     
     await waitFor(() => {
-      expect(screen.getByText('Ferramenta de Geração de Dados')).toBeInTheDocument();
+      expect(screen.getByText('Geração de Dados')).toBeInTheDocument();
     });
     
     expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
