@@ -182,7 +182,7 @@ async function handleErrorResponse(response) {
     case 503:
     case 504:
       throw new ApiError(
-        'Erro no servidor. Tente novamente mais tarde.',
+        errorMessage || 'Erro no servidor. Tente novamente mais tarde.',
         status,
         errorDetails
       );
