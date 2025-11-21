@@ -94,15 +94,6 @@ const SettingsPage = () => {
         </div>
       )}
 
-      {/* Non-admin components remain the same */}
-      {userRole !== 'admin' && (
-        <>
-          <DataStats ref={dataStatsRef} />
-          <DataGenerator />
-          <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
-        </>
-      )}
-
       {/* Therapist ID Card - Only for therapists */}
       {userRole === 'therapist' && (
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border-2 border-primary/20 shadow-sm max-w-2xl">
