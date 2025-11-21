@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import SystemStats from '../../src/components/admin/SystemStats';
 import { useAuth } from '../../src/hooks/useAuth';
 import { api } from '../../src/api/apiClient';
@@ -38,8 +38,10 @@ describe('SystemStats', () => {
   test('should not call enhanced-stats endpoint', async () => {
     render(<SystemStats />);
     
-    // Wait a bit to ensure no additional API calls are made
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for component to fully render and make API calls
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalled();
+    });
     
     // Verify that only the /api/admin/stats endpoint is called, not /api/admin/enhanced-stats
     expect(api.get).toHaveBeenCalledWith('/api/admin/stats');

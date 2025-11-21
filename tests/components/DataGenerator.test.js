@@ -213,10 +213,10 @@ describe('DataGenerator', () => {
       500
     );
     
-    // Add delay to simulate network request
+    // Add minimal delay to simulate network request
     api.post.mockImplementation(() => 
       new Promise((resolve, reject) => 
-        setTimeout(() => reject(mockError), 100)
+        setTimeout(() => reject(mockError), 10)
       )
     );
 
