@@ -34,7 +34,7 @@ const TrendsPage = () => {
         if (error) throw error;
         
         setCheckins(data || []);
-      } catch {
+      } catch (error) {
         if (isMounted) setError('Não foi possível carregar seus dados.');
       } finally {
         if (isMounted) setLoading(false);
