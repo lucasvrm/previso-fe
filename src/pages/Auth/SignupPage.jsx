@@ -8,6 +8,7 @@ const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [isTherapist, setIsTherapist] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,16 +24,21 @@ const SignupPage = () => {
     }
 
     setLoading(true);
-    const result = await signUp(email, password);
-    setLoading(false);
+    
+    try {
+      const role = isTherapist ? 'therapist' : 'patient';
+      const result = await signUp(email, password, role);
 
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setMessage(
-        result.message ||
-          'Conta criada com sucesso. Verifique seu e-mail para confirmar.'
-      );
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setMessage(
+          result.message ||
+            'Conta criada com sucesso. Verifique seu e-mail para confirmar.'
+        );
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,6 +108,23 @@ const SignupPage = () => {
               required
               className="w-full p-3 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-foreground"
             />
+          </div>
+
+          {/* Professional Health Toggle */}
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-md">
+            <input
+              id="isTherapist"
+              type="checkbox"
+              checked={isTherapist}
+              onChange={(e) => setIsTherapist(e.target.checked)}
+              className="h-5 w-5 rounded text-primary focus:ring-primary"
+            />
+            <label
+              htmlFor="isTherapist"
+              className="text-sm font-medium text-foreground cursor-pointer"
+            >
+              Sou Profissional de Saúde Mental (Terapeuta)
+            </label>
           </div>
 
           {error && (

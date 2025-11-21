@@ -13,17 +13,30 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Excluir arquivos de variáveis de ambiente
+.env
+.env.*
+!.env.example # (Opcional: pode comitar um exemplo sem as senhas reais)
+
+# Configurações de Editor (são pessoais de cada dev)
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
 
-# Excluir arquivos de variáveis de ambiente
-.env
-.env.*
+# Credenciais do Google (para o seu script de Docs)
+google_credentials.json
+client_secret.json
+token.json
+
+# Exclusão de arquivos LM
+scripts/*
+supabase/.temp
+supabase/seed.sql
+supabase/migrations/*
+md_files*

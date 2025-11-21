@@ -1,0 +1,6 @@
+#!/bin/sh
+# Se o script existir, execute-o
+if [ -f "scripts/var_docs_update/sync_google_docs.js" ]; then
+  node scripts/var_docs_update/sync_google_docs.js
+fi
+# Se o script falhar (exit code 1), o commit será abortado.

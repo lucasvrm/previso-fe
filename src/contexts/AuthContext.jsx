@@ -66,24 +66,54 @@ export function AuthProvider({ children }) {
       
       if (authData.user) {
         try {
+          // Use upsert instead of insert to handle cases where the backend trigger
+          // already created the profile (avoids 409 conflict errors)
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert({ 
+            .upsert({ 
               id: authData.user.id, 
               role: role, 
               email: email 
+            }, {
+              onConflict: 'id'
             });
           
           if (profileError) {
-            console.error('Erro ao criar perfil:', profileError);
+            console.error('Erro ao criar/atualizar perfil:', profileError);
+            // If it's a 409 conflict that still somehow happened, provide a clearer message
+            if (profileError.code === '23505' || profileError.message?.includes('duplicate')) {
+              return { 
+                error: 'Perfil já existe. Por favor, faça login.' 
+              };
+            }
             return { 
-              error: 'Erro ao criar perfil do usuário. Por favor, contate o suporte.' 
+              error: 'Erro ao configurar perfil do usuário. Por favor, contate o suporte.' 
             };
+          }
+
+          // CRITICAL FIX: After successfully updating the profile role,
+          // fetch the updated profile and update local state immediately
+          // This ensures the UI reflects the correct role (therapist/patient)
+          try {
+            const { data: updatedProfile, error: fetchError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', authData.user.id)
+              .single();
+            
+            if (!fetchError && updatedProfile) {
+              setProfile(updatedProfile);
+              setUserRole(updatedProfile.role);
+            }
+          } catch (fetchErr) {
+            console.error('Erro ao buscar perfil atualizado:', fetchErr);
+            // Don't fail the signup if we can't fetch the profile
+            // The onAuthStateChange listener will handle it eventually
           }
         } catch (err) {
           console.error('Erro inesperado ao criar perfil:', err);
           return { 
-            error: 'Erro ao criar perfil do usuário. Por favor, contate o suporte.' 
+            error: 'Erro ao configurar perfil do usuário. Por favor, contate o suporte.' 
           };
         }
       }
@@ -98,6 +128,25 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const signOut = async () => {
+    try {
+      // Clear local state first
+      setUser(null);
+      setProfile(null);
+      setUserRole(null);
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Erro ao fazer logout:', error);
+        // Even if there's an error, we've cleared local state, so logout is successful
+      }
+    } catch (err) {
+      console.error('Erro inesperado no logout:', err);
+      // Even if there's an error, we've cleared local state
+    }
+  };
+
   const value = {
     user,
     profile,
@@ -105,7 +154,8 @@ export function AuthProvider({ children }) {
     loading,
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signUp,
-    signOut: () => supabase.auth.signOut(),
+    signOut,
+    logout: signOut, // Use the same function for both
   };
 
   return (

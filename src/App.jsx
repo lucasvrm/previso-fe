@@ -6,10 +6,16 @@ import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout'; // <-- Importa o novo Layout
 import LoginPage from './pages/Auth/LoginPage';
 import SignupPage from './pages/Auth/SignupPage';
+import TherapistSignupPage from './pages/Auth/TherapistSignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
 import PatientView from './pages/Therapist/PatientView';
 import TrendsPage from './pages/Trends/TrendsPage';
+import ClinicalReports from './pages/Therapist/ClinicalReports';
+import SettingsPage from './pages/Settings/SettingsPage';
+import CheckinWizard from './pages/Checkin/CheckinWizard';
+import AITestingPage from './pages/Checkin/AITestingPage'; // <--- CORREÇÃO AQUI
+import AnalysesPage from './pages/Analyses/AnalysesPage';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -31,6 +37,10 @@ function App() {
       <Route 
         path="/signup" 
         element={!user ? <SignupPage /> : <Navigate to="/dashboard" />} 
+      />
+      <Route 
+        path="/signup/therapist" 
+        element={!user ? <TherapistSignupPage /> : <Navigate to="/dashboard" />} 
       />
 
       {/* Rotas para usuários AUTENTICADOS, dentro do Layout */}
@@ -57,8 +67,19 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* Adicione outras rotas protegidas aqui, ex: /settings, /profile, etc. */}
-        {/* <Route path="/settings" element={<SettingsPage />} /> */}
+        <Route 
+          path="/therapist/reports"
+          element={
+            <ProtectedRoute allowedRoles={['therapist']}>
+              <ClinicalReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/checkin" element={<CheckinWizard />} />
+        <Route path="/analyses" element={<AnalysesPage />} />
+        {/* NOVA ROTA: Teste de IA Isolado */}
+        <Route path="/ai-test" element={<AITestingPage />} />
       </Route>
       
       {/* Redirecionamento da raiz */}

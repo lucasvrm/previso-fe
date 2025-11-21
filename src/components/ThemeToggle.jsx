@@ -13,7 +13,8 @@ const ThemeToggle = () => {
 
   return (
     <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
-      {themes.map(({ value, icon: ThemeIcon, label }) => (
+      {/* eslint-disable-next-line no-unused-vars */}
+      {themes.map(({ value, icon: Icon, label }) => (
         <button
           key={value}
           onClick={() => setTheme(value)}
@@ -28,7 +29,7 @@ const ThemeToggle = () => {
           title={label}
           aria-label={`Mudar para tema ${label.toLowerCase()}`}
         >
-          <ThemeIcon className="w-4 h-4" />
+          <Icon className="w-4 h-4" />
           <span className="hidden sm:inline">{label}</span>
         </button>
       ))}

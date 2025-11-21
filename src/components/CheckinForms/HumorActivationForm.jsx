@@ -2,18 +2,20 @@
 // (ATUALIZADO: Wrappers de Card aplicados no Grid)
 
 import React, { useEffect, useState } from 'react';
-import SegmentedScale from '../SegmentedScale'; // Importa a versão "nua"
+import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 
 // Mapas de Escala
 const tristezaMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Crítico."];
 const ansiedadeMap = ["Ausente.", "Baixo.", "Médio.", "Alto.", "Crítico."];
 const ativacaoMap = ["Ausente.", "Baixa.", "Média.", "Alta.", "Altíssima."];
+const elevacaoMap = ["Ausente.", "Leve.", "Moderada.", "Alta.", "Euforia Intensa."];
 
 const HumorActivationForm = ({ data, onChange }) => {
     const [humorData, setHumorData] = useState({
         depressedMood: data.depressedMood !== undefined ? data.depressedMood : 2,
         anxietyStress: data.anxietyStress !== undefined ? data.anxietyStress : 2,
         activation: data.activation !== undefined ? data.activation : 2,
+        elevation: data.elevation !== undefined ? data.elevation : 0,
     });
 
     useEffect(() => {
@@ -25,10 +27,10 @@ const HumorActivationForm = ({ data, onChange }) => {
     };
     
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* 1. Tristeza (Cinza) - Coluna 1 */}
-            <div className="p-4 border rounded-lg bg-muted/50">
+            <div className="p-3 border rounded-lg bg-muted/50">
                 <SegmentedScale
                     label="Tristeza/Apatia" 
                     value={humorData.depressedMood}
@@ -38,7 +40,7 @@ const HumorActivationForm = ({ data, onChange }) => {
             </div>
             
             {/* 2. Ansiedade (Branco) - Coluna 2 */}
-            <div className="p-4 border rounded-lg bg-card">
+            <div className="p-3 border rounded-lg bg-card">
                 <SegmentedScale
                     label="Ansiedade / Estresse"
                     value={humorData.anxietyStress}
@@ -48,12 +50,22 @@ const HumorActivationForm = ({ data, onChange }) => {
             </div>
 
             {/* 3. Ativação (Cinza) - Ocupa a largura inteira */}
-            <div className="md:col-span-2 p-4 border rounded-lg bg-muted/50">
+            <div className="md:col-span-2 p-3 border rounded-lg bg-muted/50">
                 <SegmentedScale
                     label="Ativação (Irritabilidade/Aceleração Mental)"
                     value={humorData.activation}
                     onChange={(v) => handleChange('activation', v)}
                     scaleMap={ativacaoMap} 
+                />
+            </div>
+
+            {/* 4. Elevação/Euforia (Branco) - NOVO - Ocupa largura inteira */}
+            <div className="md:col-span-2 p-3 border rounded-lg bg-card">
+                <SegmentedScale
+                    label="Elevação/Euforia"
+                    value={humorData.elevation}
+                    onChange={(v) => handleChange('elevation', v)}
+                    scaleMap={elevacaoMap} 
                 />
             </div>
         </div>

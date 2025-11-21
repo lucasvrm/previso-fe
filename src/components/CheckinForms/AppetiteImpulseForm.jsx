@@ -2,7 +2,7 @@
 // (ATUALIZADO: Wrappers de Card aplicados no Grid - CORRIGIDO)
 
 import React, { useEffect, useState } from 'react';
-import SegmentedScale from '../SegmentedScale'; // Importa a versão "nua"
+import SegmentedScale from '../UI/SegmentedScale'; // Importa a versão "nua"
 
 // Mapas de Escala
 const apetiteMap = ["Ausente.", "Baixo.", "Normal.", "Alto.", "Compulsão."];
@@ -11,9 +11,9 @@ const compulsaoMap = ["Ausente.", "Baixa.", "Média.", "Alta.", "Crítica."];
 
 // Componente Toggle
 const ToggleInput = ({ label, checked, onChange }) => (
-  // (MODIFICAÇÃO) Removido h-full
-  <div className="flex items-center justify-between p-4">
-    <label className="text-base font-semibold text-foreground mr-4">{label}</label>
+  // (MODIFICAÇÃO) Removido h-full, reduzido padding
+  <div className="flex items-center justify-between p-3">
+    <label className="text-sm font-semibold text-foreground mr-4">{label}</label>
     <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
       className="h-5 w-5 rounded text-primary focus:ring-primary" />
   </div>
@@ -38,10 +38,10 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
 
     return (
         // --- (CORREÇÃO) Grid de 2 Colunas ---
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* 1. Apetite (Cinza) */}
-            <div className="p-4 border rounded-lg bg-muted/50">
+            <div className="p-3 border rounded-lg bg-muted/50">
                 <SegmentedScale
                     label="Apetite Geral"
                     value={appetiteData.generalAppetite}
@@ -51,7 +51,7 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
             </div>
             
             {/* 2. Pular Refeições (Branco) */}
-            <div className="p-4 border rounded-lg bg-card">
+            <div className="border rounded-lg bg-card">
                 <ToggleInput
                   label="Pulou refeições? (Ficou > 6h sem comer)"
                   checked={appetiteData.skipMeals}
@@ -60,7 +60,7 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
             </div>
             
             {/* 3. Compulsão (Branco) */}
-            <div className="p-4 border rounded-lg bg-card space-y-4">
+            <div className="p-3 border rounded-lg bg-card space-y-3">
                 <ToggleInput
                   label="Houve episódio de compulsão (alimentar ou sexual)?"
                   checked={appetiteData.compulsionEpisode}
@@ -68,7 +68,7 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
                 />
                 
                 {appetiteData.compulsionEpisode && (
-                    <div className="pt-4 border-t">
+                    <div className="pt-3 border-t">
                         <SegmentedScale
                             label="Intensidade da Compulsão / Impulso"
                             value={appetiteData.compulsionIntensity}
@@ -80,7 +80,7 @@ const AppetiteImpulseForm = ({ data, onChange }) => {
             </div>
 
             {/* 4. Risco (Cinza) */}
-            <div className="p-4 border rounded-lg bg-muted/50">
+            <div className="border rounded-lg bg-muted/50">
                 <ToggleInput
                   label="Houve comportamento sexual de risco?"
                   checked={appetiteData.sexualRiskBehavior}

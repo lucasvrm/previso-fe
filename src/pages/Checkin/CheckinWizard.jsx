@@ -16,9 +16,9 @@ import MedsContextForm from '../../components/CheckinForms/MedsContextForm.jsx';
 
 const STEPS = [
     { name: "1. Sono & Ritmo", component: SleepForm, key: 'sleep_data' },
-    { name: "2. Humor & Ativação", component: HumorActivationForm, key: 'humor_data' },
-    { name: "3. Energia & Foco", component: EnergyFocusForm, key: 'energy_focus_data' },
-    { name: "4. Social, Corpo & Rotina", component: RoutineBodyForm, key: 'routine_body_data' },
+    { name: "2. Humor & Ativação", component: HumorActivationForm, key: 'mood_data' },
+    { name: "3. Energia & Foco", component: EnergyFocusForm, key: 'symptoms_data' },
+    { name: "4. Social, Corpo & Rotina", component: RoutineBodyForm, key: 'risk_routine_data' },
     { name: "5. Apetite & Impulso", component: AppetiteImpulseForm, key: 'appetite_impulse_data' },
     { name: "6. Medicação & Contexto", component: MedsContextForm, key: 'meds_context_data' },
 ];
@@ -27,23 +27,43 @@ const STEPS = [
 const getPastDates = () => {
     const dates = [];
     const today = new Date();
-    const dayNames = ["D-5", "D-4 (Anteanteanteontem)", "D-3 (Anteanteontem)", "D-2 (Anteontem)", "D-1 (Ontem)"];
     
-    for (let i = 1; i <= 5; i++) {
-        const pastDate = new Date(today);
-        pastDate.setDate(today.getDate() - i);
-        const yyyy = pastDate.getFullYear();
-        const mm = String(pastDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(pastDate.getDate()).padStart(2, '0');
-        const dateString = `${yyyy}-${mm}-${dd}`;
-        const displayDate = `${dd}/${mm}/${yyyy}`;
-        
-        dates.push({
-            value: dateString, 
-            label: `${dayNames[5-i]}: ${displayDate}`
-        });
-    }
-    return dates.reverse(); 
+    // Get today
+    const todayDate = new Date(today);
+    const todayYYYY = todayDate.getFullYear();
+    const todayMM = String(todayDate.getMonth() + 1).padStart(2, '0');
+    const todayDD = String(todayDate.getDate()).padStart(2, '0');
+    dates.push({
+        value: `${todayYYYY}-${todayMM}-${todayDD}`,
+        label: 'Hoje',
+        shortLabel: 'Hoje'
+    });
+    
+    // Get yesterday
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yYYYY = yesterday.getFullYear();
+    const yMM = String(yesterday.getMonth() + 1).padStart(2, '0');
+    const yDD = String(yesterday.getDate()).padStart(2, '0');
+    dates.push({
+        value: `${yYYYY}-${yMM}-${yDD}`,
+        label: 'Ontem',
+        shortLabel: 'Ontem'
+    });
+    
+    // Get day before yesterday
+    const dayBefore = new Date(today);
+    dayBefore.setDate(today.getDate() - 2);
+    const dYYYY = dayBefore.getFullYear();
+    const dMM = String(dayBefore.getMonth() + 1).padStart(2, '0');
+    const dDD = String(dayBefore.getDate()).padStart(2, '0');
+    dates.push({
+        value: `${dYYYY}-${dMM}-${dDD}`,
+        label: 'Anteontem',
+        shortLabel: 'D-2'
+    });
+    
+    return dates;
 };
 // ------------------------------------
 
@@ -120,49 +140,57 @@ const CheckinWizard = () => {
     const CurrentComponent = STEPS[currentStep].component;
 
     return (
-      <div className="w-full">
-        <div className="bg-card p-6 sm:p-8 rounded-lg border shadow-sm">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="bg-card p-4 sm:p-6 rounded-lg border shadow-sm">
             
             {currentStep === 0 && (
-                <div className="mb-6 p-4 bg-muted/50 border rounded-lg">
+                <div className="mb-4 p-4 bg-muted/50 border rounded-lg">
                     <label 
-                      htmlFor="checkin-date" 
-                      className="flex items-center text-base font-semibold text-foreground mb-2"
+                      className="flex items-center text-sm font-semibold text-foreground mb-3"
                     >
-                      <CalendarDays className="h-5 w-5 mr-2 text-primary" />
+                      <CalendarDays className="h-4 w-4 mr-2 text-primary" />
                       Para qual dia é este check-in?
                     </label>
-                    <select
-                        id="checkin-date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
-                    >
+                    <div className="flex gap-2 flex-wrap">
                         {pastDates.map(date => (
-                            <option key={date.value} value={date.value}>
-                                {date.label}
-                            </option>
+                            <button
+                                key={date.value}
+                                type="button"
+                                onClick={() => setSelectedDate(date.value)}
+                                className={`
+                                    px-4 py-2 rounded-lg font-medium text-sm transition-all
+                                    ${selectedDate === date.value 
+                                        ? 'bg-primary text-primary-foreground shadow-md' 
+                                        : 'bg-background border border-border text-foreground hover:bg-muted'
+                                    }
+                                `}
+                            >
+                                {date.shortLabel}
+                            </button>
                         ))}
-                    </select>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                        Datas futuras não são permitidas
+                    </p>
                 </div>
             )}
             
-            <div className="mb-6">
-                <h3 className="text-xl font-semibold text-foreground text-center">
-                  Check-in Diário - {STEPS[currentStep].name}
+            <div className="mb-4">
+                <h3 className="text-lg font-semibold text-foreground text-center mb-2">
+                  {STEPS[currentStep].name}
                 </h3>
-                <div className="w-full bg-muted rounded-full h-2.5 mt-4">
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
                     <div 
-                      className="bg-primary h-2.5 rounded-full transition-all duration-300" 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
                       style={{ width: `${progress}%` }}
                     ></div>
                 </div>
-                <p className="text-sm text-muted-foreground text-center mt-2">
-                  Progresso: {currentStep + 1} de {STEPS.length}
+                <p className="text-xs text-muted-foreground text-center mt-1">
+                  Etapa {currentStep + 1} de {STEPS.length}
                 </p>
             </div>
 
-            <div className="min-h-[400px]">
+            <div className="min-h-[300px]">
                 <CurrentComponent 
                     data={formData[STEPS[currentStep].key] || {}} 
                     onChange={updateFormData} 
@@ -170,29 +198,29 @@ const CheckinWizard = () => {
             </div>
 
             {error && (
-              <p className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md text-center">
+              <p className="text-sm font-medium text-destructive bg-destructive/10 p-2.5 rounded-md text-center mt-4">
                 🛑 {error}
               </p>
             )}
             
-            <div className="flex justify-between mt-8 pt-6 border-t">
+            <div className="flex justify-between mt-6 pt-4 border-t gap-3">
                 <button 
                     onClick={prevStep} 
                     disabled={currentStep === 0 || loading}
                     className={`
-                      flex items-center justify-center px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-semibold 
+                      flex items-center justify-center px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium text-sm
                       hover:bg-secondary/80 transition-colors disabled:opacity-50
                       ${currentStep === 0 ? 'invisible' : 'visible'}
                     `}
                 >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    <ArrowLeft className="h-4 w-4 mr-1.5" />
                     Anterior
                 </button>
                 <button 
                     onClick={nextStep} 
                     disabled={loading}
                     className={`
-                      flex items-center justify-center px-6 py-2 rounded-md font-semibold 
+                      flex items-center justify-center px-5 py-2 rounded-md font-medium text-sm
                       hover:bg-primary/90 transition-colors disabled:opacity-50
                       ${currentStep === STEPS.length - 1 
                           ? 'bg-green-600 text-white hover:bg-green-700' 
@@ -203,7 +231,7 @@ const CheckinWizard = () => {
                     {currentStep === STEPS.length - 1 
                         ? (loading ? 'Enviando...' : 'Finalizar') 
                         : 'Próximo'}
-                    {currentStep < STEPS.length - 1 && <ArrowRight className="h-4 w-4 ml-2" />}
+                    {currentStep < STEPS.length - 1 && <ArrowRight className="h-4 w-4 ml-1.5" />}
                 </button>
             </div>
         </div>

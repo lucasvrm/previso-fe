@@ -23,15 +23,15 @@ const STRESSOR_OPTIONS = [
 
 // Componentes Reutilizados
 const TagButton = ({ label, isActive, onClick }) => (
-  <button type="button" onClick={onClick} className={`py-2 px-4 rounded-full border text-sm font-medium transition-colors duration-150
+  <button type="button" onClick={onClick} className={`py-1.5 px-3 rounded-full border text-xs font-medium transition-colors duration-150
       ${isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/50 text-muted-foreground hover:bg-muted'}`}>
     {label}
   </button>
 );
 const ToggleInput = ({ label, checked, onChange }) => (
-  // (MODIFICAÇÃO) Removido h-full
-  <div className="flex items-center justify-between p-4">
-    <label className="text-base font-semibold text-foreground mr-4">{label}</label>
+  // (MODIFICAÇÃO) Removido h-full, reduzido padding
+  <div className="flex items-center justify-between p-3">
+    <label className="text-sm font-semibold text-foreground mr-4">{label}</label>
     <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
       className="h-5 w-5 rounded text-primary focus:ring-primary border-muted-foreground" />
   </div>
@@ -68,29 +68,29 @@ const MedsContextForm = ({ data, onChange }) => {
     const showTimingField = medsData.medicationAdherence === 'partial' || medsData.medicationAdherence === 'all';
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* --- COLUNA 1 (Cinza, Branco) --- */}
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* 1. Adesão (Cinza) */}
-                <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
-                  <label className="block text-base font-semibold text-foreground">Adesão à Medicação</label>
+                <div className="p-3 border rounded-lg bg-muted/50 space-y-3">
+                  <label className="block text-sm font-semibold text-foreground">Adesão à Medicação</label>
                   <select
                       value={medsData.medicationAdherence}
                       onChange={(e) => handleChange('medicationAdherence', e.target.value)}
-                      className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
+                      className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-sm"
                   >
                       {ADHERENCE_OPTIONS.map(opt => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                   </select>
                   {showTimingField && (
-                      <div className="pt-4 border-t">
-                          <label className="block text-sm font-medium text-muted-foreground mb-1">Horário da medicação</label>
+                      <div className="pt-3 border-t">
+                          <label className="block text-xs font-medium text-muted-foreground mb-1">Horário da medicação</label>
                           <select
                               value={medsData.medicationTiming}
                               onChange={(e) => handleChange('medicationTiming', e.target.value)}
-                              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
+                              className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-sm"
                           >
                               {TIMING_OPTIONS.map(opt => (
                                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -101,8 +101,8 @@ const MedsContextForm = ({ data, onChange }) => {
                 </div>
                 
                 {/* 2. Contexto (Branco) */}
-                <div className="p-4 border rounded-lg bg-card space-y-4">
-                  <label className="block text-base font-semibold text-foreground">Contexto e Eventos</label>
+                <div className="border rounded-lg bg-card space-y-3">
+                  <label className="block text-sm font-semibold text-foreground p-3 pb-0">Contexto e Eventos</label>
                   <ToggleInput
                     label="Mudança de turno/viagem/fuso/virada de noite?"
                     checked={medsData.socialRhythmEvent}
@@ -117,20 +117,20 @@ const MedsContextForm = ({ data, onChange }) => {
             </div>
 
             {/* --- COLUNA 2 (Cinza, Branco) --- */}
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* 1. Substâncias (Cinza) */}
-                <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
+                <div className="border rounded-lg bg-muted/50 space-y-3">
                   <ToggleInput
                     label="Uso de substâncias psicoativas hoje?"
                     checked={medsData.substanceUsage}
                     onChange={(v) => handleChange('substanceUsage', v)}
                   />
                   {medsData.substanceUsage && (
-                      <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-3 px-3 pb-3 pt-0 border-t">
                           <select
                               value={medsData.substanceUsed || ''}
                               onChange={(e) => handleChange('substanceUsed', e.target.value)}
-                              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none"
+                              className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none text-sm"
                           >
                               <option value="" disabled>Selecione a substância...</option>
                               {SUBSTANCE_OPTIONS.map(opt => ( <option key={opt} value={opt}>{opt}</option> ))}
@@ -141,15 +141,15 @@ const MedsContextForm = ({ data, onChange }) => {
                               value={medsData.substanceUnits}
                               onChange={(e) => handleChange('substanceUnits', parseInt(e.target.value) || 0)}
                               min="0"
-                              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums"
+                              className="w-full p-2 bg-background border rounded-md focus:ring-2 focus:ring-ring focus:outline-none tabular-nums text-sm"
                           />
                       </div>
                   )}
                 </div>
                 
                 {/* 2. Estressores (Branco) */}
-                <div className="p-4 border rounded-lg bg-card">
-                    <label className="block text-base font-semibold text-foreground mb-3">
+                <div className="p-3 border rounded-lg bg-card">
+                    <label className="block text-sm font-semibold text-foreground mb-2">
                       Eventos Estressantes Hoje (Selecione)
                     </label>
                     <div className="flex flex-wrap gap-2">
