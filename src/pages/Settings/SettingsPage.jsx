@@ -1,12 +1,13 @@
 // src/pages/Settings/SettingsPage.jsx
 // (ATUALIZADO: Importa o hook de 'src/hooks/useAuth.jsx')
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { supabase } from '../../api/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { Send, Copy, Check } from 'lucide-react';
 import DataGenerator from '../../components/DataGenerator';
 import DataStats from '../../components/Admin/DataStats';
+import DataCleanup from '../../components/Admin/DataCleanup';
 
 const SettingsPage = () => {
   const { user, userRole } = useAuth();
@@ -15,6 +16,7 @@ const SettingsPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [copied, setCopied] = useState(false);
+  const dataStatsRef = useRef(null);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -63,13 +65,23 @@ const SettingsPage = () => {
     }
   };
 
+  const handleCleanupSuccess = () => {
+    // Trigger refresh of DataStats component
+    if (dataStatsRef.current && typeof dataStatsRef.current.refresh === 'function') {
+      dataStatsRef.current.refresh();
+    }
+  };
+
   return (
     <div className="w-full space-y-8">
       {/* Data Statistics - Only for admin */}
-      <DataStats />
+      <DataStats ref={dataStatsRef} />
 
       {/* Data Generator Tool - Only for admin */}
       <DataGenerator />
+
+      {/* Data Cleanup Tool - Only for admin */}
+      <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
 
       {/* Therapist ID Card - Only for therapists */}
       {userRole === 'therapist' && (
