@@ -43,8 +43,8 @@ const DataGenerator = () => {
       // Build the payload based on the form data
       const payload = {
         user_type: data.userType,
-        patients_count: parseInt(data.patients_count, 10),
-        therapists_count: parseInt(data.therapists_count, 10),
+        patients_count: parseInt(data.patients_count, 10) || 0,
+        therapists_count: parseInt(data.therapists_count, 10) || 0,
         checkins_per_user: parseInt(data.checkins_per_user, 10),
         mood_pattern: data.mood_pattern,
         include_notes: data.include_notes,
