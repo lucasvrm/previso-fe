@@ -1,13 +1,11 @@
 // src/pages/Settings/SettingsPage.jsx
-// (ATUALIZADO: Importa o hook de 'src/hooks/useAuth.jsx')
+// Refactored: Role-specific settings for patients and therapists only
+// Admin settings moved to nested routes under SettingsLayout
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../api/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { Send, Copy, Check } from 'lucide-react';
-import DataGenerator from '../../components/DataGenerator';
-import DataStats from '../../components/Admin/DataStats';
-import DataCleanup from '../../components/Admin/DataCleanup';
 
 const SettingsPage = () => {
   const { user, userRole } = useAuth();
@@ -16,7 +14,6 @@ const SettingsPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [copied, setCopied] = useState(false);
-  const dataStatsRef = useRef(null);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -65,31 +62,8 @@ const SettingsPage = () => {
     }
   };
 
-  const handleCleanupSuccess = () => {
-    // Trigger refresh of DataStats component
-    if (dataStatsRef.current && typeof dataStatsRef.current.refresh === 'function') {
-      dataStatsRef.current.refresh();
-    }
-  };
-
   return (
-    <div className="w-full space-y-8">
-      {/* Admin Components Grid - Only for admin */}
-      {userRole === 'admin' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Row 1, Column 1: Data Statistics */}
-          <DataStats ref={dataStatsRef} />
-
-          {/* Row 1, Column 2: Data Generator Tool */}
-          <DataGenerator />
-
-          {/* Row 2: Data Cleanup Tool - Spans full width on desktop */}
-          <div className="md:col-span-2">
-            <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
-          </div>
-        </div>
-      )}
-
+    <div className="w-full space-y-8" data-testid="settings-page">
       {/* Therapist ID Card - Only for therapists */}
       {userRole === 'therapist' && (
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border-2 border-primary/20 shadow-sm max-w-2xl">
@@ -113,6 +87,7 @@ const SettingsPage = () => {
               <button
                 onClick={handleCopyTherapistId}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors whitespace-nowrap"
+                data-testid="copy-therapist-id"
               >
                 {copied ? (
                   <>
