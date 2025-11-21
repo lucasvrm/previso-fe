@@ -1,24 +1,70 @@
 // src/components/DataGenerator.jsx
 // Component for admin to generate synthetic data for testing
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../api/supabaseClient';
+import { getApiUrl } from '../utils/apiConfig';
 import { Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DataGenerator = () => {
   const { userRole } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [users, setUsers] = useState([]);
   
   // Form state
   const [config, setConfig] = useState({
-    userId: '',
+    userId: '', // Empty string means "Generate New User"
     numDays: 30,
     includeNotes: true,
     includeMedications: true
   });
+
+  // Fetch users when component mounts (only for admin)
+  useEffect(() => {
+    if (userRole !== 'admin') return;
+
+    const fetchUsers = async () => {
+      setLoadingUsers(true);
+      try {
+        // Get the current session to obtain the access token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error('Error getting session:', sessionError);
+          return;
+        }
+
+        const apiUrl = getApiUrl();
+        const endpoint = `${apiUrl}/api/admin/users`;
+
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+
+        if (!response.ok) {
+          console.error('Failed to fetch users:', response.status);
+          return;
+        }
+
+        const data = await response.json();
+        setUsers(data.users || []);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, [userRole]);
 
   // Only show this component to admin users
   if (userRole !== 'admin') {
@@ -32,13 +78,6 @@ const DataGenerator = () => {
     setLoading(true);
 
     try {
-      // Validate inputs
-      if (!config.userId.trim()) {
-        setError('Por favor, informe o User ID.');
-        setLoading(false);
-        return;
-      }
-
       const parsedNumDays = parseInt(config.numDays, 10);
       if (isNaN(parsedNumDays) || parsedNumDays < 1 || parsedNumDays > 365) {
         setError('O número de dias deve estar entre 1 e 365.');
@@ -46,40 +85,69 @@ const DataGenerator = () => {
         return;
       }
 
-      // Call the Supabase Edge Function for data generation
-      const { data, error: funcError } = await supabase.functions.invoke(
-        'generate-data',
-        {
-          body: {
-            user_id: config.userId.trim(),
-            num_days: parsedNumDays,
-            include_notes: config.includeNotes,
-            include_medications: config.includeMedications
+      // Get the current session to obtain the access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        setError('Erro ao obter sessão de autenticação. Faça login novamente.');
+        setLoading(false);
+        return;
+      }
+
+      const apiUrl = getApiUrl();
+      const endpoint = `${apiUrl}/api/admin/generate-data`;
+
+      // Prepare payload - send null or empty string for userId if "new user" is selected
+      const payload = {
+        user_id: config.userId || null,
+        num_days: parsedNumDays,
+        include_notes: config.includeNotes,
+        include_medications: config.includeMedications
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Erro na API (${response.status})`;
+        
+        // Try to parse error response if it's JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          } catch (jsonError) {
+            console.error('Failed to parse error response:', jsonError);
           }
         }
-      );
-
-      if (funcError) {
-        console.error('Erro ao invocar função:', funcError);
-        setError(funcError.message || 'Erro ao gerar dados. Tente novamente.');
-      } else if (data?.error) {
-        setError(data.error);
-      } else {
-        setSuccess(
-          data?.message || 
-          `Dados gerados com sucesso! ${config.numDays} dias de check-ins criados.`
-        );
-        // Reset form on success
-        setConfig({
-          userId: '',
-          numDays: 30,
-          includeNotes: true,
-          includeMedications: true
-        });
+        
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
+      
+      setSuccess(
+        data.message || 
+        `Dados gerados com sucesso! ${config.numDays} dias de check-ins criados.`
+      );
+      
+      // Reset form on success
+      setConfig({
+        userId: '',
+        numDays: 30,
+        includeNotes: true,
+        includeMedications: true
+      });
     } catch (err) {
       console.error('Erro na requisição:', err);
-      setError('Erro ao gerar dados. Verifique sua conexão e tente novamente.');
+      setError(err.message || 'Erro ao gerar dados. Verifique sua conexão e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -114,22 +182,29 @@ const DataGenerator = () => {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* User ID Input */}
+        {/* User Selection Dropdown */}
         <div>
           <label htmlFor="userId" className="block text-sm font-medium text-muted-foreground mb-1">
-            User ID <span className="text-red-500">*</span>
+            Usuário <span className="text-red-500">*</span>
           </label>
-          <input
+          <select
             id="userId"
-            type="text"
-            placeholder="UUID do usuário"
             value={config.userId}
             onChange={(e) => handleInputChange('userId', e.target.value)}
-            required
-            className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none font-mono text-sm"
-          />
+            disabled={loadingUsers}
+            className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+          >
+            <option value="">Gerar Novo Usuário (Automático)</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.email || `Usuário ${user.id.substring(0, 8)}...`}
+              </option>
+            ))}
+          </select>
           <p className="text-xs text-muted-foreground mt-1">
-            Informe o UUID do usuário para o qual deseja gerar dados
+            {loadingUsers 
+              ? 'Carregando usuários...' 
+              : 'Selecione um usuário existente ou gere dados para um novo usuário'}
           </p>
         </div>
 
