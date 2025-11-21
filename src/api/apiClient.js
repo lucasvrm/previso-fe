@@ -60,9 +60,13 @@ export async function apiRequest(endpoint, options = {}) {
 
   // Prepare headers
   const requestHeaders = {
-    'Content-Type': 'application/json',
     ...headers,
   };
+
+  // Add Content-Type header if body is present and not already set
+  if (body && !requestHeaders['Content-Type'] && !requestHeaders['content-type']) {
+    requestHeaders['Content-Type'] = 'application/json';
+  }
 
   // Add authentication header if required
   if (requireAuth) {

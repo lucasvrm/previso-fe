@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DataGenerator from '../../src/components/DataGenerator';
 import { useAuth } from '../../src/hooks/useAuth';
-import { api } from '../../src/api/apiClient';
+import { api, ApiError } from '../../src/api/apiClient';
 
 // Mock dependencies
 jest.mock('../../src/hooks/useAuth');
@@ -151,7 +151,7 @@ describe('DataGenerator', () => {
     });
 
     api.get.mockResolvedValue({ users: [] });
-    const mockError = new (require('../../src/api/apiClient').ApiError)(
+    const mockError = new ApiError(
       'Erro no servidor. Tente novamente mais tarde.',
       500
     );

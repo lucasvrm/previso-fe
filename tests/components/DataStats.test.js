@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DataStats from '../../src/components/Admin/DataStats';
 import { useAuth } from '../../src/hooks/useAuth';
-import { api } from '../../src/api/apiClient';
+import { api, ApiError } from '../../src/api/apiClient';
 
 // Mock dependencies
 jest.mock('../../src/hooks/useAuth');
@@ -75,7 +75,7 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    const mockError = new (require('../../src/api/apiClient').ApiError)(
+    const mockError = new ApiError(
       'Erro no servidor. Tente novamente mais tarde.',
       500
     );
