@@ -69,7 +69,7 @@ class ErrorBoundary extends React.Component {
               <li>Se o console do navegador possui mais detalhes sobre o erro</li>
             </ul>
 
-            {this.state.error && import.meta.env.DEV && (
+            {import.meta.env.DEV && this.state.error && (
               <details style={{ 
                 marginTop: '20px',
                 backgroundColor: '#1a1a1a',

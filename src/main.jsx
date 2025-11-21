@@ -50,24 +50,55 @@ function displayErrorOnScreen(errorMessage) {
     z-index: 999999;
     overflow: auto;
   `;
-  errorDiv.innerHTML = `
-    <div style="max-width: 800px; margin: 0 auto; background-color: #2a2a2a; padding: 30px; border-radius: 8px; border: 2px solid #ff4444;">
-      <h1 style="color: #ff4444; margin-top: 0; font-size: 24px;">⚠️ Erro Crítico na Inicialização</h1>
-      <p style="font-size: 16px; line-height: 1.5;">A aplicação encontrou um erro crítico e não pode ser iniciada.</p>
-      <div style="background-color: #1a1a1a; padding: 15px; border-radius: 4px; margin: 20px 0; font-family: monospace; font-size: 13px; color: #ff6666; word-break: break-word;">
-        ${errorMessage}
-      </div>
-      <p style="font-size: 14px; line-height: 1.6;">Por favor, verifique:</p>
-      <ul style="font-size: 14px; line-height: 1.6;">
-        <li>Se o arquivo .env.local existe na raiz do projeto</li>
-        <li>Se as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão configuradas</li>
-        <li>Se o console do navegador possui mais detalhes</li>
-      </ul>
-      <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: bold;">
-        Recarregar Página
-      </button>
-    </div>
-  `;
+  
+  // Create structure using DOM methods to avoid XSS vulnerabilities
+  const container = document.createElement('div');
+  container.style.cssText = 'max-width: 800px; margin: 0 auto; background-color: #2a2a2a; padding: 30px; border-radius: 8px; border: 2px solid #ff4444;';
+  
+  const title = document.createElement('h1');
+  title.style.cssText = 'color: #ff4444; margin-top: 0; font-size: 24px;';
+  title.textContent = '⚠️ Erro Crítico na Inicialização';
+  
+  const description = document.createElement('p');
+  description.style.cssText = 'font-size: 16px; line-height: 1.5;';
+  description.textContent = 'A aplicação encontrou um erro crítico e não pode ser iniciada.';
+  
+  const errorBox = document.createElement('div');
+  errorBox.style.cssText = 'background-color: #1a1a1a; padding: 15px; border-radius: 4px; margin: 20px 0; font-family: monospace; font-size: 13px; color: #ff6666; word-break: break-word;';
+  errorBox.textContent = errorMessage; // Use textContent instead of innerHTML to prevent XSS
+  
+  const instructionsTitle = document.createElement('p');
+  instructionsTitle.style.cssText = 'font-size: 14px; line-height: 1.6;';
+  instructionsTitle.textContent = 'Por favor, verifique:';
+  
+  const instructionsList = document.createElement('ul');
+  instructionsList.style.cssText = 'font-size: 14px; line-height: 1.6;';
+  
+  const items = [
+    'Se o arquivo .env.local existe na raiz do projeto',
+    'Se as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão configuradas',
+    'Se o console do navegador possui mais detalhes'
+  ];
+  
+  items.forEach(itemText => {
+    const li = document.createElement('li');
+    li.textContent = itemText;
+    instructionsList.appendChild(li);
+  });
+  
+  const reloadButton = document.createElement('button');
+  reloadButton.textContent = 'Recarregar Página';
+  reloadButton.style.cssText = 'margin-top: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: bold;';
+  reloadButton.onclick = () => window.location.reload();
+  
+  container.appendChild(title);
+  container.appendChild(description);
+  container.appendChild(errorBox);
+  container.appendChild(instructionsTitle);
+  container.appendChild(instructionsList);
+  container.appendChild(reloadButton);
+  
+  errorDiv.appendChild(container);
   document.body.innerHTML = '';
   document.body.appendChild(errorDiv);
 }
