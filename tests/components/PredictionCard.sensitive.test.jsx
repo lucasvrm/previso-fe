@@ -258,14 +258,10 @@ describe('PredictionCard - Sensitive Predictions', () => {
 
       expect(screen.getByText(/Test disclaimer/)).toBeInTheDocument();
       
-      // Empty resources object creates the list but with no items
+      // Empty resources object should not render the list at all
       const sensitiveWarning = screen.getByTestId('sensitive-warning');
       const resourcesList = sensitiveWarning.querySelector('ul');
-      expect(resourcesList).toBeInTheDocument();
-      
-      // But the list should be empty (no li elements)
-      const listItems = resourcesList.querySelectorAll('li');
-      expect(listItems).toHaveLength(0);
+      expect(resourcesList).not.toBeInTheDocument();
     });
 
     test('should handle very high probability (>= 0.9) for sensitive prediction', () => {

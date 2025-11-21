@@ -40,8 +40,11 @@ const PredictionsGrid = ({ userId }) => {
   useEffect(() => {
     if (!userId) {
       setLoading(false);
+      setPredictions([]);
       return;
     }
+
+    let cancelled = false;
 
     const loadPredictions = async () => {
       try {
@@ -53,25 +56,45 @@ const PredictionsGrid = ({ userId }) => {
           window_days: windowDays,
         });
 
+        // Don't update state if component was unmounted
+        if (cancelled) return;
+
         if (result.error) {
           throw result.error;
         }
 
         // Handle the response - it could be an array or an object with aggregated/per_checkin
         if (result.data) {
-          setPredictions(result.data);
+          // Ensure we always set an array
+          if (Array.isArray(result.data)) {
+            setPredictions(result.data);
+          } else if (result.data.predictions && Array.isArray(result.data.predictions)) {
+            setPredictions(result.data.predictions);
+          } else {
+            console.warn('[PredictionsGrid] Unexpected data format, setting empty array');
+            setPredictions([]);
+          }
         } else {
           setPredictions([]);
         }
       } catch (err) {
-        console.error('Error loading predictions:', err);
+        if (cancelled) return;
+        console.error('[PredictionsGrid] Error loading predictions:', err);
         setError('Não foi possível carregar as previsões. Por favor, tente novamente.');
+        setPredictions([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadPredictions();
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      cancelled = true;
+    };
   }, [userId, windowDays, refreshKey]); // Add refreshKey to dependencies
 
   const handleWindowChange = (newWindow) => {
