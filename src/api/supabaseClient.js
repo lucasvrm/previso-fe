@@ -14,7 +14,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     [Supabase] ERRO CRÍTICO: Variáveis de ambiente não configuradas!
     
     VITE_SUPABASE_URL: ${SUPABASE_URL || 'NÃO DEFINIDA'}
-    VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'NÃO DEFINIDA' : 'NÃO DEFINIDA'}
+    VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY || 'NÃO DEFINIDA'}
     
     Por favor, crie um arquivo .env.local na raiz do projeto com:
     VITE_SUPABASE_URL=sua_url_do_supabase

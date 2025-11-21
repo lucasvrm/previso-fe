@@ -69,7 +69,7 @@ class ErrorBoundary extends React.Component {
               <li>Se o console do navegador possui mais detalhes sobre o erro</li>
             </ul>
 
-            {this.state.error && (
+            {this.state.error && import.meta.env.DEV && (
               <details style={{ 
                 marginTop: '20px',
                 backgroundColor: '#1a1a1a',
@@ -84,7 +84,7 @@ class ErrorBoundary extends React.Component {
                   marginBottom: '10px',
                   color: '#ffaa00'
                 }}>
-                  Detalhes Técnicos do Erro
+                  Detalhes Técnicos do Erro (Modo Desenvolvimento)
                 </summary>
                 <pre style={{ 
                   margin: '10px 0 0 0',

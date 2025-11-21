@@ -105,5 +105,8 @@ try {
   console.error('[main.jsx] Stack trace:', error.stack);
   
   // Display error directly in the DOM
-  displayErrorOnScreen(`${error.message}\n\nStack trace:\n${error.stack}`);
+  // In production, avoid showing full stack trace for security reasons
+  const isDev = import.meta.env.DEV;
+  const errorDetail = isDev ? `${error.message}\n\nStack trace:\n${error.stack}` : error.message;
+  displayErrorOnScreen(errorDetail);
 }
