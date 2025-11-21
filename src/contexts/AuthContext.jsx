@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 
+/* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
