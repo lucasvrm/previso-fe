@@ -7,7 +7,7 @@ import { supabase } from '../api/supabaseClient';
 import { Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DataGenerator = () => {
-  const { user } = useAuth();
+  const { userRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -20,8 +20,8 @@ const DataGenerator = () => {
     includeMedications: true
   });
 
-  // Only show this component to the admin user
-  if (user?.email !== 'lucasvrm@gmail.com') {
+  // Only show this component to admin users
+  if (userRole !== 'admin') {
     return null;
   }
 

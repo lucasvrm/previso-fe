@@ -15,7 +15,7 @@ describe('DataGenerator', () => {
 
   test('should not render for non-admin users', () => {
     useAuth.mockReturnValue({
-      user: { email: 'regular@user.com' }
+      userRole: 'patient'
     });
 
     const { container } = render(<DataGenerator />);
@@ -24,7 +24,7 @@ describe('DataGenerator', () => {
 
   test('should render for admin user', () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     render(<DataGenerator />);
@@ -38,7 +38,7 @@ describe('DataGenerator', () => {
 
   test('should show error when User ID is empty', async () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     render(<DataGenerator />);
@@ -55,7 +55,7 @@ describe('DataGenerator', () => {
 
   test('should show error for invalid number of days', async () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     render(<DataGenerator />);
@@ -75,7 +75,7 @@ describe('DataGenerator', () => {
 
   test('should call API with correct parameters', async () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     const mockInvoke = jest.fn().mockResolvedValue({
@@ -108,7 +108,7 @@ describe('DataGenerator', () => {
 
   test('should show success message on successful generation', async () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     const mockInvoke = jest.fn().mockResolvedValue({
@@ -132,7 +132,7 @@ describe('DataGenerator', () => {
 
   test('should show error message on API failure', async () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     const mockInvoke = jest.fn().mockResolvedValue({
@@ -156,7 +156,7 @@ describe('DataGenerator', () => {
 
   test('should update checkboxes correctly', () => {
     useAuth.mockReturnValue({
-      user: { email: 'lucasvrm@gmail.com' }
+      userRole: 'admin'
     });
 
     render(<DataGenerator />);
