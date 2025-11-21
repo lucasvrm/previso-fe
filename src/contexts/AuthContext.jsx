@@ -95,7 +95,10 @@ export function AuthProvider({ children }) {
         async (_event, session) => {
           console.log('[AuthContext] Auth state changed:', _event);
           setUser(session?.user ?? null);
-          await fetchUserProfile(session?.user?.id);
+          // Fetch profile without blocking (consistent with initial auth flow)
+          if (session?.user?.id) {
+            fetchUserProfile(session.user.id);
+          }
         }
       );
       

@@ -121,3 +121,14 @@
 .react-calendar-heatmap .color-adherence-none {
   fill: hsl(var(--destructive)); /* Vermelho (Destrutivo) */
 }
+
+/* Spinner animation for loading states */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
