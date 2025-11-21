@@ -176,6 +176,72 @@ describe('DataGenerator', () => {
     });
   });
 
+  test('should display specific backend error messages like Duplicidade', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    // Simulate backend returning a specific error message
+    const mockError = new ApiError(
+      'Erro: Duplicidade detectada nos dados',
+      500
+    );
+    api.post.mockRejectedValue(mockError);
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      // Should show the specific backend error message, not a generic one
+      expect(screen.getByText(/Duplicidade detectada/)).toBeInTheDocument();
+    });
+  });
+
+  test('should stop loading state on error', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Erro: Operação falhou',
+      500
+    );
+    
+    // Add minimal delay to simulate network request
+    api.post.mockImplementation(() => 
+      new Promise((resolve, reject) => 
+        setTimeout(() => reject(mockError), 10)
+      )
+    );
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+    fireEvent.click(submitButton);
+
+    // Should show loading initially
+    await waitFor(() => {
+      expect(screen.getByText('Gerando dados...')).toBeInTheDocument();
+    });
+
+    // After error, loading should stop and button should be enabled again
+    await waitFor(() => {
+      expect(screen.queryByText('Gerando dados...')).not.toBeInTheDocument();
+      expect(submitButton).not.toBeDisabled();
+      expect(screen.getByText(/Operação falhou/)).toBeInTheDocument();
+    });
+  });
+
   test('should validate patient count range', async () => {
     useAuth.mockReturnValue({
       userRole: 'admin'
