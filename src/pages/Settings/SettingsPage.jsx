@@ -76,15 +76,17 @@ const SettingsPage = () => {
     <div className="w-full space-y-8">
       {/* Admin Components Grid - Only for admin */}
       {userRole === 'admin' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Row 1, Column 1: Data Statistics */}
           <DataStats ref={dataStatsRef} />
 
           {/* Row 1, Column 2: Data Generator Tool */}
           <DataGenerator />
 
-          {/* Row 2, Column 1: Data Cleanup Tool */}
-          <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
+          {/* Row 2: Data Cleanup Tool - Spans full width on desktop */}
+          <div className="md:col-span-2">
+            <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
+          </div>
         </div>
       )}
 
