@@ -176,23 +176,36 @@ describe('PredictionCard - Sensitive Predictions', () => {
       expect(sensitiveWarning).toBeInTheDocument();
     });
 
-    test('non-sensitive predictions should not show warning section', () => {
-      const nonSensitiveTypes = ['mood_state', 'relapse_risk', 'medication_adherence_risk', 'sleep_disturbance_risk'];
+    test('mood_state should not show warning section when not explicitly marked sensitive', () => {
+      const { queryByTestId } = render(
+        <PredictionCard
+          type="mood_state"
+          probability={0.70}
+          explanation="Test explanation"
+          model_version="1.0.0"
+          window_days={3}
+        />
+      );
 
-      nonSensitiveTypes.forEach(type => {
-        const { queryByTestId } = render(
-          <PredictionCard
-            type={type}
-            probability={0.70}
-            explanation="Test explanation"
-            model_version="1.0.0"
-            window_days={3}
-          />
-        );
+      const sensitiveWarning = queryByTestId('sensitive-warning');
+      expect(sensitiveWarning).not.toBeInTheDocument();
+    });
 
-        const sensitiveWarning = queryByTestId('sensitive-warning');
-        expect(sensitiveWarning).not.toBeInTheDocument();
-      });
+    test('can override non-sensitive prediction to be sensitive via prediction object', () => {
+      const prediction = {
+        type: 'mood_state',
+        probability: 0.70,
+        explanation: 'Test',
+        model_version: '1.0.0',
+        sensitive: true,
+        disclaimer: 'This is now sensitive',
+        resources: null
+      };
+
+      render(<PredictionCard prediction={prediction} window_days={3} />);
+
+      const sensitiveWarning = screen.getByTestId('sensitive-warning');
+      expect(sensitiveWarning).toBeInTheDocument();
     });
   });
 

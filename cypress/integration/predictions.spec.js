@@ -202,18 +202,18 @@ describe('Predictions Integration Tests', () => {
       cy.visit('/dashboard');
       cy.wait('@getPredictions');
 
-      // Verify progress bars have correct widths based on probability
+      // Verify progress bars have correct widths based on probability using aria-label
       // mood_state: 0.65 = 65%
-      cy.contains('Estado de Humor').parent().parent()
-        .find('.progress-fill').should('have.css', 'width').and('match', /65/);
+      cy.get('[aria-label="Estado de Humor probability"]')
+        .should('have.attr', 'aria-valuenow', '65');
       
       // relapse_risk: 0.42 = 42%
-      cy.contains('Risco de Recaída').parent().parent()
-        .find('.progress-fill').should('have.css', 'width').and('match', /42/);
+      cy.get('[aria-label="Risco de Recaída probability"]')
+        .should('have.attr', 'aria-valuenow', '42');
 
       // suicidality_risk: 0.15 = 15%
-      cy.contains('Risco de Suicidalidade').parent().parent()
-        .find('.progress-fill').should('have.css', 'width').and('match', /15/);
+      cy.get('[aria-label="Risco de Suicidalidade probability"]')
+        .should('have.attr', 'aria-valuenow', '15');
     });
 
     it('should render progress bars with correct widths for 7-day window', () => {
@@ -228,14 +228,14 @@ describe('Predictions Integration Tests', () => {
       cy.visit('/dashboard?window_days=7');
       cy.wait('@getPredictions');
 
-      // Verify progress bars for 7-day window
+      // Verify progress bars for 7-day window using aria-label
       // mood_state: 0.72 = 72%
-      cy.contains('Estado de Humor').parent().parent()
-        .find('.progress-fill').should('have.css', 'width').and('match', /72/);
+      cy.get('[aria-label="Estado de Humor probability"]')
+        .should('have.attr', 'aria-valuenow', '72');
       
       // relapse_risk: 0.58 = 58%
-      cy.contains('Risco de Recaída').parent().parent()
-        .find('.progress-fill').should('have.css', 'width').and('match', /58/);
+      cy.get('[aria-label="Risco de Recaída probability"]')
+        .should('have.attr', 'aria-valuenow', '58');
     });
   });
 
