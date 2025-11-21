@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { api, ApiError } from '../../api/apiClient';
+import { downloadBlob, getContentType } from '../../utils/downloadHelper';
 import { Download, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 const ExportData = () => {
@@ -54,16 +55,10 @@ const ExportData = () => {
       if (result.download_url) {
         window.open(result.download_url, '_blank');
       } else if (result.data) {
-        // Create a blob and download
-        const blob = new Blob([result.data], { type: getContentType(format) });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `export_${Date.now()}.${format}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        // Use the utility function to download the blob
+        const filename = `export_${Date.now()}.${format}`;
+        const contentType = getContentType(format);
+        downloadBlob(result.data, filename, contentType);
       }
       
       setSuccess('Exportação gerada com sucesso!');
@@ -83,15 +78,6 @@ const ExportData = () => {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getContentType = (fmt) => {
-    switch (fmt) {
-      case 'csv': return 'text/csv';
-      case 'json': return 'application/json';
-      case 'excel': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      default: return 'text/plain';
     }
   };
 

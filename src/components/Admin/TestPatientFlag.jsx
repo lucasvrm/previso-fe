@@ -19,6 +19,9 @@ const TestPatientFlag = () => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Memoized search function
+  // Note: Input is sanitized with encodeURIComponent on client-side.
+  // Server-side should implement additional validation, rate limiting,
+  // and SQL injection prevention to ensure security.
   const searchPatients = useCallback(async () => {
     setSearching(true);
     try {

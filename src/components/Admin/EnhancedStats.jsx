@@ -1,7 +1,7 @@
 // src/components/Admin/EnhancedStats.jsx
 // Enhanced statistics component with detailed metrics for admin dashboard
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { api, ApiError } from '../../api/apiClient';
 import { 
@@ -38,7 +38,7 @@ const EnhancedStats = () => {
     radarUpdatedLast7Days: 0
   });
 
-  const fetchEnhancedStats = async () => {
+  const fetchEnhancedStats = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -75,11 +75,11 @@ const EnhancedStats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEnhancedStats();
-  }, []);
+  }, [fetchEnhancedStats]);
 
   const handleRefresh = () => {
     fetchEnhancedStats();
@@ -199,18 +199,21 @@ const EnhancedStats = () => {
             <h3 className="text-sm font-medium text-muted-foreground">Distribuição de Padrões de Humor</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {Object.entries(stats.moodPatternDistribution).length > 0 ? (
-              Object.entries(stats.moodPatternDistribution).map(([pattern, percentage]) => (
-                <div key={pattern} className="text-center p-2 bg-muted/50 rounded">
-                  <p className="text-lg font-bold text-foreground">{percentage.toFixed(1)}%</p>
-                  <p className="text-xs text-muted-foreground capitalize">{pattern}</p>
-                </div>
-              ))
-            ) : (
-              <p className="col-span-full text-sm text-muted-foreground text-center">
-                Sem dados disponíveis
-              </p>
-            )}
+            {(() => {
+              const moodPatternEntries = Object.entries(stats.moodPatternDistribution);
+              return moodPatternEntries.length > 0 ? (
+                moodPatternEntries.map(([pattern, percentage]) => (
+                  <div key={pattern} className="text-center p-2 bg-muted/50 rounded">
+                    <p className="text-lg font-bold text-foreground">{percentage.toFixed(1)}%</p>
+                    <p className="text-xs text-muted-foreground capitalize">{pattern}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="col-span-full text-sm text-muted-foreground text-center">
+                  Sem dados disponíveis
+                </p>
+              );
+            })()}
           </div>
         </div>
 

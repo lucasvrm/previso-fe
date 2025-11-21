@@ -37,7 +37,7 @@ const DangerZone = ({ onCleanupSuccess }) => {
     try {
       const payload = {
         action,
-        quantity: quantity ? parseInt(quantity, 10) : undefined,
+        quantity: quantity ? (parseInt(quantity, 10) || undefined) : undefined,
         mood_pattern: moodPattern,
         before_date: beforeDate
       };
