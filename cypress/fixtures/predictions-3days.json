@@ -1,0 +1,42 @@
+[
+  {
+    "type": "mood_state",
+    "probability": 0.65,
+    "explanation": "Baseado em padrões de humor dos últimos 3 dias",
+    "model_version": "1.0.0",
+    "sensitive": false
+  },
+  {
+    "type": "relapse_risk",
+    "probability": 0.42,
+    "explanation": "Baixo risco de recaída",
+    "model_version": "1.0.0",
+    "sensitive": false
+  },
+  {
+    "type": "suicidality_risk",
+    "probability": 0.15,
+    "explanation": "Risco baixo detectado",
+    "model_version": "1.0.0",
+    "sensitive": true,
+    "disclaimer": "Se você estiver em crise, procure ajuda imediatamente.",
+    "resources": {
+      "CVV": "Ligue 188",
+      "SAMU": "Emergências: 192"
+    }
+  },
+  {
+    "type": "medication_adherence_risk",
+    "probability": 0.30,
+    "explanation": "Boa adesão à medicação",
+    "model_version": "1.0.0",
+    "sensitive": false
+  },
+  {
+    "type": "sleep_disturbance_risk",
+    "probability": 0.55,
+    "explanation": "Padrão de sono moderado",
+    "model_version": "1.0.0",
+    "sensitive": false
+  }
+]

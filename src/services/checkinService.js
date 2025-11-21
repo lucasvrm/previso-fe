@@ -87,7 +87,7 @@ export const getCheckinCountInLastDays = async (userId, days = 7) => {
  * @param {number} options.limit_checkins - Maximum number of check-ins to use for predictions
  * @returns {Promise<{data: Array|null, error: Error|null}>}
  */
-export const fetchPredictions = async (userId, { types, window_days, limit_checkins } = {}) => {
+export const fetchPredictions = async (userId, { types, window_days = 3, limit_checkins = 0 } = {}) => {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
     const qs = new URLSearchParams();
@@ -105,12 +105,17 @@ export const fetchPredictions = async (userId, { types, window_days, limit_check
     const queryString = qs.toString();
     const endpoint = `${apiUrl}/data/predictions/${userId}${queryString ? `?${queryString}` : ''}`;
     
-    console.log(`Fetching predictions from API: ${endpoint}`);
+    // Only log in development
+    if (import.meta.env.DEV) {
+      console.log(`Fetching predictions from API: ${endpoint}`);
+    }
     
     const response = await fetch(endpoint);
     
     if (!response.ok) {
-      throw new Error(`API responded with status ${response.status} (${response.statusText}) for endpoint: ${endpoint}`);
+      const errorBody = await response.json().catch(() => ({}));
+      const errorMessage = errorBody.detail || `API responded with status ${response.status}`;
+      throw new Error(errorMessage);
     }
     
     const predictionsData = await response.json();
@@ -118,7 +123,10 @@ export const fetchPredictions = async (userId, { types, window_days, limit_check
     // The API returns an array of predictions or null if there's no data
     return { data: predictionsData, error: null };
   } catch (error) {
-    console.error('Error fetching predictions from API:', error);
+    // Only log in development, don't log sensitive prediction data
+    if (import.meta.env.DEV) {
+      console.error('Error fetching predictions:', error.message);
+    }
     return { data: null, error };
   }
 };
