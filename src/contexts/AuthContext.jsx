@@ -69,6 +69,11 @@ export function AuthProvider({ children }) {
         setUserRole(profileData?.role || null);
       } catch (error) {
         console.error('[AuthContext] Erro ao buscar perfil do usuário:', error.message || error);
+        console.error('[AuthContext] ⚠️  ATENÇÃO: Não foi possível carregar o perfil do usuário!');
+        console.error('[AuthContext] Possíveis causas:');
+        console.error('[AuthContext] 1. Política RLS do Supabase está bloqueando o acesso');
+        console.error('[AuthContext] 2. Endpoint /api/profile não existe no backend');
+        console.error('[AuthContext] Solução: Verifique as políticas RLS ou adicione o endpoint /api/profile no backend');
         setProfile(null);
         setUserRole(null);
       }
