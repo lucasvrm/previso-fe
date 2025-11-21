@@ -106,6 +106,21 @@ const Sidebar = () => {
           )}
           <li>
             <NavLink 
+              to="/trends" 
+              className={({ isActive }) =>
+                `flex items-center p-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`
+              }
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span className="flex-1 ms-3 whitespace-nowrap">Radar de Tendências</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink 
               to="/settings" 
               className={({ isActive }) =>
                 `flex items-center p-3 rounded-lg transition-colors ${

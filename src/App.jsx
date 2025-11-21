@@ -10,6 +10,7 @@ import TherapistSignupPage from './pages/Auth/TherapistSignupPage';
 import PatientDashboard from './pages/Dashboard/Dashboard';
 import TherapistDashboard from './pages/Therapist/TherapistDashboard';
 import PatientView from './pages/Therapist/PatientView';
+import TrendsPage from './pages/Trends/TrendsPage';
 import ClinicalReports from './pages/Therapist/ClinicalReports';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
@@ -53,6 +54,10 @@ function App() {
         <Route 
           path="/dashboard"
           element={userRole === 'therapist' ? <TherapistDashboard /> : <PatientDashboard />}
+        />
+        <Route 
+          path="/trends"
+          element={<TrendsPage />}
         />
         <Route 
           path="/therapist/patient/:patientId"
