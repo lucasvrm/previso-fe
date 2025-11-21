@@ -35,7 +35,10 @@ const Dashboard = () => {
         const latestResult = await fetchLatestCheckin(user.id);
         if (!isMounted) return;
         
-        if (latestResult.data) {
+        if (latestResult.error) {
+          console.warn('Could not fetch latest checkin for daily prediction:', latestResult.error);
+          // Continue without daily prediction - don't fail the entire dashboard
+        } else if (latestResult.data) {
           setLatestCheckin(latestResult.data);
         }
       } catch (error) {

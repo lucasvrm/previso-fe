@@ -26,11 +26,16 @@ const AnalysesPage = () => {
       try {
         setLoading(true);
         const result = await fetchLatestCheckin(user.id);
-        if (result.data) {
+        
+        if (result.error) {
+          console.warn('Could not fetch latest checkin for daily prediction:', result.error);
+          // Continue without daily prediction - not a critical error
+        } else if (result.data) {
           setLatestCheckin(result.data);
         }
       } catch (error) {
         console.error('Error loading latest checkin:', error);
+        // Continue without daily prediction - not a critical error
       } finally {
         setLoading(false);
       }
