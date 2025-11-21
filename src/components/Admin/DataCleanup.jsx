@@ -26,7 +26,6 @@ const DataCleanup = ({ onCleanupSuccess }) => {
     setError(null);
     setSuccess(null);
     setLoading(true);
-    setShowModal(false);
 
     try {
       const result = await api.post('/api/admin/cleanup-data', { confirm: true });
@@ -57,6 +56,7 @@ const DataCleanup = ({ onCleanupSuccess }) => {
       }
     } finally {
       setLoading(false);
+      setShowModal(false);
     }
   };
 
