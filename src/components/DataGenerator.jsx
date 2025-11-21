@@ -111,7 +111,7 @@ const DataGenerator = () => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-6 rounded-lg border-2 border-purple-500/20 shadow-sm max-w-2xl">
+    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-6 rounded-lg border-2 border-purple-500/20 shadow-sm h-full flex flex-col">
       <div className="flex items-center gap-3 mb-4">
         <Database className="h-6 w-6 text-purple-600" />
         <h2 className="text-xl font-semibold text-foreground">
@@ -131,7 +131,7 @@ const DataGenerator = () => {
         </span>
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col">
         {/* User Selection Dropdown */}
         <div>
           <label htmlFor="userId" className="block text-sm font-medium text-muted-foreground mb-1">

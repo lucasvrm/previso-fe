@@ -68,7 +68,7 @@ const DataCleanup = ({ onCleanupSuccess }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 p-6 rounded-lg border-2 border-red-500/20 shadow-sm max-w-2xl">
+    <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 p-6 rounded-lg border-2 border-red-500/20 shadow-sm h-full flex flex-col">
       <div className="flex items-center gap-3 mb-4">
         <Trash2 className="h-6 w-6 text-red-600" />
         <h2 className="text-xl font-semibold text-foreground">
