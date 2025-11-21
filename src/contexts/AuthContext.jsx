@@ -25,33 +25,79 @@ export function AuthProvider({ children }) {
           .select('*')
           .eq('id', userId)
           .single();
-        if (error) throw error;
+        if (error) {
+          console.error('[AuthContext] Erro ao buscar perfil via Supabase:', error);
+          console.log('[AuthContext] Tentando fallback: buscar via API...');
+          
+          // Fallback: Try to fetch via API endpoint to bypass RLS
+          try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            
+            if (sessionError || !session) {
+              throw new Error('Sem sessão ativa');
+            }
+            
+            // Import getApiUrl at the top or inline it here
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
+            const endpoint = `${apiUrl}/api/profile`;
+            
+            const response = await fetch(endpoint, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              }
+            });
+            
+            if (!response.ok) {
+              throw new Error(`API retornou ${response.status}`);
+            }
+            
+            const apiProfileData = await response.json();
+            console.log('[AuthContext] Perfil carregado via API:', apiProfileData);
+            setProfile(apiProfileData);
+            setUserRole(apiProfileData?.role || null);
+            return;
+          } catch (apiError) {
+            console.error('[AuthContext] Fallback via API também falhou:', apiError);
+            throw error; // Throw original Supabase error
+          }
+        }
+        console.log('[AuthContext] Perfil carregado via Supabase:', profileData);
         setProfile(profileData);
         setUserRole(profileData?.role || null);
       } catch (error) {
-        console.error('Erro ao buscar perfil do usuário:', error.message);
+        console.error('[AuthContext] Erro ao buscar perfil do usuário:', error.message || error);
         setProfile(null);
         setUserRole(null);
       }
     };
     
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    let subscription = null;
+    
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       await fetchUserProfile(session?.user?.id);
       setLoading(false);
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      const { data: authListener } = supabase.auth.onAuthStateChange(
         async (_event, session) => {
           setUser(session?.user ?? null);
           await fetchUserProfile(session?.user?.id);
-          setLoading(false);
         }
       );
       
-      return subscription;
-    });
+      subscription = authListener.subscription;
+    };
+    
+    initAuth();
 
-    return () => {};
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const signUp = async (email, password, role = 'patient') => {
