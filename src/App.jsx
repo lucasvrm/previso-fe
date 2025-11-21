@@ -21,11 +21,21 @@ import AnalysesPage from './pages/Analyses/AnalysesPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
+  console.log('[App] Componente App montando...');
   const { user, userRole, loading } = useAuth();
+  
+  console.log('[App] Estado atual:', { 
+    user: user ? '✓ autenticado' : '✗ não autenticado', 
+    userRole: userRole || 'não definido', 
+    loading 
+  });
 
   if (loading) {
+    console.log('[App] Estado: Carregando autenticação...');
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><h2>Carregando...</h2></div>;
   }
+  
+  console.log('[App] ✓ Renderizando rotas...');
 
   return (
     <Routes>
