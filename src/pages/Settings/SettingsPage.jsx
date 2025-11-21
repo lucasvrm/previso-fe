@@ -6,6 +6,7 @@ import { supabase } from '../../api/supabaseClient';
 import { useAuth } from '../../hooks/useAuth';
 import { Send, Copy, Check } from 'lucide-react';
 import DataGenerator from '../../components/DataGenerator';
+import DataStats from '../../components/Admin/DataStats';
 
 const SettingsPage = () => {
   const { user, userRole } = useAuth();
@@ -64,6 +65,9 @@ const SettingsPage = () => {
 
   return (
     <div className="w-full space-y-8">
+      {/* Data Statistics - Only for admin */}
+      <DataStats />
+
       {/* Data Generator Tool - Only for admin */}
       <DataGenerator />
 
