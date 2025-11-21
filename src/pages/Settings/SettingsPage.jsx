@@ -78,19 +78,13 @@ const SettingsPage = () => {
       {userRole === 'admin' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Row 1, Column 1: Data Statistics */}
-          <div className="flex">
-            <DataStats ref={dataStatsRef} />
-          </div>
+          <DataStats ref={dataStatsRef} />
 
           {/* Row 1, Column 2: Data Generator Tool */}
-          <div className="flex">
-            <DataGenerator />
-          </div>
+          <DataGenerator />
 
           {/* Row 2, Column 1: Data Cleanup Tool */}
-          <div className="md:col-span-1">
-            <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
-          </div>
+          <DataCleanup onCleanupSuccess={handleCleanupSuccess} />
         </div>
       )}
 
