@@ -1,88 +1,65 @@
 // src/components/DataGenerator.jsx
 // Component for admin to generate synthetic data for testing
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../hooks/useAuth';
 import { api, ApiError } from '../api/apiClient';
 import { Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DataGenerator = () => {
   const { userRole } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [users, setUsers] = useState([]);
-  
-  // Form state
-  const [config, setConfig] = useState({
-    userId: '', // Empty string means "Generate New User"
-    numDays: 30,
-    includeNotes: true,
-    includeMedications: true
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
+    defaultValues: {
+      userType: 'patient',
+      patients_count: 1,
+      therapists_count: 0,
+      checkins_per_user: 30,
+      mood_pattern: 'stable',
+      include_notes: true,
+      include_medications: true,
+      include_social_events: false
+    }
   });
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [response, setResponse] = useState(null);
 
-  // Fetch users when component mounts (only for admin)
-  useEffect(() => {
-    if (userRole !== 'admin') return;
-
-    const fetchUsers = async () => {
-      setLoadingUsers(true);
-      try {
-        const data = await api.get('/api/admin/users');
-        setUsers(data.users || []);
-      } catch (err) {
-        console.error('Error fetching users:', err);
-        // Silently fail - user list is not critical
-      } finally {
-        setLoadingUsers(false);
-      }
-    };
-
-    fetchUsers();
-  }, [userRole]);
+  // Watch userType to conditionally show fields
+  const userType = watch('userType');
 
   // Only show this component to admin users
   if (userRole !== 'admin') {
     return null;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
+  const onGenerate = async (data) => {
     setLoading(true);
+    setError(null);
+    setResponse(null);
 
     try {
-      const parsedNumDays = parseInt(config.numDays, 10);
-      if (isNaN(parsedNumDays) || parsedNumDays < 1 || parsedNumDays > 365) {
-        setError('O número de dias deve estar entre 1 e 365.');
-        setLoading(false);
-        return;
-      }
-
-      // Prepare payload - send null or empty string for userId if "new user" is selected
+      // Build the payload based on the form data
+      // Note: patients_count or therapists_count may be undefined if their input is not rendered
+      // (based on userType selection), so we use || 0 as a fallback
       const payload = {
-        user_id: config.userId || null,
-        num_days: parsedNumDays,
-        include_notes: config.includeNotes,
-        include_medications: config.includeMedications
+        user_type: data.userType,
+        patients_count: parseInt(data.patients_count, 10) || 0,
+        therapists_count: parseInt(data.therapists_count, 10) || 0,
+        checkins_per_user: parseInt(data.checkins_per_user, 10),
+        mood_pattern: data.mood_pattern,
+        include_notes: data.include_notes,
+        include_medications: data.include_medications,
+        include_social_events: data.include_social_events
       };
 
-      const data = await api.post('/api/admin/generate-data', payload);
+      const result = await api.post('/api/admin/generate-data', payload);
       
-      setSuccess(
-        data.message || 
-        `Dados gerados com sucesso! ${config.numDays} dias de check-ins criados.`
-      );
+      setResponse(result);
       
       // Reset form on success
-      setConfig({
-        userId: '',
-        numDays: 30,
-        includeNotes: true,
-        includeMedications: true
-      });
+      reset();
     } catch (err) {
       console.error('Erro na requisição:', err);
       
@@ -101,13 +78,6 @@ const DataGenerator = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleInputChange = (field, value) => {
-    setConfig(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   return (
@@ -131,63 +101,133 @@ const DataGenerator = () => {
         </span>
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4 flex-1 flex flex-col">
-        {/* User Selection Dropdown */}
+      <form onSubmit={handleSubmit(onGenerate)} className="space-y-4 flex-1 flex flex-col">
+        {/* User Type Selection */}
         <div>
-          <label htmlFor="userId" className="block text-sm font-medium text-muted-foreground mb-1">
-            Usuário <span className="text-red-500">*</span>
+          <label htmlFor="userType" className="block text-sm font-medium text-muted-foreground mb-1">
+            Tipo de Usuário <span className="text-red-500">*</span>
           </label>
           <select
-            id="userId"
-            value={config.userId}
-            onChange={(e) => handleInputChange('userId', e.target.value)}
-            disabled={loadingUsers}
+            id="userType"
+            {...register('userType', { required: 'Campo obrigatório' })}
             className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
           >
-            <option value="">Gerar Novo Usuário (Automático)</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.email || `Usuário ${user.id.substring(0, 8)}...`}
-              </option>
-            ))}
+            <option value="patient">Paciente</option>
+            <option value="therapist">Terapeuta</option>
+            <option value="both">Ambos</option>
           </select>
+          {errors.userType && (
+            <p className="text-xs text-red-500 mt-1">{errors.userType.message}</p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
-            {loadingUsers 
-              ? 'Carregando usuários...' 
-              : 'Selecione um usuário existente ou gere dados para um novo usuário'}
+            Selecione o tipo de usuário a ser gerado
           </p>
         </div>
 
+        {/* Patient Count Input */}
+        {(userType === 'patient' || userType === 'both') && (
+          <div>
+            <label htmlFor="patients_count" className="block text-sm font-medium text-muted-foreground mb-1">
+              Quantidade de Pacientes <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="patients_count"
+              type="number"
+              {...register('patients_count', { 
+                required: 'Campo obrigatório',
+                min: { value: 0, message: 'Mínimo: 0' },
+                max: { value: 100, message: 'Máximo: 100' }
+              })}
+              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+            {errors.patients_count && (
+              <p className="text-xs text-red-500 mt-1">{errors.patients_count.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Número de pacientes a criar (0-100)
+            </p>
+          </div>
+        )}
+
+        {/* Therapist Count Input */}
+        {(userType === 'therapist' || userType === 'both') && (
+          <div>
+            <label htmlFor="therapists_count" className="block text-sm font-medium text-muted-foreground mb-1">
+              Quantidade de Terapeutas <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="therapists_count"
+              type="number"
+              {...register('therapists_count', { 
+                required: 'Campo obrigatório',
+                min: { value: 0, message: 'Mínimo: 0' },
+                max: { value: 50, message: 'Máximo: 50' }
+              })}
+              className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            />
+            {errors.therapists_count && (
+              <p className="text-xs text-red-500 mt-1">{errors.therapists_count.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Número de terapeutas a criar (0-50)
+            </p>
+          </div>
+        )}
+
         {/* Number of Days Input */}
         <div>
-          <label htmlFor="numDays" className="block text-sm font-medium text-muted-foreground mb-1">
+          <label htmlFor="checkins_per_user" className="block text-sm font-medium text-muted-foreground mb-1">
             Número de Dias <span className="text-red-500">*</span>
           </label>
           <input
-            id="numDays"
+            id="checkins_per_user"
             type="number"
-            min="1"
-            max="365"
-            value={config.numDays}
-            onChange={(e) => handleInputChange('numDays', e.target.value)}
-            required
+            {...register('checkins_per_user', { 
+              required: 'Campo obrigatório',
+              min: { value: 1, message: 'Mínimo: 1' },
+              max: { value: 365, message: 'Máximo: 365' }
+            })}
             className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
           />
+          {errors.checkins_per_user && (
+            <p className="text-xs text-red-500 mt-1">{errors.checkins_per_user.message}</p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">
             Quantidade de dias de histórico a gerar (1-365)
+          </p>
+        </div>
+
+        {/* Mood Pattern Dropdown */}
+        <div>
+          <label htmlFor="mood_pattern" className="block text-sm font-medium text-muted-foreground mb-1">
+            Padrão de Humor <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="mood_pattern"
+            {...register('mood_pattern', { required: 'Campo obrigatório' })}
+            className="w-full p-3 bg-background border rounded-md focus:ring-2 focus:ring-purple-500 focus:outline-none"
+          >
+            <option value="stable">Estável</option>
+            <option value="cycling">Cíclico</option>
+            <option value="random">Aleatório</option>
+          </select>
+          {errors.mood_pattern && (
+            <p className="text-xs text-red-500 mt-1">{errors.mood_pattern.message}</p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            Padrão de variação de humor para os check-ins
           </p>
         </div>
 
         {/* Include Notes Checkbox */}
         <div className="flex items-center gap-3">
           <input
-            id="includeNotes"
+            id="include_notes"
             type="checkbox"
-            checked={config.includeNotes}
-            onChange={(e) => handleInputChange('includeNotes', e.target.checked)}
+            {...register('include_notes')}
             className="w-4 h-4 text-purple-600 bg-background border-gray-300 rounded focus:ring-purple-500"
           />
-          <label htmlFor="includeNotes" className="text-sm font-medium text-foreground">
+          <label htmlFor="include_notes" className="text-sm font-medium text-foreground">
             Incluir notas nos check-ins
           </label>
         </div>
@@ -195,14 +235,26 @@ const DataGenerator = () => {
         {/* Include Medications Checkbox */}
         <div className="flex items-center gap-3">
           <input
-            id="includeMedications"
+            id="include_medications"
             type="checkbox"
-            checked={config.includeMedications}
-            onChange={(e) => handleInputChange('includeMedications', e.target.checked)}
+            {...register('include_medications')}
             className="w-4 h-4 text-purple-600 bg-background border-gray-300 rounded focus:ring-purple-500"
           />
-          <label htmlFor="includeMedications" className="text-sm font-medium text-foreground">
+          <label htmlFor="include_medications" className="text-sm font-medium text-foreground">
             Incluir medicações nos check-ins
+          </label>
+        </div>
+
+        {/* Include Social Events/Rhythm Checkbox */}
+        <div className="flex items-center gap-3">
+          <input
+            id="include_social_events"
+            type="checkbox"
+            {...register('include_social_events')}
+            className="w-4 h-4 text-purple-600 bg-background border-gray-300 rounded focus:ring-purple-500"
+          />
+          <label htmlFor="include_social_events" className="text-sm font-medium text-foreground">
+            Incluir eventos sociais/ritmo
           </label>
         </div>
 
@@ -214,11 +266,25 @@ const DataGenerator = () => {
           </div>
         )}
 
-        {/* Success Message */}
-        {success && (
+        {/* Success Message with Statistics */}
+        {response && (
           <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
             <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-green-800 dark:text-green-200">{success}</p>
+            <div className="text-sm font-medium text-green-800 dark:text-green-200">
+              <p className="mb-2">{response.message || 'Dados gerados com sucesso!'}</p>
+              {response.statistics && (
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>Pacientes criados: {response.statistics.patients_created || 0}</li>
+                  <li>Terapeutas criados: {response.statistics.therapists_created || 0}</li>
+                  <li>Check-ins totais: {response.statistics.total_checkins || 0}</li>
+                  {response.statistics.user_ids && response.statistics.user_ids.length > 0 && (
+                    <li>IDs de usuários: {response.statistics.user_ids.slice(0, 3).join(', ')}
+                      {response.statistics.user_ids.length > 3 && ` +${response.statistics.user_ids.length - 3} mais`}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
           </div>
         )}
 

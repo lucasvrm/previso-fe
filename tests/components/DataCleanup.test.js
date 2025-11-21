@@ -9,17 +9,9 @@ jest.mock('../../src/hooks/useAuth');
 jest.mock('../../src/api/apiClient');
 jest.mock('../../src/contexts/AuthContext');
 
-// Mock window.confirm
-const originalConfirm = window.confirm;
-
 describe('DataCleanup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    window.confirm = jest.fn();
-  });
-
-  afterEach(() => {
-    window.confirm = originalConfirm;
   });
 
   test('should not render for non-admin users', () => {
@@ -44,22 +36,46 @@ describe('DataCleanup', () => {
     expect(screen.getByRole('button', { name: /Limpar Dados de Teste/i })).toBeInTheDocument();
   });
 
-  test('should not proceed if user cancels confirmation', async () => {
+  test('should show modal when cleanup button is clicked', async () => {
     useAuth.mockReturnValue({
       userRole: 'admin'
     });
-
-    window.confirm.mockReturnValue(false);
 
     render(<DataCleanup />);
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
 
-    // Verify that window.confirm was called
-    expect(window.confirm).toHaveBeenCalled();
+    // Verify that modal appears
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+      expect(screen.getByText(/Esta ação removerá TODOS os usuários/)).toBeInTheDocument();
+    });
+  });
+
+  test('should not proceed if user cancels confirmation', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    render(<DataCleanup />);
     
-    // Verify that no API call was made
+    const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
+    fireEvent.click(cleanupButton);
+
+    // Wait for modal to appear
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    // Click cancel button
+    const cancelButton = screen.getByRole('button', { name: /Cancelar/i });
+    fireEvent.click(cancelButton);
+    
+    // Verify that modal is closed and no API call was made
+    await waitFor(() => {
+      expect(screen.queryByText('Confirmação')).not.toBeInTheDocument();
+    });
     expect(api.post).not.toHaveBeenCalled();
   });
 
@@ -68,8 +84,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     // Mock API to throw 401 error
     const mockError = new ApiError('Sessão expirada. Por favor, faça login novamente.', 401);
     api.post.mockRejectedValue(mockError);
@@ -78,6 +92,14 @@ describe('DataCleanup', () => {
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Sessão expirada/)).toBeInTheDocument();
@@ -89,14 +111,20 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     api.post.mockResolvedValue({ message: 'Dados removidos com sucesso!' });
 
     render(<DataCleanup />);
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/api/admin/cleanup-data', { confirm: true });
@@ -108,14 +136,20 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     api.post.mockResolvedValue({ message: 'Dados removidos com sucesso!' });
 
     render(<DataCleanup />);
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText('Dados removidos com sucesso!')).toBeInTheDocument();
@@ -127,8 +161,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     api.post.mockResolvedValue({ message: 'Success' });
 
     const mockCallback = jest.fn();
@@ -137,6 +169,14 @@ describe('DataCleanup', () => {
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(mockCallback).toHaveBeenCalledTimes(1);
@@ -148,8 +188,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     const mockError = new ApiError('Erro no servidor. Tente novamente mais tarde.', 500);
     api.post.mockRejectedValue(mockError);
 
@@ -157,6 +195,14 @@ describe('DataCleanup', () => {
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Erro no servidor/)).toBeInTheDocument();
@@ -168,8 +214,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     // Mock a delayed response
     api.post.mockImplementation(() => 
       new Promise(resolve => 
@@ -182,9 +226,17 @@ describe('DataCleanup', () => {
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
 
-    // Button should be disabled while loading
+    // Wait for modal and click confirm
     await waitFor(() => {
-      expect(cleanupButton).toBeDisabled();
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
+
+    // Modal confirm button should be disabled while loading
+    await waitFor(() => {
+      expect(confirmButton).toBeDisabled();
     });
   });
 
@@ -193,8 +245,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     // Mock a delayed response
     api.post.mockImplementation(() => 
       new Promise(resolve => 
@@ -207,9 +257,17 @@ describe('DataCleanup', () => {
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
 
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
+
     // Should show loading text
     await waitFor(() => {
-      expect(screen.getByText('Limpando dados...')).toBeInTheDocument();
+      expect(screen.getByText('Limpando...')).toBeInTheDocument();
     });
   });
 
@@ -218,14 +276,20 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     api.post.mockRejectedValue(new Error('Network error'));
 
     render(<DataCleanup />);
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Erro ao limpar dados/)).toBeInTheDocument();
@@ -237,8 +301,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     const mockError = new ApiError('Server error', 500);
     api.post.mockRejectedValue(mockError);
 
@@ -248,6 +310,14 @@ describe('DataCleanup', () => {
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Server error/)).toBeInTheDocument();
@@ -261,8 +331,6 @@ describe('DataCleanup', () => {
       userRole: 'admin'
     });
 
-    window.confirm.mockReturnValue(true);
-    
     const mockError = new ApiError('Acesso negado. Você não tem permissão para realizar esta ação.', 403);
     api.post.mockRejectedValue(mockError);
 
@@ -270,6 +338,14 @@ describe('DataCleanup', () => {
     
     const cleanupButton = screen.getByRole('button', { name: /Limpar Dados de Teste/i });
     fireEvent.click(cleanupButton);
+
+    // Wait for modal and click confirm
+    await waitFor(() => {
+      expect(screen.getByText('Confirmação')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /Confirmar/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Você não tem permissão/)).toBeInTheDocument();
