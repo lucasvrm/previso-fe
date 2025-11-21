@@ -8,7 +8,8 @@ import { Trash2, Loader2, AlertTriangle, CheckCircle, X } from 'lucide-react';
 
 // Confirmation message constant
 const CLEANUP_CONFIRMATION_MESSAGE = 
-  'ATENÇÃO: Esta ação removerá TODOS os usuários e check-ins gerados sinteticamente. Esta operação NÃO pode ser desfeita.';
+  'ATENÇÃO: Esta ação removerá TODOS os usuários e check-ins gerados sinteticamente. ' +
+  'Esta operação NÃO pode ser desfeita.';
 
 const DataCleanup = ({ onCleanupSuccess }) => {
   const { userRole } = useAuth();

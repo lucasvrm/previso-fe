@@ -41,6 +41,8 @@ const DataGenerator = () => {
 
     try {
       // Build the payload based on the form data
+      // Note: patients_count or therapists_count may be undefined if their input is not rendered
+      // (based on userType selection), so we use || 0 as a fallback
       const payload = {
         user_type: data.userType,
         patients_count: parseInt(data.patients_count, 10) || 0,
