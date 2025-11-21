@@ -1,0 +1,18 @@
+{
+  "predictions": [
+    {
+      "type": "mood_state",
+      "probability": 0.80,
+      "explanation": "Wrapped response format test",
+      "model_version": "1.0.0",
+      "sensitive": false
+    },
+    {
+      "type": "relapse_risk",
+      "probability": 0.35,
+      "explanation": "Testing wrapped format",
+      "model_version": "1.0.0",
+      "sensitive": false
+    }
+  ]
+}
