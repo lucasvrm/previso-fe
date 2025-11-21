@@ -1,0 +1,31 @@
+# Python Virtual Environment
+venv/
+env/
+.venv/
+
+# Pytest cache
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Test results
+test-results/
+screenshots/
+*.png
+*.mp4
+*.webm
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
