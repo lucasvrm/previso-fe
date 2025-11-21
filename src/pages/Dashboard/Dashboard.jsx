@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { fetchCheckins, fetchLatestCheckin } from '../../services/checkinService';
+import { fetchCheckins } from '../../services/checkinService';
 import DashboardViewer from '../../components/Dashboard/DashboardViewer';
-import DailyPredictionCard from '../../components/DailyPredictionCard';
+import PredictionsGrid from '../../components/PredictionsGrid';
 import { AlertTriangle } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [checkins, setCheckins] = useState([]);
-  const [latestCheckin, setLatestCheckin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState('overview');
@@ -21,19 +20,14 @@ const Dashboard = () => {
     let isMounted = true; 
     const fetchCheckinData = async () => {
       try {
-        // Fetch both historical check-ins for charts and the latest check-in for the prediction card
-        const [checkinsResult, latestResult] = await Promise.all([
-          fetchCheckins(user.id, 30),
-          fetchLatestCheckin(user.id)
-        ]);
+        // Fetch historical check-ins for charts
+        const checkinsResult = await fetchCheckins(user.id, 30);
         
         if (!isMounted) return;
         
         if (checkinsResult.error) throw checkinsResult.error;
-        if (latestResult.error) throw latestResult.error;
         
         setCheckins(checkinsResult.data);
-        setLatestCheckin(latestResult.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         if (isMounted) setError('Não foi possível carregar seus dados.');
@@ -110,17 +104,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Daily Prediction Card */}
-      {latestCheckin ? (
-        <DailyPredictionCard 
-          latestCheckin={latestCheckin} 
-          userId={user?.id} 
-        />
-      ) : (
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <p className="text-gray-600">Você ainda não fez nenhum check-in.</p>
-        </div>
-      )}
+      {/* Predictions Grid - Multiple prediction cards */}
+      {user && <PredictionsGrid userId={user.id} />}
 
       {/* Dashboard Viewer */}
       <DashboardViewer 
