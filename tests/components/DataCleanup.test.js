@@ -7,8 +7,12 @@ import { supabase } from '../../src/api/supabaseClient';
 // Mock dependencies
 jest.mock('../../src/hooks/useAuth');
 jest.mock('../../src/api/supabaseClient');
+
+// Mock API URL
+const MOCK_API_URL = 'https://bipolar-engine.onrender.com';
+
 jest.mock('../../src/utils/apiConfig', () => ({
-  getApiUrl: jest.fn(() => 'https://bipolar-engine.onrender.com')
+  getApiUrl: jest.fn(() => MOCK_API_URL)
 }));
 
 // Mock fetch

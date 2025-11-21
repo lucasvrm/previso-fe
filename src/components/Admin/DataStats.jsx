@@ -152,4 +152,6 @@ const DataStats = forwardRef((props, ref) => {
   );
 });
 
+DataStats.displayName = 'DataStats';
+
 export default DataStats;

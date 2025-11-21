@@ -7,17 +7,17 @@ import { supabase } from '../../api/supabaseClient';
 import { getApiUrl } from '../../utils/apiConfig';
 import { Trash2, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 
+// Confirmation message constant
+const CLEANUP_CONFIRMATION_MESSAGE = 
+  'ATENÇÃO: Esta ação removerá TODOS os usuários e check-ins gerados sinteticamente.\n\n' +
+  'Esta operação NÃO pode ser desfeita.\n\n' +
+  'Tem certeza de que deseja continuar?';
+
 const DataCleanup = ({ onCleanupSuccess }) => {
   const { userRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
-  // Confirmation message constant
-  const CLEANUP_CONFIRMATION_MESSAGE = 
-    'ATENÇÃO: Esta ação removerá TODOS os usuários e check-ins gerados sinteticamente.\n\n' +
-    'Esta operação NÃO pode ser desfeita.\n\n' +
-    'Tem certeza de que deseja continuar?';
 
   // Only show this component to admin users
   if (userRole !== 'admin') {
