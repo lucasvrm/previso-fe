@@ -39,7 +39,8 @@ const DataGenerator = () => {
         return;
       }
 
-      if (config.numDays < 1 || config.numDays > 365) {
+      const parsedNumDays = parseInt(config.numDays, 10);
+      if (isNaN(parsedNumDays) || parsedNumDays < 1 || parsedNumDays > 365) {
         setError('O número de dias deve estar entre 1 e 365.');
         setLoading(false);
         return;
@@ -51,7 +52,7 @@ const DataGenerator = () => {
         {
           body: {
             user_id: config.userId.trim(),
-            num_days: parseInt(config.numDays, 10),
+            num_days: parsedNumDays,
             include_notes: config.includeNotes,
             include_medications: config.includeMedications
           }
@@ -101,13 +102,15 @@ const DataGenerator = () => {
       </div>
       
       <p className="text-muted-foreground mb-6">
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded text-xs font-semibold mb-2">
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded text-xs font-semibold">
           <AlertCircle className="h-3 w-3" />
           Admin Only
         </span>
         <br />
-        Esta ferramenta gera dados sintéticos de check-ins para testes. 
-        Use com cuidado, pois irá inserir dados no banco de dados.
+        <span className="block mt-2">
+          Esta ferramenta gera dados sintéticos de check-ins para testes. 
+          Use com cuidado, pois irá inserir dados no banco de dados.
+        </span>
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
