@@ -70,7 +70,7 @@ const Sidebar = () => {
               </NavLink>
             </li>
           )}
-          {userRole === 'patient' && (
+          {(userRole === 'patient' || userRole === 'therapist') && (
             <li>
               <NavLink 
                 to="/analyses" 
