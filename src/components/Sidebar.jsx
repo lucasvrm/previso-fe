@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Settings, BarChart3, User, UserCog, FileText, LogOut } from 'lucide-react';
+import { Home, Settings, BarChart3, User, UserCog, FileText, LogOut, Brain } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const Sidebar = () => {
@@ -67,6 +67,23 @@ const Sidebar = () => {
               >
                 <BarChart3 className="w-5 h-5" />
                 <span className="flex-1 ms-3 whitespace-nowrap">Check-in</span>
+              </NavLink>
+            </li>
+          )}
+          {userRole === 'patient' && (
+            <li>
+              <NavLink 
+                to="/analyses" 
+                className={({ isActive }) =>
+                  `flex items-center p-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`
+                }
+              >
+                <Brain className="w-5 h-5" />
+                <span className="flex-1 ms-3 whitespace-nowrap">Análises</span>
               </NavLink>
             </li>
           )}

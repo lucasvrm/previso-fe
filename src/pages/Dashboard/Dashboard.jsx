@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { fetchCheckins } from '../../services/checkinService';
+import { fetchCheckins, fetchLatestCheckin } from '../../services/checkinService';
 import DashboardViewer from '../../components/Dashboard/DashboardViewer';
 import PredictionsGrid from '../../components/PredictionsGrid';
+import DailyPredictionCard from '../../components/DailyPredictionCard';
 import { AlertTriangle } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [checkins, setCheckins] = useState([]);
+  const [latestCheckin, setLatestCheckin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState('overview');
@@ -28,6 +30,17 @@ const Dashboard = () => {
         if (checkinsResult.error) throw checkinsResult.error;
         
         setCheckins(checkinsResult.data);
+
+        // Fetch latest check-in for daily prediction
+        const latestResult = await fetchLatestCheckin(user.id);
+        if (!isMounted) return;
+        
+        if (latestResult.error) {
+          console.warn('Could not fetch latest checkin for daily prediction:', latestResult.error);
+          // Continue without daily prediction - don't fail the entire dashboard
+        } else if (latestResult.data) {
+          setLatestCheckin(latestResult.data);
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         if (isMounted) setError('Não foi possível carregar seus dados.');
@@ -102,6 +115,11 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Daily Prediction Card */}
+      {user && latestCheckin && (
+        <DailyPredictionCard latestCheckin={latestCheckin} userId={user.id} />
       )}
 
       {/* Predictions Grid - Multiple prediction cards */}

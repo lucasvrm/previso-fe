@@ -14,6 +14,7 @@ import ClinicalReports from './pages/Therapist/ClinicalReports';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
 import AITestingPage from './pages/Checkin/AITestingPage'; // <--- CORREÇÃO AQUI
+import AnalysesPage from './pages/Analyses/AnalysesPage';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -71,6 +72,7 @@ function App() {
         />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/checkin" element={<CheckinWizard />} />
+        <Route path="/analyses" element={<AnalysesPage />} />
         {/* NOVA ROTA: Teste de IA Isolado */}
         <Route path="/ai-test" element={<AITestingPage />} />
       </Route>
