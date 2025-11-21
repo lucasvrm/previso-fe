@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { getApiUrl } from '../utils/apiConfig';
 
 /* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
@@ -38,7 +39,7 @@ export function AuthProvider({ children }) {
             }
             
             // Import getApiUrl at the top or inline it here
-            const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
+            const apiUrl = getApiUrl();
             const endpoint = `${apiUrl}/api/profile`;
             
             const response = await fetch(endpoint, {
