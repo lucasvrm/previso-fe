@@ -155,11 +155,11 @@ const PredictionCard = ({
                 )}
               </p>
               {/* Resources list if provided */}
-              {resources && (
+              {resources && typeof resources === 'object' && Object.keys(resources).length > 0 && (
                 <ul className="mt-2 space-y-1">
                   {Object.entries(resources).map(([k, v]) => (
                     <li key={k} className="text-xs">
-                      <strong>{k}:</strong> {v}
+                      <strong>{k}:</strong> {String(v)}
                     </li>
                   ))}
                 </ul>

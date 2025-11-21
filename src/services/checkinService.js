@@ -89,6 +89,11 @@ export const getCheckinCountInLastDays = async (userId, days = 7) => {
  */
 export const fetchPredictions = async (userId, { types, window_days = 3, limit_checkins = 0 } = {}) => {
   try {
+    // Validate and encode userId
+    if (!userId || typeof userId !== 'string') {
+      throw new Error('Invalid userId provided to fetchPredictions');
+    }
+    
     const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
     const qs = new URLSearchParams();
     
@@ -103,11 +108,12 @@ export const fetchPredictions = async (userId, { types, window_days = 3, limit_c
     }
     
     const queryString = qs.toString();
-    const endpoint = `${apiUrl}/data/predictions/${userId}${queryString ? `?${queryString}` : ''}`;
+    // Use encodeURIComponent for userId to handle special characters
+    const endpoint = `${apiUrl}/data/predictions/${encodeURIComponent(userId)}${queryString ? `?${queryString}` : ''}`;
     
     // Only log in development
     if (import.meta.env.DEV) {
-      console.log(`Fetching predictions from API: ${endpoint}`);
+      console.log(`[fetchPredictions] Fetching from API: ${endpoint}`);
     }
     
     const response = await fetch(endpoint);
@@ -118,14 +124,40 @@ export const fetchPredictions = async (userId, { types, window_days = 3, limit_c
       throw new Error(errorMessage);
     }
     
-    const predictionsData = await response.json();
+    // Safe JSON parsing with try/catch
+    let predictionsData;
+    try {
+      const textResponse = await response.text();
+      predictionsData = JSON.parse(textResponse);
+    } catch (parseError) {
+      console.error('[fetchPredictions] JSON parse error:', parseError);
+      throw new Error('Invalid JSON response from predictions API');
+    }
     
-    // The API returns an array of predictions or null if there's no data
-    return { data: predictionsData, error: null };
+    // Validate that response contains predictions array
+    if (predictionsData && typeof predictionsData === 'object') {
+      // Handle different response formats
+      if (Array.isArray(predictionsData)) {
+        // Response is directly an array
+        return { data: predictionsData, error: null };
+      } else if (predictionsData.predictions && Array.isArray(predictionsData.predictions)) {
+        // Response is an object with predictions property
+        return { data: predictionsData.predictions, error: null };
+      } else {
+        // Log the unexpected format for debugging
+        console.warn('[fetchPredictions] Unexpected response format:', typeof predictionsData);
+        // Return as-is and let the component handle it
+        return { data: predictionsData, error: null };
+      }
+    }
+    
+    // No data available
+    return { data: null, error: null };
   } catch (error) {
-    // Only log in development, don't log sensitive prediction data
-    if (import.meta.env.DEV) {
-      console.error('Error fetching predictions:', error.message);
+    // Contextualized error logging
+    console.error('[fetchPredictions] Error for userId:', userId, '- Error:', error.message);
+    if (error.stack) {
+      console.error('[fetchPredictions] Stack trace:', error.stack);
     }
     return { data: null, error };
   }

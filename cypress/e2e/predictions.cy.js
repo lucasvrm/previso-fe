@@ -148,4 +148,59 @@ describe('Predictions Grid E2E Tests', () => {
     // Verify 100% is displayed for probabilities > 1
     cy.contains('100% de probabilidade').should('be.visible');
   });
+
+  it('should handle API errors gracefully', () => {
+    cy.intercept('GET', `${API_URL}/data/predictions/${TEST_USER_ID}*`, {
+      statusCode: 500,
+      body: {
+        detail: 'Internal server error'
+      }
+    }).as('getPredictionsError');
+
+    cy.window().then((win) => {
+      win.sessionStorage.setItem('userId', TEST_USER_ID);
+    });
+
+    cy.visit('/dashboard');
+    cy.wait('@getPredictionsError');
+
+    // Verify error message is displayed
+    cy.contains('Não foi possível carregar as previsões').should('be.visible');
+  });
+
+  it('should handle empty predictions array', () => {
+    cy.intercept('GET', `${API_URL}/data/predictions/${TEST_USER_ID}*`, {
+      body: []
+    }).as('getPredictionsEmpty');
+
+    cy.window().then((win) => {
+      win.sessionStorage.setItem('userId', TEST_USER_ID);
+    });
+
+    cy.visit('/dashboard');
+    cy.wait('@getPredictionsEmpty');
+
+    // Verify empty state message is displayed
+    cy.contains('Nenhuma previsão disponível').should('be.visible');
+    cy.contains('Adicione mais check-ins').should('be.visible');
+  });
+
+  it('should handle wrapped predictions format', () => {
+    cy.intercept('GET', `${API_URL}/data/predictions/${TEST_USER_ID}*`, {
+      fixture: 'predictions-wrapped.json'
+    }).as('getPredictionsWrapped');
+
+    cy.window().then((win) => {
+      win.sessionStorage.setItem('userId', TEST_USER_ID);
+    });
+
+    cy.visit('/dashboard');
+    cy.wait('@getPredictionsWrapped');
+
+    // Verify predictions from wrapped format are displayed
+    cy.contains('Estado de Humor').should('be.visible');
+    cy.contains('Risco de Recaída').should('be.visible');
+    cy.contains('80% de probabilidade').should('be.visible');
+    cy.contains('35% de probabilidade').should('be.visible');
+  });
 });
