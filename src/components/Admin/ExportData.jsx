@@ -36,10 +36,11 @@ const ExportData = () => {
     setLoading(true);
 
     try {
+      const parsedQuantity = quantity ? parseInt(quantity, 10) : null;
       const payload = {
         format,
         scope,
-        quantity: quantity ? parseInt(quantity, 10) : undefined,
+        quantity: (parsedQuantity && !isNaN(parsedQuantity)) ? parsedQuantity : undefined,
         mood_pattern: moodPattern,
         start_date: startDate,
         end_date: endDate,

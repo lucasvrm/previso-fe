@@ -35,9 +35,10 @@ const DangerZone = ({ onCleanupSuccess }) => {
     setLoading(true);
 
     try {
+      const parsedQuantity = quantity ? parseInt(quantity, 10) : null;
       const payload = {
         action,
-        quantity: quantity ? (parseInt(quantity, 10) || undefined) : undefined,
+        quantity: (parsedQuantity && !isNaN(parsedQuantity)) ? parsedQuantity : undefined,
         mood_pattern: moodPattern,
         before_date: beforeDate
       };
