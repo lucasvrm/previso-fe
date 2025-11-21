@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Settings, BarChart3 } from 'lucide-react';
+import { Home, Settings, BarChart3, TrendingUp } from 'lucide-react';
 
 const Sidebar = () => {
   return (
@@ -40,6 +40,21 @@ const Sidebar = () => {
             >
               <BarChart3 className="w-5 h-5" />
               <span className="flex-1 ms-3 whitespace-nowrap">Check-in</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink 
+              to="/trends" 
+              className={({ isActive }) =>
+                `flex items-center p-3 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`
+              }
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span className="flex-1 ms-3 whitespace-nowrap">Radar de Tendências</span>
             </NavLink>
           </li>
           <li>
