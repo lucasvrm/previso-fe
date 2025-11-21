@@ -85,7 +85,7 @@ const DataGenerator = () => {
       <div className="flex items-center gap-3 mb-4">
         <Database className="h-6 w-6 text-purple-600" />
         <h2 className="text-xl font-semibold text-foreground">
-          Ferramenta de Geração de Dados
+          Geração de Dados
         </h2>
       </div>
       
