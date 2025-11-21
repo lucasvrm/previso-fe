@@ -79,6 +79,51 @@ export const getCheckinCountInLastDays = async (userId, days = 7) => {
 };
 
 /**
+ * Fetch predictions for a specific user from the bipolar-engine API
+ * @param {string} userId - The user ID to fetch predictions for
+ * @param {Object} options - Query parameters for the predictions API
+ * @param {Array<string>} options.types - Array of prediction types to fetch
+ * @param {number} options.window_days - Number of days for the prediction window (default: 3)
+ * @param {number} options.limit_checkins - Maximum number of check-ins to use for predictions
+ * @returns {Promise<{data: Array|null, error: Error|null}>}
+ */
+export const fetchPredictions = async (userId, { types, window_days, limit_checkins } = {}) => {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
+    const qs = new URLSearchParams();
+    
+    if (types && Array.isArray(types)) {
+      qs.append('types', types.join(','));
+    }
+    if (window_days) {
+      qs.append('window_days', String(window_days));
+    }
+    if (limit_checkins) {
+      qs.append('limit_checkins', String(limit_checkins));
+    }
+    
+    const queryString = qs.toString();
+    const endpoint = `${apiUrl}/data/predictions/${userId}${queryString ? `?${queryString}` : ''}`;
+    
+    console.log(`Fetching predictions from API: ${endpoint}`);
+    
+    const response = await fetch(endpoint);
+    
+    if (!response.ok) {
+      throw new Error(`API responded with status ${response.status} (${response.statusText}) for endpoint: ${endpoint}`);
+    }
+    
+    const predictionsData = await response.json();
+    
+    // The API returns an array of predictions or null if there's no data
+    return { data: predictionsData, error: null };
+  } catch (error) {
+    console.error('Error fetching predictions from API:', error);
+    return { data: null, error };
+  }
+};
+
+/**
  * Analyze patient risk based on check-ins
  * @param {Array} checkins - Array of check-in data
  * @returns {Object} Risk analysis result
