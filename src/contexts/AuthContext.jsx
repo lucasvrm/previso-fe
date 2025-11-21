@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
-import { getApiUrl } from '../utils/apiConfig';
 
 /* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
@@ -38,23 +37,10 @@ export function AuthProvider({ children }) {
               throw new Error('Sem sessão ativa');
             }
             
-            // Import getApiUrl at the top or inline it here
-            const apiUrl = getApiUrl();
-            const endpoint = `${apiUrl}/api/profile`;
+            // Use the new API client for authenticated requests
+            const { api } = await import('../api/apiClient');
+            const apiProfileData = await api.get('/api/profile');
             
-            const response = await fetch(endpoint, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              }
-            });
-            
-            if (!response.ok) {
-              throw new Error(`API retornou ${response.status}`);
-            }
-            
-            const apiProfileData = await response.json();
             console.log('[AuthContext] Perfil carregado via API:', apiProfileData);
             setProfile(apiProfileData);
             setUserRole(apiProfileData?.role || null);

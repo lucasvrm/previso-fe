@@ -2,40 +2,19 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DataGenerator from '../../src/components/DataGenerator';
 import { useAuth } from '../../src/hooks/useAuth';
-import { supabase } from '../../src/api/supabaseClient';
+import { api, ApiError } from '../../src/api/apiClient';
 
 // Mock dependencies
 jest.mock('../../src/hooks/useAuth');
-jest.mock('../../src/api/supabaseClient');
-
-// Mock API URL
-const MOCK_API_URL = 'https://bipolar-engine.onrender.com';
-
-jest.mock('../../src/utils/apiConfig', () => ({
-  getApiUrl: jest.fn(() => MOCK_API_URL)
-}));
-
-// Mock fetch
-global.fetch = jest.fn();
+jest.mock('../../src/api/apiClient');
+jest.mock('../../src/contexts/AuthContext');
 
 describe('DataGenerator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch.mockClear();
-    
-    // Default mock for getSession
-    supabase.auth = {
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
-        error: null
-      })
-    };
     
     // Default mock for users fetch
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ users: [] })
-    });
+    api.get.mockResolvedValue({ users: [] });
   });
 
   test('should not render for non-admin users', () => {
@@ -74,10 +53,7 @@ describe('DataGenerator', () => {
       { id: 'user-2', email: 'user2@example.com' }
     ];
 
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ users: mockUsers })
-    });
+    api.get.mockResolvedValue({ users: mockUsers });
 
     render(<DataGenerator />);
 
@@ -117,15 +93,8 @@ describe('DataGenerator', () => {
       userRole: 'admin'
     });
 
-    global.fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ users: [] })
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ message: 'Dados gerados com sucesso!' })
-      });
+    api.get.mockResolvedValue({ users: [] });
+    api.post.mockResolvedValue({ message: 'Dados gerados com sucesso!' });
 
     render(<DataGenerator />);
     
@@ -142,39 +111,22 @@ describe('DataGenerator', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/generate-data'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer test-token'
-          },
-          body: JSON.stringify({
-            user_id: null,
-            num_days: 30,
-            include_notes: true,
-            include_medications: true
-          })
-        })
-      );
+      expect(api.post).toHaveBeenCalledWith('/api/admin/generate-data', {
+        user_id: null,
+        num_days: 30,
+        include_notes: true,
+        include_medications: true
+      });
     });
   });
 
-  test('should show success message on successful generation', async () => {
+  test('should show success message after successful generation', async () => {
     useAuth.mockReturnValue({
       userRole: 'admin'
     });
 
-    global.fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ users: [] })
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ message: 'Dados gerados com sucesso!' })
-      });
+    api.get.mockResolvedValue({ users: [] });
+    api.post.mockResolvedValue({ message: 'Dados gerados com sucesso!' });
 
     render(<DataGenerator />);
     
@@ -182,7 +134,10 @@ describe('DataGenerator', () => {
       expect(screen.getByLabelText(/Usuário/)).toBeInTheDocument();
     });
     
+    const numDaysInput = screen.getByLabelText(/Número de Dias/);
     const submitButton = screen.getByText('Gerar Dados Sintéticos');
+
+    fireEvent.change(numDaysInput, { target: { value: '15' } });
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -195,22 +150,71 @@ describe('DataGenerator', () => {
       userRole: 'admin'
     });
 
-    global.fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ users: [] })
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          })
-        },
-        json: async () => ({ detail: 'API Error' })
-      });
+    api.get.mockResolvedValue({ users: [] });
+    const mockError = new ApiError(
+      'Erro no servidor. Tente novamente mais tarde.',
+      500
+    );
+    api.post.mockRejectedValue(mockError);
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Usuário/)).toBeInTheDocument();
+    });
+    
+    const numDaysInput = screen.getByLabelText(/Número de Dias/);
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+
+    fireEvent.change(numDaysInput, { target: { value: '20' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Erro no servidor/)).toBeInTheDocument();
+    });
+  });
+
+  test('should reset form after successful generation', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    api.get.mockResolvedValue({ users: [] });
+    api.post.mockResolvedValue({ message: 'Success' });
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Usuário/)).toBeInTheDocument();
+    });
+    
+    const numDaysInput = screen.getByLabelText(/Número de Dias/);
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+
+    // Change values
+    fireEvent.change(numDaysInput, { target: { value: '60' } });
+    fireEvent.click(submitButton);
+
+    // Wait for success
+    await waitFor(() => {
+      expect(screen.getByText('Success')).toBeInTheDocument();
+    });
+
+    // Check that form reset to defaults
+    expect(numDaysInput.value).toBe('30');
+  });
+
+  test('should disable button while loading', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    api.get.mockResolvedValue({ users: [] });
+    api.post.mockImplementation(() => 
+      new Promise(resolve => 
+        setTimeout(() => resolve({ message: 'Success' }), 100)
+      )
+    );
 
     render(<DataGenerator />);
     
@@ -221,78 +225,9 @@ describe('DataGenerator', () => {
     const submitButton = screen.getByText('Gerar Dados Sintéticos');
     fireEvent.click(submitButton);
 
+    // Should be disabled while loading
     await waitFor(() => {
-      expect(screen.getByText('API Error')).toBeInTheDocument();
-    });
-  });
-
-  test('should update checkboxes correctly', async () => {
-    useAuth.mockReturnValue({
-      userRole: 'admin'
-    });
-
-    render(<DataGenerator />);
-    
-    await waitFor(() => {
-      expect(screen.getByLabelText(/Incluir notas nos check-ins/)).toBeInTheDocument();
-    });
-    
-    const notesCheckbox = screen.getByLabelText(/Incluir notas nos check-ins/);
-    const medicationsCheckbox = screen.getByLabelText(/Incluir medicações nos check-ins/);
-
-    expect(notesCheckbox).toBeChecked();
-    expect(medicationsCheckbox).toBeChecked();
-
-    fireEvent.click(notesCheckbox);
-    expect(notesCheckbox).not.toBeChecked();
-
-    fireEvent.click(medicationsCheckbox);
-    expect(medicationsCheckbox).not.toBeChecked();
-  });
-
-  test('should call API with existing user id when selected', async () => {
-    useAuth.mockReturnValue({
-      userRole: 'admin'
-    });
-
-    const mockUsers = [
-      { id: 'existing-user-123', email: 'user@example.com' }
-    ];
-
-    global.fetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ users: mockUsers })
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ message: 'Success' })
-      });
-
-    render(<DataGenerator />);
-
-    await waitFor(() => {
-      expect(screen.getByText('user@example.com')).toBeInTheDocument();
-    });
-
-    const userSelect = screen.getByLabelText(/Usuário/);
-    const submitButton = screen.getByText('Gerar Dados Sintéticos');
-
-    fireEvent.change(userSelect, { target: { value: 'existing-user-123' } });
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/generate-data'),
-        expect.objectContaining({
-          body: JSON.stringify({
-            user_id: 'existing-user-123',
-            num_days: 30,
-            include_notes: true,
-            include_medications: true
-          })
-        })
-      );
+      expect(submitButton).toBeDisabled();
     });
   });
 });

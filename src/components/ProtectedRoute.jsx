@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 // CORREÇÃO: A importação agora vem de 'hooks', que está no mesmo nível da pasta 'components'.
 import { useAuth } from '../hooks/useAuth';
+import AccessDenied from './AccessDenied';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, userRole, loading } = useAuth();
@@ -15,13 +16,14 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     );
   }
 
+  // 401 - Unauthorized: User is not authenticated
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // 403 - Forbidden: User is authenticated but lacks required role
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Se a role não é permitida, redireciona para o dashboard principal
-    return <Navigate to="/dashboard" replace />;
+    return <AccessDenied message="Esta página é restrita. Você não possui as permissões necessárias para acessá-la." />;
   }
 
   // Se tudo estiver certo, renderiza o componente filho (a página)
