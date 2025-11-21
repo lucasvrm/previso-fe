@@ -16,6 +16,9 @@ jobs:
   unit-tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     
     steps:
       - name: Checkout code
@@ -52,6 +55,9 @@ jobs:
   e2e-tests:
     name: Run E2E Tests (Cypress)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     # Only run E2E tests on push to main/develop branches
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     
