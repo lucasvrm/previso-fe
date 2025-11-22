@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import SystemStats from '../../src/components/admin/SystemStats';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useAdminStats } from '../../src/hooks/useAdminStats';
