@@ -181,6 +181,15 @@ async function handleErrorResponse(response) {
     case 502:
     case 503:
     case 504:
+      // Check for Invalid API key error in 500 responses
+      if (errorMessage && errorMessage.toLowerCase().includes('invalid api key')) {
+        throw new ApiError(
+          'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.',
+          status,
+          { ...errorDetails, type: 'INVALID_API_KEY' }
+        );
+      }
+      
       throw new ApiError(
         errorMessage || 'Erro no servidor. Tente novamente mais tarde.',
         status,

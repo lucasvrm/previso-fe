@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { api, ApiError } from '../../api/apiClient';
 import { Trash2, Loader2, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import Toast from '../UI/Toast';
 
 // Confirmation message constant
 const CLEANUP_CONFIRMATION_MESSAGE = 
@@ -17,6 +18,7 @@ const DataCleanup = ({ onCleanupSuccess }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Only show this component to admin users
   if (userRole !== 'admin') {
@@ -26,15 +28,14 @@ const DataCleanup = ({ onCleanupSuccess }) => {
   const handleCleanup = async () => {
     setError(null);
     setSuccess(null);
+    setToast(null);
     setLoading(true);
 
     try {
       const result = await api.post('/api/admin/cleanup-data', { confirm: true });
       
-      setSuccess(
-        result.message || 
-        'Dados de teste removidos com sucesso!'
-      );
+      const successMsg = result.message || 'Dados de teste removidos com sucesso!';
+      setSuccess(successMsg);
 
       // Call the callback to refresh DataStats if provided
       if (onCleanupSuccess && typeof onCleanupSuccess === 'function') {
@@ -43,17 +44,32 @@ const DataCleanup = ({ onCleanupSuccess }) => {
     } catch (err) {
       console.error('Erro ao limpar dados:', err);
       
+      let errorMessage = 'Erro ao limpar dados. Verifique sua conexão e tente novamente.';
+      let showToast = false;
+      
       // Handle specific error types
       if (err instanceof ApiError) {
-        if (err.status === 401) {
-          setError('Sessão expirada. Por favor, faça login novamente.');
+        // Check for Invalid API key error (500 status) - show toast for critical errors
+        if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
+          errorMessage = 'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.';
+          showToast = true; // Show toast for critical server configuration errors
+        } else if (err.status === 401) {
+          errorMessage = 'Sessão expirada. Por favor, faça login novamente.';
         } else if (err.status === 403) {
-          setError('Você não tem permissão para realizar esta ação.');
+          errorMessage = 'Você não tem permissão para realizar esta ação.';
         } else {
-          setError(err.message);
+          errorMessage = err.message;
         }
-      } else {
-        setError('Erro ao limpar dados. Verifique sua conexão e tente novamente.');
+      }
+      
+      setError(errorMessage);
+      
+      // Only show toast for critical errors
+      if (showToast) {
+        setToast({
+          type: 'error',
+          message: errorMessage
+        });
       }
     } finally {
       setLoading(false);
@@ -168,6 +184,15 @@ const DataCleanup = ({ onCleanupSuccess }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </>
   );

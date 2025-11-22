@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../hooks/useAuth';
 import { api, ApiError } from '../api/apiClient';
 import { Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import Toast from './UI/Toast';
 
 const DataGenerator = () => {
   const { userRole } = useAuth();
@@ -25,6 +26,7 @@ const DataGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [response, setResponse] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Watch userType to conditionally show fields
   const userType = watch('userType');
@@ -38,6 +40,7 @@ const DataGenerator = () => {
     setLoading(true);
     setError(null);
     setResponse(null);
+    setToast(null);
 
     try {
       // Build the payload based on the form data
@@ -63,17 +66,32 @@ const DataGenerator = () => {
     } catch (err) {
       console.error('Erro na requisição:', err);
       
+      let errorMessage = 'Erro ao gerar dados. Verifique sua conexão e tente novamente.';
+      let showToast = false;
+      
       // Handle specific error types
       if (err instanceof ApiError) {
-        if (err.status === 401) {
-          setError('Sessão expirada. Por favor, faça login novamente.');
+        // Check for Invalid API key error (500 status) - show toast for critical errors
+        if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
+          errorMessage = 'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.';
+          showToast = true; // Show toast for critical server configuration errors
+        } else if (err.status === 401) {
+          errorMessage = 'Sessão expirada. Por favor, faça login novamente.';
         } else if (err.status === 403) {
-          setError('Você não tem permissão para realizar esta ação.');
+          errorMessage = 'Você não tem permissão para realizar esta ação.';
         } else {
-          setError(err.message);
+          errorMessage = err.message;
         }
-      } else {
-        setError('Erro ao gerar dados. Verifique sua conexão e tente novamente.');
+      }
+      
+      setError(errorMessage);
+      
+      // Only show toast for critical errors
+      if (showToast) {
+        setToast({
+          type: 'error',
+          message: errorMessage
+        });
       }
     } finally {
       setLoading(false);
@@ -308,6 +326,15 @@ const DataGenerator = () => {
           )}
         </button>
       </form>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
