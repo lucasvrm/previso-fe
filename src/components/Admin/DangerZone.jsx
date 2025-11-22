@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { api, ApiError } from '../../api/apiClient';
 import { AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
+import Toast from '../UI/Toast';
 
 const DangerZone = ({ onCleanupSuccess }) => {
   const { userRole } = useAuth();
@@ -16,6 +17,7 @@ const DangerZone = ({ onCleanupSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Only show this component to admin users
   if (userRole !== 'admin') {
@@ -26,12 +28,14 @@ const DangerZone = ({ onCleanupSuccess }) => {
     e.preventDefault();
     
     if (!confirmed) {
-      setError('Você deve confirmar que entende as consequências desta ação.');
+      const errorMsg = 'Você deve confirmar que entende as consequências desta ação.';
+      setError(errorMsg);
       return;
     }
 
     setError(null);
     setSuccess(null);
+    setToast(null);
     setLoading(true);
 
     try {
@@ -45,7 +49,8 @@ const DangerZone = ({ onCleanupSuccess }) => {
 
       const result = await api.post('/api/admin/danger-zone-cleanup', payload);
       
-      setSuccess(result.message || 'Operação executada com sucesso!');
+      const successMsg = result.message || 'Operação executada com sucesso!';
+      setSuccess(successMsg);
       
       // Reset form
       setAction('delete_all_synthetic');
@@ -61,16 +66,31 @@ const DangerZone = ({ onCleanupSuccess }) => {
     } catch (err) {
       console.error('Erro ao executar limpeza:', err);
       
+      let errorMessage = 'Erro ao executar limpeza. Verifique sua conexão e tente novamente.';
+      let showToast = false;
+      
       if (err instanceof ApiError) {
-        if (err.status === 401) {
-          setError('Sessão expirada. Por favor, faça login novamente.');
+        // Check for Invalid API key error (500 status) - show toast for critical errors
+        if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
+          errorMessage = 'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.';
+          showToast = true; // Show toast for critical server configuration errors
+        } else if (err.status === 401) {
+          errorMessage = 'Sessão expirada. Por favor, faça login novamente.';
         } else if (err.status === 403) {
-          setError('Você não tem permissão para realizar esta ação.');
+          errorMessage = 'Você não tem permissão para realizar esta ação.';
         } else {
-          setError(err.message);
+          errorMessage = err.message;
         }
-      } else {
-        setError('Erro ao executar limpeza. Verifique sua conexão e tente novamente.');
+      }
+      
+      setError(errorMessage);
+      
+      // Only show toast for critical errors
+      if (showToast) {
+        setToast({
+          type: 'error',
+          message: errorMessage
+        });
       }
     } finally {
       setLoading(false);
@@ -234,6 +254,15 @@ const DangerZone = ({ onCleanupSuccess }) => {
           )}
         </button>
       </form>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

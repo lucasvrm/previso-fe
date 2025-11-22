@@ -7,7 +7,64 @@ Refatorar o layout da Página de Configurações Administrativas para utilizar u
 
 ## 1. Mudanças Implementadas
 
-### 1.1 Reestruturação de Layout (CSS Grid)
+### 1.1 Aprimoramento do Tratamento de Erros nas Ferramentas Administrativas (NOVO)
+
+**Data de Implementação:** 2025-11-22
+
+**Problema Resolvido:**
+O Frontend recebia erros 500 genéricos quando o Backend falhava na autenticação administrativa, com a UI travando em loading ou exibindo mensagens pouco informativas.
+
+**Arquivos Modificados:**
+- `src/api/apiClient.js` - Enhanced error parsing for Invalid API key
+- `src/components/DataGenerator.jsx` - Improved error handling with intelligent parsing
+- `src/components/Admin/DangerZone.jsx` - Improved error handling with intelligent parsing
+- `src/components/Admin/DataCleanup.jsx` - Improved error handling with intelligent parsing
+- `src/components/UI/Toast.jsx` - NEW: Toast notification component
+- `src/index.css` - Added toast slide-in animation
+
+**Implementações Realizadas:**
+
+1. **Parsing Inteligente de Erros**
+   - apiClient.js agora detecta erros 500 contendo "Invalid API key" no corpo da resposta
+   - Traduz automaticamente para mensagem amigável: *"Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend."*
+   - Erro marcado com tipo `INVALID_API_KEY` para identificação específica nos componentes
+
+2. **Gestão de Estado (Loading/Reset)**
+   - Todos os componentes agora garantem que `isLoading`/`isGenerating` seja resetado no bloco `finally`
+   - Botões de ação são reabilitados após erro, permitindo nova tentativa
+   - Estados são limpos corretamente antes de cada operação
+
+3. **Feedback Visual (Toast/Alert)**
+   - Criado componente Toast (`src/components/UI/Toast.jsx`) para notificações críticas
+   - Toast aparece apenas para erros críticos de configuração do servidor (Invalid API key)
+   - Mantidas as mensagens inline (error/success cards) para contexto local
+   - Toast com auto-dismiss de 5 segundos e opção de fechar manualmente
+   - Animação suave de slide-in from right
+   - Suporte a tema claro/escuro
+
+**Diferenciação de Feedback:**
+- **Erros Críticos (500 Invalid API key):** Toast + Error Card (dupla notificação para chamar atenção)
+- **Erros Comuns (401, 403, etc.):** Apenas Error Card inline
+- **Sucessos:** Success Card com estatísticas detalhadas
+
+**Validação Antes/Depois:**
+
+| Cenário | Antes | Depois |
+|---------|-------|--------|
+| Erro 500 (Invalid API key) | Console.log apenas, usuário sem feedback | Toast vermelho + Error card: "Falha na configuração do servidor" |
+| Erro 403 (Sem permissão) | Error card genérico | Error card: "Você não tem permissão para realizar esta ação." |
+| Erro 401 (Sessão expirada) | Loading infinito às vezes | Error card: "Sessão expirada. Por favor, faça login novamente." |
+| Loading state | Às vezes ficava travado | Sempre resetado no `finally` block |
+| Botão após erro | Às vezes ficava desabilitado | Sempre reabilitado, permitindo retry |
+
+**Testes:**
+- ✅ Todos os 123 testes passando
+- ✅ Build sem erros
+- ✅ Cobertura de testes mantida para DataGenerator, DataCleanup e DangerZone
+
+---
+
+### 1.2 Reestruturação de Layout (CSS Grid)
 
 **Arquivo Modificado:** `src/pages/Settings/SettingsPage.jsx`
 
@@ -34,7 +91,7 @@ Refatorar o layout da Página de Configurações Administrativas para utilizar u
 
 ---
 
-### 1.2 Padronização dos Cards
+### 1.3 Padronização dos Cards
 
 **Arquivos Modificados:**
 - `src/components/Admin/DataStats.jsx`
@@ -49,7 +106,7 @@ Refatorar o layout da Página de Configurações Administrativas para utilizar u
 
 ---
 
-### 1.3 Correção de Infraestrutura (SPA Routing)
+### 1.4 Correção de Infraestrutura (SPA Routing)
 
 **Arquivo Criado:** `vercel.json`
 
