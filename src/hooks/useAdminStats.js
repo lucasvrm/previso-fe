@@ -73,15 +73,15 @@ export function useAdminStats(options = {}) {
         } else if (err.status >= 500) {
           setError('Estatísticas indisponíveis - Erro no servidor. Verifique as configurações do backend.');
           setErrorType('server');
-        } else if (err.status === 0) {
-          setError('Estatísticas indisponíveis - Erro de conexão. Tente novamente.');
+        } else if (err.status === 0 || err.message.includes('CORS') || err.message === 'Network Error') {
+          setError('Estatísticas indisponíveis - Erro de conexão ou CORS bloqueado. Verifique o console.');
           setErrorType('network');
         } else {
           setError(err.message || 'Erro ao carregar estatísticas.');
           setErrorType('server');
         }
       } else {
-        setError('Estatísticas indisponíveis - Erro de conexão. Tente novamente.');
+        setError('Estatísticas indisponíveis - Erro inesperado. Tente novamente.');
         setErrorType('network');
       }
     } finally {

@@ -37,6 +37,7 @@ axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
+    // Check for 401 Unauthorized
     if (status === 401 && !hasRedirected401) {
       hasRedirected401 = true;
       // Force redirect to login
@@ -71,19 +72,28 @@ async function requestWithRetry(method, url, data = null, options = {}) {
       const response = await axiosInstance(config);
       return response.data;
     } catch (error) {
-      // Check if we should retry
-      // Retry on network errors (no response) or 5xx server errors
-      const isRetryable = !error.response || (error.response.status >= 500 && error.response.status < 600);
+      const status = error.response?.status || 0;
 
-      if (attempts >= maxRetries || !isRetryable) {
+      // Determine if we should retry
+      // Retry on network errors (no response, often CORS) or 5xx server errors
+      // BUT do NOT retry on 4xx errors (client errors) like 401, 403, 404, 429
+      const isClientError = status >= 400 && status < 500;
+      const isRetryable = !error.response || (status >= 500 && status < 600);
+
+      if (attempts >= maxRetries || !isRetryable || isClientError) {
         // Convert Axios error to ApiError for compatibility
-        const status = error.response?.status || 0;
+
         // Try to extract meaningful message
         const message = error.response?.data?.detail ||
                         error.response?.data?.message ||
                         error.message ||
                         'Unknown error';
         const details = error.response?.data || null;
+
+        // Special handling for Network Error which implies CORS or offline
+        if (error.message === 'Network Error' && !error.response) {
+            throw new ApiError('Erro de conexão ou CORS bloqueado', 0, { originalError: error });
+        }
 
         throw new ApiError(message, status, details);
       }
