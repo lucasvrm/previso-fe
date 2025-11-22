@@ -19,6 +19,19 @@ Deno.serve(async (req) => {
     
     // 2. Inicializa o cliente Admin do Supabase (para ter acesso total)
     // Esses 'secrets' são injetados automaticamente pelo Supabase no deploy
+    /**
+     * IMPORTANTE: SUPABASE_SERVICE_ROLE_KEY
+     * 
+     * Esta variável de ambiente é automaticamente injetada pelo Supabase em PRODUÇÃO.
+     * Você NÃO precisa configurá-la manualmente no painel do Supabase.
+     * 
+     * Para desenvolvimento LOCAL com `supabase functions serve`:
+     * - Adicione SUPABASE_SERVICE_ROLE_KEY ao seu arquivo .env na raiz do projeto
+     * - O valor pode ser obtido em: Supabase Dashboard > Settings > API > service_role key
+     * 
+     * NOTA: Não confundir com SUPABASE_SERVICE_KEY que pode ser usado em backends Python.
+     * As Edge Functions do Supabase SEMPRE usam SUPABASE_SERVICE_ROLE_KEY.
+     */
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
