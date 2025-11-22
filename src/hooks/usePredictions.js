@@ -43,7 +43,7 @@ export function usePredictions(userId, metrics = [], windowDays = 3) {
       setData(predictions);
 
       const duration = performance.now() - start;
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
         console.debug(`[Telemetry] predictionsLoadMs=${Math.round(duration)}`);
       }
 
