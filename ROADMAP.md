@@ -7,7 +7,74 @@ Refatorar o layout da Página de Configurações Administrativas para utilizar u
 
 ## 1. Mudanças Implementadas
 
-### 1.1 Aprimoramento do Tratamento de Erros nas Ferramentas Administrativas (NOVO)
+### 1.0 Correção da Danger Zone e Melhoria de Feedback Visual (NOVO)
+
+**Data de Implementação:** 2025-11-22
+
+**Problemas Resolvidos:**
+1. **Erro 422 (Unprocessable Entity) na limpeza do banco:** O frontend enviava campos `undefined` no payload JSON para `/api/admin/danger-zone-cleanup`, causando rejeição pelo backend.
+2. **Erro 500 nas Estatísticas:** O componente de estatísticas não tratava adequadamente erros 500, potencialmente quebrando a renderização da página.
+
+**Arquivos Modificados:**
+- `src/components/Admin/DangerZone.jsx` - Correção do payload de limpeza
+- `src/components/Admin/DataStats.jsx` - Tratamento robusto de erros de infraestrutura
+
+**Implementações Realizadas:**
+
+1. **Correção do Payload de Limpeza (DangerZone)**
+   - **Problema:** O payload enviava campos com valor `undefined` para o backend
+   - **Solução:** Construção condicional do payload, incluindo apenas os campos necessários para cada ação
+   - **Formato do JSON enviado:**
+     ```javascript
+     // Para "delete_all_synthetic":
+     { "action": "delete_all_synthetic" }
+     
+     // Para "delete_last_n":
+     { "action": "delete_last_n", "quantity": 10 }
+     
+     // Para "delete_by_mood":
+     { "action": "delete_by_mood", "mood_pattern": "stable" }
+     
+     // Para "delete_before_date":
+     { "action": "delete_before_date", "before_date": "2024-01-01" }
+     ```
+   - **Validação:** Apenas campos necessários são incluídos com base no tipo de ação selecionada
+
+2. **Tratamento de Erro no Dashboard (DataStats)**
+   - **Problema:** Erros 500 podiam quebrar o componente, impedindo acesso ao resto do dashboard
+   - **Solução Implementada:**
+     - Detecção específica de erro 500 com Invalid API key
+     - Mensagem clara: "Estatísticas indisponíveis - Falha na configuração do servidor"
+     - Fallback visual quando há erro: exibe placeholder em vez de quebrar
+     - Mensagem tranquilizadora: "O resto do dashboard continua acessível"
+   - **Comportamento:** Se as estatísticas falharem, o gerador de dados e outras ferramentas permanecem funcionais
+
+**Validação Antes/Depois:**
+
+| Cenário | Antes | Depois |
+|---------|-------|--------|
+| Limpeza "delete_all_synthetic" | Payload com campos `undefined` → 422 | Payload limpo `{ action: "..." }` → 200 |
+| Limpeza "delete_last_n" sem quantity | Payload com `quantity: undefined` → 422 | Campo quantity omitido se vazio |
+| Stats com erro 500 | Componente quebra ou loading infinito | Placeholder "Estatísticas indisponíveis" |
+| Stats com Invalid API key | Erro genérico | Mensagem clara sobre configuração do servidor |
+| Dashboard após erro Stats | Pode ficar inacessível | Gerador e outras ferramentas continuam acessíveis |
+
+**Testes:**
+- ✅ Validação de construção condicional do payload
+- ✅ Garantia de que apenas campos necessários são enviados
+- ✅ Tratamento de todos os estados de erro (401, 403, 500, etc.)
+- ✅ Componente continua renderizando mesmo com erro de API
+
+**Objetivos Alcançados:**
+- ✅ Payload correto enviado para cada tipo de limpeza
+- ✅ Sem campos `undefined` no JSON
+- ✅ Estatísticas não quebram o dashboard em caso de erro
+- ✅ Feedback visual claro para usuários sobre estado de erro
+- ✅ ROADMAP.md atualizado com formato detalhado do JSON
+
+---
+
+### 1.1 Aprimoramento do Tratamento de Erros nas Ferramentas Administrativas
 
 **Data de Implementação:** 2025-11-22
 
