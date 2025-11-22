@@ -189,7 +189,7 @@ VITE_API_URL=https://bipolar-engine.onrender.com
 # ============================================
 # NOTAS IMPORTANTES
 # ============================================
-# 1. NUNCA commite arquivos .env no Git!
+# 1. NUNCA faça commit de arquivos .env no Git!
 # 2. NUNCA use service_role key no código frontend!
 # 3. Backend Python usa: SUPABASE_SERVICE_KEY
 # 4. Edge Functions usam: SUPABASE_SERVICE_ROLE_KEY
@@ -319,7 +319,7 @@ const supabaseAdmin = createClient(
 
 1. **Prevenção de exposição de secrets:**
    - ✓ `.env.example` usa placeholders, não valores reais
-   - ✓ Documentação reforça: "NUNCA commite .env no Git"
+   - ✓ Documentação reforça: "NUNCA faça commit de .env no Git"
    - ✓ Avisos sobre uso apenas em backend/serverless
 
 2. **Separação de privilégios:**

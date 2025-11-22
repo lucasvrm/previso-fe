@@ -105,7 +105,7 @@ supabase functions serve invite-therapist --env-file .env
 ```
 
 ⚠️ **SEGURANÇA:**
-- NUNCA commite o arquivo `.env` ou `.env.local` no git
+- NUNCA faça commit do arquivo `.env` ou `.env.local` no git
 - A `service_role` key tem privilégios administrativos completos
 - Use apenas em ambientes seguros (backend/serverless)
 
