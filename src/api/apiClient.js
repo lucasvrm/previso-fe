@@ -153,23 +153,23 @@ async function handleErrorResponse(response) {
       errorDetails = errorData;
     } catch (parseError) {
       console.error('[apiClient] Failed to parse error response as JSON:', parseError);
-      // If JSON parsing fails, try to read as text for better error reporting
+      // Log the raw response for debugging but don't expose it to users
       try {
         const textResponse = await response.text();
-        if (textResponse && textResponse.length > 0 && textResponse.length < 500) {
-          errorMessage = `Erro do servidor: ${textResponse}`;
-        }
+        console.error('[apiClient] Raw error response:', textResponse.substring(0, 200));
+        // Don't include raw server response in user-facing error message for security
+        errorMessage = `Erro ao processar resposta do servidor (${status})`;
       } catch (textError) {
         console.error('[apiClient] Failed to read error response as text:', textError);
       }
     }
   } else {
-    // Non-JSON response - try to read as text
+    // Non-JSON response - log for debugging but don't expose to user
     try {
       const textResponse = await response.text();
-      if (textResponse && textResponse.length > 0 && textResponse.length < 500) {
-        errorMessage = `Resposta não-JSON do servidor (${status}): ${textResponse}`;
-      }
+      console.error('[apiClient] Non-JSON error response:', textResponse.substring(0, 200));
+      // Don't include raw server response in user-facing error message for security
+      errorMessage = `Resposta não-JSON do servidor (${status})`;
     } catch (textError) {
       console.error('[apiClient] Failed to read non-JSON error response:', textError);
     }
