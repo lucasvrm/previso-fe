@@ -31,15 +31,19 @@ const DataStats = forwardRef((props, ref) => {
       
       // Handle specific error types
       if (err instanceof ApiError) {
-        if (err.status === 401) {
+        if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
+          setError('Estatísticas indisponíveis - Falha na configuração do servidor (Chave de API inválida).');
+        } else if (err.status === 401) {
           setError('Sessão expirada. Por favor, faça login novamente.');
         } else if (err.status === 403) {
           setError('Você não tem permissão para visualizar estas estatísticas.');
+        } else if (err.status === 500) {
+          setError('Estatísticas indisponíveis - Erro no servidor. Verifique as configurações do backend.');
         } else {
-          setError(err.message);
+          setError(err.message || 'Erro ao carregar estatísticas.');
         }
       } else {
-        setError('Erro ao carregar estatísticas. Tente novamente.');
+        setError('Estatísticas indisponíveis - Erro de conexão. Tente novamente.');
       }
     } finally {
       setLoading(false);
@@ -106,6 +110,14 @@ const DataStats = forwardRef((props, ref) => {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
           <span className="ml-2 text-muted-foreground">Carregando estatísticas...</span>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center text-muted-foreground">
+            <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-400" />
+            <p className="text-sm">As estatísticas não estão disponíveis no momento.</p>
+            <p className="text-xs mt-1">O resto do dashboard continua acessível.</p>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

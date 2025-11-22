@@ -39,13 +39,26 @@ const DangerZone = ({ onCleanupSuccess }) => {
     setLoading(true);
 
     try {
-      const parsedQuantity = quantity ? parseInt(quantity, 10) : null;
-      const payload = {
-        action,
-        quantity: (parsedQuantity && !isNaN(parsedQuantity)) ? parsedQuantity : undefined,
-        mood_pattern: moodPattern,
-        before_date: beforeDate
-      };
+      // Build payload with only the fields that are needed for the selected action
+      const payload = { action };
+      
+      // Add quantity only if needed and valid
+      if (needsQuantity && quantity) {
+        const parsedQuantity = parseInt(quantity, 10);
+        if (!isNaN(parsedQuantity)) {
+          payload.quantity = parsedQuantity;
+        }
+      }
+      
+      // Add mood_pattern only if needed
+      if (needsMoodPattern && moodPattern) {
+        payload.mood_pattern = moodPattern;
+      }
+      
+      // Add before_date only if needed
+      if (needsDate && beforeDate) {
+        payload.before_date = beforeDate;
+      }
 
       const result = await api.post('/api/admin/danger-zone-cleanup', payload);
       
