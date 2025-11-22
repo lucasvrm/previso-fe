@@ -37,15 +37,23 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Additional validation: Check if values look valid
-// Supabase URLs should start with https:// and contain 'supabase'
-// Anon keys should be long JWT-like strings
-if (!SUPABASE_URL.startsWith('https://') || !SUPABASE_URL.includes('supabase')) {
+// Supabase URLs should start with https:// and typically contain 'supabase'
+// Note: This is a warning, not an error, to allow for self-hosted instances
+if (!SUPABASE_URL.startsWith('https://')) {
   console.error('[Supabase] AVISO: URL do Supabase parece inválida:', SUPABASE_URL);
-  console.error('[Supabase] URLs válidas devem ser como: https://seu-projeto.supabase.co');
+  console.error('[Supabase] URLs válidas devem começar com https://');
+} else if (!SUPABASE_URL.includes('supabase')) {
+  console.warn('[Supabase] AVISO: URL não contém "supabase" - isso é esperado apenas para instâncias self-hosted');
+  console.warn('[Supabase] Se você não está usando uma instância self-hosted, verifique se a URL está correta');
 }
 
-if (SUPABASE_ANON_KEY.length < 100) {
-  console.error('[Supabase] AVISO: ANON_KEY parece muito curta. Chaves anônimas válidas são tokens JWT longos.');
+// Minimum expected length for a valid Supabase anon key (JWT format)
+// Typical Supabase JWTs are 200+ characters. We use 100 as a safe minimum.
+const MIN_ANON_KEY_LENGTH = 100;
+
+if (SUPABASE_ANON_KEY.length < MIN_ANON_KEY_LENGTH) {
+  console.error('[Supabase] AVISO: ANON_KEY parece muito curta (menos de', MIN_ANON_KEY_LENGTH, 'caracteres).');
+  console.error('[Supabase] Chaves anônimas válidas são tokens JWT longos (tipicamente 200+ caracteres).');
   console.error('[Supabase] Verifique se você não está usando a URL no lugar da chave ou vice-versa.');
 }
 
