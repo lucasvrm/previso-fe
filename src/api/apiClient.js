@@ -17,6 +17,43 @@ export class ApiError extends Error {
 }
 
 /**
+ * Check if an error is retryable (network errors, 5xx server errors)
+ * @param {Error|ApiError} error - The error to check
+ * @returns {boolean} True if the error is retryable
+ */
+function isRetryableError(error) {
+  if (error instanceof ApiError) {
+    // Retry on server errors (5xx), but not on client errors (4xx)
+    return error.status >= 500 && error.status < 600;
+  }
+  // Retry on network errors (no status code)
+  return error.status === 0 || error.status === undefined;
+}
+
+/**
+ * Calculate exponential backoff delay
+ * @param {number} attempt - Current attempt number (0-indexed)
+ * @param {number} baseDelay - Base delay in milliseconds (default: 1000ms)
+ * @returns {number} Delay in milliseconds
+ */
+function calculateBackoffDelay(attempt, baseDelay = 1000) {
+  // Exponential backoff: baseDelay * 2^attempt with jitter
+  const exponentialDelay = baseDelay * Math.pow(2, attempt);
+  // Add random jitter (±25%) to avoid thundering herd
+  const jitter = exponentialDelay * 0.25 * (Math.random() * 2 - 1);
+  return Math.min(exponentialDelay + jitter, 10000); // Max 10 seconds
+}
+
+/**
+ * Sleep for a specified duration
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise<void>}
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Get the current user's access token from the session
  * @returns {Promise<string|null>} Access token or null if no session
  */
@@ -28,23 +65,29 @@ async function getAccessToken() {
       return null;
     }
     
+    // Debug log: only show token prefix for security
+    const tokenPrefix = session.access_token ? session.access_token.substring(0, 10) + '...' : 'none';
+    console.log('[apiClient] Access token retrieved:', tokenPrefix);
+    
     return session.access_token;
   } catch (error) {
-    console.error('[apiClient] Error getting access token:', error);
+    console.error('[apiClient] Error getting access token:', error.message);
     return null;
   }
 }
 
 /**
- * Make an authenticated API request
+ * Make an authenticated API request with retry support
  * @param {string} endpoint - API endpoint (relative path, e.g., '/api/admin/stats')
  * @param {Object} options - Fetch options
  * @param {string} options.method - HTTP method (GET, POST, PUT, DELETE, etc.)
  * @param {Object} options.body - Request body (will be JSON stringified)
  * @param {Object} options.headers - Additional headers
  * @param {boolean} options.requireAuth - Whether authentication is required (default: true)
+ * @param {number} options.maxRetries - Maximum number of retry attempts (default: 0, max: 3)
+ * @param {number} options.baseDelay - Base delay for exponential backoff in ms (default: 1000)
  * @returns {Promise<Object>} Response data
- * @throws {ApiError} If the request fails
+ * @throws {ApiError} If the request fails after all retries
  */
 export async function apiRequest(endpoint, options = {}) {
   const {
@@ -52,86 +95,120 @@ export async function apiRequest(endpoint, options = {}) {
     body = null,
     headers = {},
     requireAuth = true,
+    maxRetries = 0,
+    baseDelay = 1000,
   } = options;
 
-  // Build full URL
-  const apiUrl = getApiUrl();
-  const url = `${apiUrl}${endpoint}`;
+  // Validate maxRetries
+  const retries = Math.min(Math.max(0, maxRetries), 3); // Clamp between 0 and 3
 
-  // Prepare headers
-  const requestHeaders = {
-    ...headers,
-  };
+  let lastError = null;
 
-  // Add Content-Type header if body is present and not already set
-  if (body && !requestHeaders['Content-Type'] && !requestHeaders['content-type']) {
-    requestHeaders['Content-Type'] = 'application/json';
-  }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      // If this is a retry, wait with exponential backoff
+      if (attempt > 0) {
+        const delay = calculateBackoffDelay(attempt - 1, baseDelay);
+        console.log(`[apiClient] Retry attempt ${attempt}/${retries} after ${Math.round(delay)}ms delay`);
+        await sleep(delay);
+      }
 
-  // Add authentication header if required
-  if (requireAuth) {
-    const accessToken = await getAccessToken();
-    
-    if (!accessToken) {
-      throw new ApiError(
-        'Sessão inválida ou expirada. Por favor, faça login novamente.',
-        401,
-        { type: 'NO_SESSION' }
-      );
-    }
-    
-    requestHeaders['Authorization'] = `Bearer ${accessToken}`;
-  }
+      // Build full URL
+      const apiUrl = getApiUrl();
+      const url = `${apiUrl}${endpoint}`;
 
-  // Prepare fetch options
-  const fetchOptions = {
-    method,
-    headers: requestHeaders,
-  };
+      // Prepare headers
+      const requestHeaders = {
+        ...headers,
+      };
 
-  // Add body if present
-  if (body) {
-    fetchOptions.body = JSON.stringify(body);
-  }
+      // Add Content-Type header if body is present and not already set
+      if (body && !requestHeaders['Content-Type'] && !requestHeaders['content-type']) {
+        requestHeaders['Content-Type'] = 'application/json';
+      }
 
-  try {
-    const response = await fetch(url, fetchOptions);
+      // Add authentication header if required
+      if (requireAuth) {
+        const accessToken = await getAccessToken();
+        
+        if (!accessToken) {
+          throw new ApiError(
+            'Sessão inválida ou expirada. Por favor, faça login novamente.',
+            401,
+            { type: 'NO_SESSION' }
+          );
+        }
+        
+        requestHeaders['Authorization'] = `Bearer ${accessToken}`;
+      }
 
-    // Handle different HTTP status codes
-    if (!response.ok) {
-      await handleErrorResponse(response);
-    }
+      // Prepare fetch options
+      const fetchOptions = {
+        method,
+        headers: requestHeaders,
+      };
 
-    // Parse response with robust error handling
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        return await response.json();
-      } catch (parseError) {
-        console.error('[apiClient] Failed to parse JSON response:', parseError);
+      // Add body if present
+      if (body) {
+        fetchOptions.body = JSON.stringify(body);
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      // Handle different HTTP status codes
+      if (!response.ok) {
+        await handleErrorResponse(response);
+      }
+
+      // Parse response with robust error handling
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const data = await response.json();
+          // Success - return data
+          return data;
+        } catch (parseError) {
+          console.error('[apiClient] Failed to parse JSON response:', parseError);
+          throw new ApiError(
+            'Resposta inválida do servidor. O servidor não retornou dados válidos.',
+            response.status || 500,
+            { type: 'INVALID_JSON', originalError: parseError.message }
+          );
+        }
+      }
+
+      return null;
+    } catch (error) {
+      lastError = error;
+
+      // Don't retry on client errors (4xx) or auth errors
+      if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+        throw error;
+      }
+
+      // If this is the last attempt or error is not retryable, throw
+      if (attempt >= retries || !isRetryableError(error)) {
+        // If it's already an ApiError, rethrow it
+        if (error instanceof ApiError) {
+          throw error;
+        }
+
+        // Network or other errors
+        console.error('[apiClient] Request failed:', error.message);
         throw new ApiError(
-          'Resposta inválida do servidor. O servidor não retornou dados válidos.',
-          response.status || 500,
-          { type: 'INVALID_JSON', originalError: parseError.message }
+          'Erro de conexão. Verifique sua internet e tente novamente.',
+          0,
+          { originalError: error.message }
         );
       }
-    }
 
-    return null;
-  } catch (error) {
-    // If it's already an ApiError, rethrow it
-    if (error instanceof ApiError) {
-      throw error;
+      // Continue to next retry attempt
+      console.log(`[apiClient] Retryable error encountered:`, error.message);
     }
-
-    // Network or other errors
-    console.error('[apiClient] Request failed:', error);
-    throw new ApiError(
-      'Erro de conexão. Verifique sua internet e tente novamente.',
-      0,
-      { originalError: error.message }
-    );
   }
+
+  // If we get here, all retries failed - throw the last error
+  throw lastError;
 }
 
 /**

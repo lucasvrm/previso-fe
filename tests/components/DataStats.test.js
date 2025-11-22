@@ -2,12 +2,20 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DataStats from '../../src/components/Admin/DataStats';
 import { useAuth } from '../../src/hooks/useAuth';
-import { api, ApiError } from '../../src/api/apiClient';
+import { useAdminStats } from '../../src/hooks/useAdminStats';
+import { ApiError } from '../../src/api/apiClient';
 
 // Mock dependencies
 jest.mock('../../src/hooks/useAuth');
-jest.mock('../../src/api/apiClient');
+jest.mock('../../src/hooks/useAdminStats');
 jest.mock('../../src/contexts/AuthContext');
+jest.mock('../../src/api/supabaseClient');
+jest.mock('../../src/api/apiClient');
+jest.mock('../../src/components/ErrorBoundary', () => {
+  return function ErrorBoundary({ children }) {
+    return <>{children}</>;
+  };
+});
 
 describe('DataStats', () => {
   beforeEach(() => {
@@ -19,6 +27,14 @@ describe('DataStats', () => {
       userRole: 'patient'
     });
 
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
+
     const { container } = render(<DataStats />);
     expect(container.firstChild).toBeNull();
   });
@@ -28,7 +44,13 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    api.get.mockResolvedValue({ total_users: 0, total_checkins: 0 });
+    useAdminStats.mockReturnValue({
+      data: { totalUsers: 0, totalCheckins: 0 },
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
     
@@ -41,14 +63,15 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    api.get.mockResolvedValue({ total_users: 25, total_checkins: 150 });
+    useAdminStats.mockReturnValue({
+      data: { totalUsers: 25, totalCheckins: 150 },
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
-
-    // Wait for loading to finish
-    await waitFor(() => {
-      expect(screen.queryByText('Carregando estatísticas...')).not.toBeInTheDocument();
-    });
 
     // Check if counts are displayed
     expect(screen.getByText('25')).toBeInTheDocument();
@@ -62,8 +85,13 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock API that never resolves
-    api.get.mockImplementation(() => new Promise(() => {}));
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
     
@@ -75,17 +103,17 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    const mockError = new ApiError(
-      'Erro no servidor. Tente novamente mais tarde.',
-      500
-    );
-    api.get.mockRejectedValue(mockError);
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: false,
+      error: 'Erro no servidor. Tente novamente mais tarde.',
+      errorType: 'server',
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
   });
 
   test('should keep UI functional when backend returns 500 error', async () => {
@@ -93,18 +121,18 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    const mockError = new ApiError(
-      'Estatísticas indisponíveis - Erro no servidor. Verifique as configurações do backend.',
-      500
-    );
-    api.get.mockRejectedValue(mockError);
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: false,
+      error: 'Estatísticas indisponíveis - Erro no servidor. Verifique as configurações do backend.',
+      errorType: 'server',
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
 
-    // Wait for error to be displayed
-    await waitFor(() => {
-      expect(screen.getByText(/Estatísticas indisponíveis/i)).toBeInTheDocument();
-    });
+    // Error message should be displayed
+    expect(screen.getByText(/Estatísticas indisponíveis/i)).toBeInTheDocument();
 
     // Ensure the component header is still rendered
     expect(screen.getByText('Estatísticas do Sistema')).toBeInTheDocument();
@@ -119,36 +147,46 @@ describe('DataStats', () => {
   });
 
   test('should allow user to retry after 500 error', async () => {
+    const mockRetry = jest.fn();
+
     useAuth.mockReturnValue({
       userRole: 'admin'
     });
 
-    const mockError = new ApiError(
-      'Erro no servidor',
-      500
-    );
-    
-    // First call fails, second succeeds
-    api.get
-      .mockRejectedValueOnce(mockError)
-      .mockResolvedValueOnce({ total_users: 10, total_checkins: 50 });
+    // First render with error
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: false,
+      error: 'Erro no servidor',
+      errorType: 'server',
+      retry: mockRetry,
+    });
 
-    render(<DataStats />);
+    const { rerender } = render(<DataStats />);
 
     // Wait for error
-    await waitFor(() => {
-      expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
 
     // Click refresh to retry
     const refreshButton = screen.getByLabelText('Atualizar estatísticas');
     fireEvent.click(refreshButton);
 
-    // Wait for successful data
-    await waitFor(() => {
-      expect(screen.getByText('10')).toBeInTheDocument();
-      expect(screen.getByText('50')).toBeInTheDocument();
+    expect(mockRetry).toHaveBeenCalled();
+
+    // Simulate successful retry
+    useAdminStats.mockReturnValue({
+      data: { totalUsers: 10, totalCheckins: 50 },
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: mockRetry,
     });
+
+    rerender(<DataStats />);
+
+    // Wait for successful data
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.getByText('50')).toBeInTheDocument();
 
     // Error message should be gone
     expect(screen.queryByText(/Erro no servidor/i)).not.toBeInTheDocument();
@@ -159,18 +197,17 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    const mockError = new ApiError(
-      'Resposta inválida do servidor. O servidor não retornou dados válidos.',
-      500,
-      { type: 'INVALID_JSON' }
-    );
-    api.get.mockRejectedValue(mockError);
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: false,
+      error: 'Estatísticas indisponíveis - Resposta inválida do servidor.',
+      errorType: 'server',
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Estatísticas indisponíveis - Resposta inválida do servidor/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Estatísticas indisponíveis - Resposta inválida do servidor/i)).toBeInTheDocument();
 
     // Component should still be functional
     expect(screen.getByText('Estatísticas do Sistema')).toBeInTheDocument();
@@ -178,36 +215,32 @@ describe('DataStats', () => {
   });
 
   test('should refresh statistics when refresh button is clicked', async () => {
+    const mockRetry = jest.fn();
+
     useAuth.mockReturnValue({
       userRole: 'admin'
     });
 
-    // Mock successful API calls
-    api.get
-      .mockResolvedValueOnce({ total_users: 10, total_checkins: 50 })
-      .mockResolvedValueOnce({ total_users: 15, total_checkins: 75 });
+    useAdminStats.mockReturnValue({
+      data: { totalUsers: 10, totalCheckins: 50 },
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: mockRetry,
+    });
 
     render(<DataStats />);
 
     // Wait for initial load
-    await waitFor(() => {
-      expect(screen.getByText('10')).toBeInTheDocument();
-      expect(screen.getByText('50')).toBeInTheDocument();
-    });
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.getByText('50')).toBeInTheDocument();
 
     // Click refresh button
     const refreshButton = screen.getByLabelText('Atualizar estatísticas');
     fireEvent.click(refreshButton);
 
-    // Wait for new data
-    await waitFor(() => {
-      expect(screen.getByText('15')).toBeInTheDocument();
-      expect(screen.getByText('75')).toBeInTheDocument();
-    });
-
-    // Verify API was called twice (initial + refresh)
-    expect(api.get).toHaveBeenCalledTimes(2);
-    expect(api.get).toHaveBeenCalledWith('/api/admin/stats');
+    // Verify retry was called
+    expect(mockRetry).toHaveBeenCalled();
   });
 
   test('should disable refresh button while loading', async () => {
@@ -215,21 +248,18 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    // Mock API calls with delay
-    api.get.mockImplementation(() => 
-      new Promise(resolve => 
-        setTimeout(() => resolve({ total_users: 10, total_checkins: 10 }), 100)
-      )
-    );
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
 
     const refreshButton = screen.getByLabelText('Atualizar estatísticas');
     expect(refreshButton).toBeDisabled();
-
-    await waitFor(() => {
-      expect(refreshButton).not.toBeDisabled();
-    }, { timeout: 3000 });
   });
 
   test('should format numbers with locale', async () => {
@@ -237,15 +267,19 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    api.get.mockResolvedValue({ total_users: 1234, total_checkins: 5678 });
+    useAdminStats.mockReturnValue({
+      data: { totalUsers: 1234, totalCheckins: 5678 },
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
 
-    await waitFor(() => {
-      // Brazilian Portuguese locale format uses period as thousand separator
-      expect(screen.getByText('1.234')).toBeInTheDocument();
-      expect(screen.getByText('5.678')).toBeInTheDocument();
-    });
+    // Brazilian Portuguese locale format uses period as thousand separator
+    expect(screen.getByText('1.234')).toBeInTheDocument();
+    expect(screen.getByText('5.678')).toBeInTheDocument();
   });
 
   test('should handle null counts gracefully', async () => {
@@ -253,16 +287,38 @@ describe('DataStats', () => {
       userRole: 'admin'
     });
 
-    api.get.mockResolvedValue({ total_users: null, total_checkins: null });
+    useAdminStats.mockReturnValue({
+      data: { totalUsers: null, totalCheckins: null },
+      loading: false,
+      error: null,
+      errorType: null,
+      retry: jest.fn(),
+    });
 
     render(<DataStats />);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Carregando estatísticas...')).not.toBeInTheDocument();
-    });
 
     // Should display 0 when count is null
     const zeros = screen.getAllByText('0');
     expect(zeros.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('should show forbidden error with different styling', () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    useAdminStats.mockReturnValue({
+      data: null,
+      loading: false,
+      error: 'Você não tem permissão para visualizar estas estatísticas.',
+      errorType: 'forbidden',
+      retry: jest.fn(),
+    });
+
+    render(<DataStats />);
+
+    const errorMessages = screen.getAllByText('Você não tem permissão para visualizar estas estatísticas.');
+    expect(errorMessages.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Estatísticas do Sistema')).toBeInTheDocument();
   });
 });
