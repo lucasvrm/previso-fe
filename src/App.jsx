@@ -24,6 +24,7 @@ import DataManagement from './components/admin/DataManagement';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
 function App() {
   console.log('[App] Componente App montando...');
@@ -113,17 +114,17 @@ function App() {
           <Route 
             path="dashboard" 
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <AdminRoute>
                 <SystemStats />
-              </ProtectedRoute>
+              </AdminRoute>
             } 
           />
           <Route 
             path="data" 
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <AdminRoute>
                 <DataManagement />
-              </ProtectedRoute>
+              </AdminRoute>
             } 
           />
         </Route>

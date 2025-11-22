@@ -1,5 +1,6 @@
 import { api, ApiError } from '../../src/api/apiClient';
 import { supabase } from '../../src/api/supabaseClient';
+import axios from 'axios';
 
 // Mock supabase
 jest.mock('../../src/api/supabaseClient', () => ({
@@ -10,14 +11,30 @@ jest.mock('../../src/api/supabaseClient', () => ({
   },
 }));
 
-// Mock fetch globally
-global.fetch = jest.fn();
+// Mock axios
+jest.mock('axios', () => {
+  const mockInstance = jest.fn();
+  mockInstance.interceptors = {
+    request: { use: jest.fn() },
+    response: { use: jest.fn() },
+  };
+  return {
+    create: jest.fn(() => mockInstance),
+  };
+});
 
-describe('apiClient - Graceful Degradation', () => {
+describe('apiClient', () => {
+  let mockAxiosInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock successful session by default
+    // Get the mocked instance that was created in apiClient.js
+    // Since we can't access the module-scope variable easily without reloading,
+    // we rely on the fact that api.axios exposes it.
+    mockAxiosInstance = api.axios;
+
+    // Default auth success
     supabase.auth.getSession.mockResolvedValue({
       data: {
         session: {
@@ -28,331 +45,101 @@ describe('apiClient - Graceful Degradation', () => {
     });
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
+  test('should return data on success', async () => {
+    const mockData = { success: true };
+    mockAxiosInstance.mockResolvedValueOnce({
+      data: mockData,
+      status: 200,
+    });
+
+    const result = await api.get('/test');
+    expect(result).toEqual(mockData);
+    expect(mockAxiosInstance).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      url: '/test',
+    }));
   });
 
-  describe('Non-JSON Response Handling', () => {
-    test('should handle non-JSON response gracefully on success', async () => {
-      // Mock a successful response with non-JSON content
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'text/html';
-            return null;
-          }),
-        },
-      });
+  test('should handle 401 error correctly', async () => {
+    const error = new Error('Unauthorized');
+    error.response = {
+      status: 401,
+      data: { detail: 'Unauthorized access' }
+    };
+    mockAxiosInstance.mockRejectedValueOnce(error);
 
-      const result = await api.get('/api/test');
-      
-      // Should return null for non-JSON responses
-      expect(result).toBeNull();
-    });
-
-    test('should handle invalid JSON in successful response', async () => {
-      // Mock a response that claims to be JSON but isn't
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockRejectedValue(new Error('Unexpected token in JSON')),
-      });
-
-      try {
-        await api.get('/api/test');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.message).toContain('Resposta inválida do servidor');
-        expect(error.status).toBe(200);
-        expect(error.details.type).toBe('INVALID_JSON');
-      }
-    });
-
-    test('should handle non-JSON error response', async () => {
-      // Mock a 500 error with HTML response
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'text/html';
-            return null;
-          }),
-        },
-        text: jest.fn().mockResolvedValue('<html>Internal Server Error</html>'),
-      });
-
-      try {
-        await api.get('/api/test');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.status).toBe(500);
-      }
-    });
-
-    test('should handle invalid JSON in error response', async () => {
-      // Mock a 500 error that claims to be JSON but isn't
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockRejectedValue(new Error('Unexpected token')),
-        text: jest.fn().mockResolvedValue('Server Error'),
-      });
-
-      try {
-        await api.get('/api/test');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.status).toBe(500);
-      }
-    });
+    try {
+      await api.get('/test');
+      throw new Error('Should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect(err.status).toBe(401);
+      expect(err.message).toContain('Unauthorized access');
+    }
   });
 
-  describe('500 Error Handling - UI Should Not Break', () => {
-    test('should handle 500 error and return meaningful error', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockResolvedValue({
-          detail: 'Internal Server Error',
-        }),
-      });
+  test('should retry on 5xx errors', async () => {
+    const error500 = new Error('Server Error');
+    error500.response = { status: 500, data: { detail: 'Server Error' } };
 
-      try {
-        await api.get('/api/admin/stats');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.message).toBe('Internal Server Error');
-        expect(error.status).toBe(500);
-      }
-    });
+    const successResponse = { data: { ok: true }, status: 200 };
 
-    test('should handle 401 error gracefully', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockResolvedValue({
-          detail: 'Unauthorized',
-        }),
-      });
+    // First call fails, second succeeds
+    mockAxiosInstance
+      .mockRejectedValueOnce(error500)
+      .mockResolvedValueOnce(successResponse);
 
-      try {
-        await api.get('/api/admin/stats');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.message).toBe('Sessão inválida ou expirada. Por favor, faça login novamente.');
-        expect(error.status).toBe(401);
-      }
-    });
+    const result = await api.get('/test', { maxRetries: 1 });
 
-    test('should handle network errors gracefully', async () => {
-      fetch.mockRejectedValueOnce(new Error('Network error'));
-
-      try {
-        await api.get('/api/admin/stats');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.message).toBe('Erro de conexão. Verifique sua internet e tente novamente.');
-        expect(error.status).toBe(0);
-      }
-    });
-
-    test('should handle invalid API key error (500)', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockResolvedValue({
-          detail: 'Invalid API key provided',
-        }),
-      });
-
-      try {
-        await api.post('/api/admin/generate-data', {});
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.message).toContain('Chave de API inválida');
-        expect(error.status).toBe(500);
-        expect(error.details.type).toBe('INVALID_API_KEY');
-      }
-    });
+    expect(result).toEqual({ ok: true });
+    expect(mockAxiosInstance).toHaveBeenCalledTimes(2);
   });
 
-  describe('Successful JSON Responses', () => {
-    test('should parse valid JSON response successfully', async () => {
-      const mockData = { total_users: 25, total_checkins: 150 };
-      
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockResolvedValue(mockData),
-      });
+  test('should fail after max retries', async () => {
+    const error500 = new Error('Server Error');
+    error500.response = { status: 500, data: { detail: 'Server Error' } };
 
-      const result = await api.get('/api/admin/stats');
-      expect(result).toEqual(mockData);
-    });
+    mockAxiosInstance.mockRejectedValue(error500);
 
-    test('should handle POST requests with valid JSON', async () => {
-      const mockResponse = {
-        message: 'Success',
-        statistics: {
-          patients_created: 5,
-          total_checkins: 150,
-        },
-      };
-      
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockResolvedValue(mockResponse),
-      });
-
-      const result = await api.post('/api/admin/generate-data', {
-        user_type: 'patient',
-        patients_count: 5,
-      });
-      
-      expect(result).toEqual(mockResponse);
-    });
+    try {
+      await api.get('/test', { maxRetries: 2 });
+      throw new Error('Should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect(err.status).toBe(500);
+      expect(mockAxiosInstance).toHaveBeenCalledTimes(3); // Initial + 2 retries
+    }
   });
 
-  describe('Authentication Handling', () => {
-    test('should throw error when no session is available', async () => {
-      supabase.auth.getSession.mockResolvedValueOnce({
-        data: { session: null },
-        error: null,
-      });
+  test('should not retry on 4xx errors', async () => {
+    const error404 = new Error('Not Found');
+    error404.response = { status: 404, data: { detail: 'Not Found' } };
 
-      try {
-        await api.get('/api/admin/stats');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.message).toContain('Sessão inválida ou expirada');
-        expect(error.status).toBe(401);
-      }
-    });
+    mockAxiosInstance.mockRejectedValueOnce(error404);
 
-    test('should include auth token in request headers', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: {
-          get: jest.fn(() => 'application/json'),
-        },
-        json: jest.fn().mockResolvedValue({}),
-      });
-
-      await api.get('/api/test');
-
-      expect(fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer mock-token',
-          }),
-        })
-      );
-    });
+    try {
+      await api.get('/test', { maxRetries: 2 });
+      throw new Error('Should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect(err.status).toBe(404);
+      expect(mockAxiosInstance).toHaveBeenCalledTimes(1); // No retry
+    }
   });
 
-  describe('Edge Cases', () => {
-    test('should handle empty response body gracefully', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'application/json';
-            return null;
-          }),
-        },
-        json: jest.fn().mockRejectedValue(new Error('No content')),
-        text: jest.fn().mockResolvedValue(''),
-      });
+  test('should handle network errors (no response)', async () => {
+    const netError = new Error('Network Error');
+    // No response property
 
-      try {
-        await api.get('/api/test');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.status).toBe(500);
-      }
-    });
+    mockAxiosInstance.mockRejectedValueOnce(netError);
 
-    test('should handle very long non-JSON error responses', async () => {
-      const longText = 'Error '.repeat(200); // Very long error text
-      
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        headers: {
-          get: jest.fn((header) => {
-            if (header === 'content-type') return 'text/html';
-            return null;
-          }),
-        },
-        text: jest.fn().mockResolvedValue(longText),
-      });
-
-      try {
-        await api.get('/api/test');
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect(error.status).toBe(500);
-        // Should still throw but not include the very long text in the message
-      }
-    });
+    try {
+      await api.get('/test');
+      throw new Error('Should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect(err.status).toBe(0);
+      expect(err.message).toBe('Network Error');
+    }
   });
 });

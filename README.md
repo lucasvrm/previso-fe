@@ -56,6 +56,35 @@ npm test
 npm run lint
 ```
 
+## 🔌 Consumo de API
+
+O projeto utiliza um cliente HTTP centralizado (`src/api/apiClient.js`) baseado em Axios.
+
+### Hooks disponíveis
+
+- `usePredictions(userId, metrics, windowDays)`: Busca previsões clínicas.
+- `useLatestCheckin(userId)`: Busca o último check-in do usuário.
+- `useAdminStats()`: Busca estatísticas administrativas (requer privilégios de admin).
+
+### Exemplo de uso do Client
+
+```javascript
+import api from './api/apiClient';
+
+const fetchData = async () => {
+  try {
+    const data = await api.get('/endpoint');
+    console.log(data);
+  } catch (error) {
+    console.error(error.message); // Mensagens de erro padronizadas
+  }
+};
+```
+
+### Tratamento de Erros
+
+Erros são classificados em categorias (`network`, `unauth`, `forbidden`, `generic`) para facilitar o tratamento na UI. O client gerencia automaticamente a injeção do token de autenticação e redirecionamentos em caso de sessão expirada (401).
+
 ## 🔐 Segurança
 
 - **NUNCA** use `SUPABASE_SERVICE_KEY` no frontend
@@ -75,6 +104,7 @@ npm run lint
 - React Router
 - Tailwind CSS
 - Jest + Testing Library
+- Axios
 
 ## 📝 Scripts Disponíveis
 

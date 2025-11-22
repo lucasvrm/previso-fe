@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { fetchPredictions } from '../services/checkinService';
+import React, { useState } from 'react';
+import { usePredictions } from '../hooks/usePredictions';
 import PredictionCard from './PredictionCard';
 import { Calendar, RefreshCw } from 'lucide-react';
 
@@ -31,82 +31,24 @@ const PREDICTION_TYPES = [
  * @returns {JSX.Element}
  */
 const PredictionsGrid = ({ userId }) => {
-  const [predictions, setPredictions] = useState([]);
   const [windowDays, setWindowDays] = useState(3); // Default to 3 days
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0); // Key to force refresh
 
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      setPredictions([]);
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadPredictions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const result = await fetchPredictions(userId, {
-          types: PREDICTION_TYPES,
-          window_days: windowDays,
-        });
-
-        // Don't update state if component was unmounted
-        if (cancelled) return;
-
-        if (result.error) {
-          throw result.error;
-        }
-
-        // Handle the response - it could be an array or an object with aggregated/per_checkin
-        if (result.data) {
-          // Ensure we always set an array
-          if (Array.isArray(result.data)) {
-            setPredictions(result.data);
-          } else if (result.data.predictions && Array.isArray(result.data.predictions)) {
-            setPredictions(result.data.predictions);
-          } else {
-            console.warn('[PredictionsGrid] Unexpected data format, setting empty array');
-            setPredictions([]);
-          }
-        } else {
-          setPredictions([]);
-        }
-      } catch (err) {
-        if (cancelled) return;
-        console.error('[PredictionsGrid] Error loading predictions:', err);
-        setError('Não foi possível carregar as previsões. Por favor, tente novamente.');
-        setPredictions([]);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadPredictions();
-
-    // Cleanup function to prevent state updates after unmount
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, windowDays, refreshKey]); // Add refreshKey to dependencies
+  const {
+    data: predictions,
+    loading,
+    error,
+    retry
+  } = usePredictions(userId, PREDICTION_TYPES, windowDays);
 
   const handleWindowChange = (newWindow) => {
     setWindowDays(newWindow);
   };
 
   const handleRefresh = () => {
-    // Force a reload by incrementing the refresh key
-    setRefreshKey(prev => prev + 1);
+    retry();
   };
 
-  if (loading) {
+  if (loading && !predictions) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
@@ -125,10 +67,16 @@ const PredictionsGrid = ({ userId }) => {
     );
   }
 
-  if (error) {
+  if (error && !predictions) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error}</p>
+        <p className="text-red-800">Não foi possível carregar as previsões. Por favor, tente novamente.</p>
+        <button
+          onClick={retry}
+          className="mt-2 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+        >
+          Tentar novamente
+        </button>
       </div>
     );
   }
@@ -176,7 +124,7 @@ const PredictionsGrid = ({ userId }) => {
             className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
             title="Atualizar previsões"
           >
-            <RefreshCw className="h-5 w-5" />
+            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
