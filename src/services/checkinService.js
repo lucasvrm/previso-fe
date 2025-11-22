@@ -43,10 +43,15 @@ export const fetchLatestCheckin = async (userId) => {
       throw new Error(`API responded with status ${response.status} (${response.statusText}) for endpoint: ${endpoint}`);
     }
 
-    const checkinData = await response.json();
-
-    // The API returns null if there's no data, so we handle that
-    return { data: checkinData, error: null };
+    // Parse response with error handling
+    try {
+      const checkinData = await response.json();
+      // The API returns null if there's no data, so we handle that
+      return { data: checkinData, error: null };
+    } catch (parseError) {
+      console.error('Error parsing latest check-in JSON response:', parseError);
+      throw new Error(`Invalid JSON response from API: ${parseError.message}`);
+    }
   } catch (error) {
     console.error('Error fetching latest check-in from API:', error);
     return { data: null, error };

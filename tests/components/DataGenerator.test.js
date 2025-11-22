@@ -242,6 +242,118 @@ describe('DataGenerator', () => {
     });
   });
 
+  test('should keep UI functional when backend returns 500 error', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Erro no servidor',
+      500
+    );
+    api.post.mockRejectedValue(mockError);
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+    fireEvent.click(submitButton);
+
+    // Wait for error to be displayed
+    await waitFor(() => {
+      expect(screen.getByText(/Erro no servidor/)).toBeInTheDocument();
+    });
+
+    // Ensure the component title is still rendered
+    expect(screen.getByText('Geração de Dados')).toBeInTheDocument();
+    
+    // Ensure the form is still functional
+    expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    expect(submitButton).not.toBeDisabled();
+
+    // User can still interact with the form
+    const userTypeSelect = screen.getByLabelText(/Tipo de Usuário/);
+    fireEvent.change(userTypeSelect, { target: { value: 'therapist' } });
+    expect(userTypeSelect.value).toBe('therapist');
+  });
+
+  test('should allow user to retry after 500 error', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Erro no servidor',
+      500
+    );
+    
+    // First call fails, second succeeds
+    api.post
+      .mockRejectedValueOnce(mockError)
+      .mockResolvedValueOnce({ 
+        message: 'Success',
+        statistics: { patients_created: 1, therapists_created: 0, total_checkins: 30, user_ids: [] }
+      });
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+    fireEvent.click(submitButton);
+
+    // Wait for error
+    await waitFor(() => {
+      expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
+    });
+
+    // Retry by clicking submit again
+    fireEvent.click(submitButton);
+
+    // Wait for success
+    await waitFor(() => {
+      expect(screen.getByText('Success')).toBeInTheDocument();
+    });
+
+    // Error message should be gone
+    expect(screen.queryByText(/Erro no servidor/i)).not.toBeInTheDocument();
+  });
+
+  test('should handle non-JSON response error gracefully', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Resposta inválida do servidor. O servidor não retornou dados válidos.',
+      500,
+      { type: 'INVALID_JSON' }
+    );
+    api.post.mockRejectedValue(mockError);
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Resposta inválida do servidor/i)).toBeInTheDocument();
+    });
+
+    // Component should still be functional
+    expect(screen.getByText('Geração de Dados')).toBeInTheDocument();
+    expect(submitButton).not.toBeDisabled();
+  });
+
   test('should validate patient count range', async () => {
     useAuth.mockReturnValue({
       userRole: 'admin'
