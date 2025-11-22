@@ -1,5 +1,5 @@
-// src/services/checkinService.js
 import { supabase } from '../api/supabaseClient';
+import api from '../api/apiClient';
 
 /**
  * Fetch check-ins for a specific user
@@ -31,29 +31,18 @@ export const fetchCheckins = async (userId, limit = 30) => {
  */
 export const fetchLatestCheckin = async (userId) => {
   try {
-    // Use our API endpoint instead of direct Supabase access
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
-    const endpoint = `${apiUrl}/data/latest_checkin/${userId}`;
+    console.log(`Fetching latest check-in from API for user ${userId}`);
 
-    console.log(`Fetching latest check-in from API: ${endpoint}`);
+    // Use api.get which handles authentication and errors
+    // Note: api.get returns the data directly
+    const checkinData = await api.get(`/data/latest_checkin/${userId}`);
 
-    const response = await fetch(endpoint);
-
-    if (!response.ok) {
-      throw new Error(`API responded with status ${response.status} (${response.statusText}) for endpoint: ${endpoint}`);
-    }
-
-    // Parse response with error handling
-    try {
-      const checkinData = await response.json();
-      // The API returns null if there's no data, so we handle that
-      return { data: checkinData, error: null };
-    } catch (parseError) {
-      console.error('Error parsing latest check-in JSON response:', parseError);
-      throw new Error(`Invalid JSON response from API: ${parseError.message}`);
-    }
+    return { data: checkinData, error: null };
   } catch (error) {
-    console.error('Error fetching latest check-in from API:', error);
+    // Don't log 404s as errors (common for new users)
+    if (error.status !== 404) {
+      console.error('Error fetching latest check-in from API:', error);
+    }
     return { data: null, error };
   }
 };
@@ -94,76 +83,41 @@ export const getCheckinCountInLastDays = async (userId, days = 7) => {
  */
 export const fetchPredictions = async (userId, { types, window_days = 3, limit_checkins = 0 } = {}) => {
   try {
-    // Validate and encode userId
+    // Validate userId
     if (!userId || typeof userId !== 'string') {
       throw new Error('Invalid userId provided to fetchPredictions');
     }
     
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
-    const qs = new URLSearchParams();
-    
+    const params = { window_days };
     if (types && Array.isArray(types)) {
-      qs.append('types', types.join(','));
-    }
-    if (window_days) {
-      qs.append('window_days', String(window_days));
+      params.types = types.join(',');
     }
     if (limit_checkins) {
-      qs.append('limit_checkins', String(limit_checkins));
+      params.limit_checkins = limit_checkins;
     }
     
-    const queryString = qs.toString();
-    // Use encodeURIComponent for userId to handle special characters
-    const endpoint = `${apiUrl}/data/predictions/${encodeURIComponent(userId)}${queryString ? `?${queryString}` : ''}`;
-    
-    // Only log in development
     if (import.meta.env.DEV) {
-      console.log(`[fetchPredictions] Fetching from API: ${endpoint}`);
+      console.log(`[fetchPredictions] Fetching from API for user ${userId}`);
     }
     
-    const response = await fetch(endpoint);
+    // Use api.get
+    const predictionsData = await api.get(`/data/predictions/${userId}`, { params });
     
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({}));
-      const errorMessage = errorBody.detail || `API responded with status ${response.status}`;
-      throw new Error(errorMessage);
-    }
-    
-    // Safe JSON parsing with try/catch
-    let predictionsData;
-    try {
-      const textResponse = await response.text();
-      predictionsData = JSON.parse(textResponse);
-    } catch (parseError) {
-      console.error('[fetchPredictions] JSON parse error:', parseError);
-      throw new Error('Invalid JSON response from predictions API');
-    }
-    
-    // Validate that response contains predictions array
+    // Normalize response
     if (predictionsData && typeof predictionsData === 'object') {
-      // Handle different response formats
       if (Array.isArray(predictionsData)) {
-        // Response is directly an array
         return { data: predictionsData, error: null };
       } else if (predictionsData.predictions && Array.isArray(predictionsData.predictions)) {
-        // Response is an object with predictions property
         return { data: predictionsData.predictions, error: null };
       } else {
-        // Log the unexpected format for debugging
         console.warn('[fetchPredictions] Unexpected response format:', typeof predictionsData);
-        // Return as-is and let the component handle it
         return { data: predictionsData, error: null };
       }
     }
     
-    // No data available
     return { data: null, error: null };
   } catch (error) {
-    // Contextualized error logging
     console.error('[fetchPredictions] Error for userId:', userId, '- Error:', error.message);
-    if (error.stack) {
-      console.error('[fetchPredictions] Stack trace:', error.stack);
-    }
     return { data: null, error };
   }
 };

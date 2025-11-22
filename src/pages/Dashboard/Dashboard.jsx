@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { fetchCheckins, fetchLatestCheckin } from '../../services/checkinService';
+import { fetchCheckins } from '../../services/checkinService';
+import { useLatestCheckin } from '../../hooks/useLatestCheckin';
 import DashboardViewer from '../../components/Dashboard/DashboardViewer';
 import PredictionsGrid from '../../components/PredictionsGrid';
 import DailyPredictionCard from '../../components/DailyPredictionCard';
@@ -9,14 +10,20 @@ import { AlertTriangle } from 'lucide-react';
 const Dashboard = () => {
   const { user } = useAuth();
   const [checkins, setCheckins] = useState([]);
-  const [latestCheckin, setLatestCheckin] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [checkinsLoading, setCheckinsLoading] = useState(true);
+  const [checkinsError, setCheckinsError] = useState(null);
   const [activeSection, setActiveSection] = useState('overview');
+
+  // Use new hook for latest checkin
+  const {
+    data: latestCheckin,
+    loading: latestCheckinLoading,
+    error: latestCheckinError
+  } = useLatestCheckin(user?.id);
 
   useEffect(() => {
     if (!user) {
-        setLoading(false);
+        setCheckinsLoading(false);
         return;
     }
     let isMounted = true; 
@@ -30,22 +37,11 @@ const Dashboard = () => {
         if (checkinsResult.error) throw checkinsResult.error;
         
         setCheckins(checkinsResult.data);
-
-        // Fetch latest check-in for daily prediction
-        const latestResult = await fetchLatestCheckin(user.id);
-        if (!isMounted) return;
-        
-        if (latestResult.error) {
-          console.warn('Could not fetch latest checkin for daily prediction:', latestResult.error);
-          // Continue without daily prediction - don't fail the entire dashboard
-        } else if (latestResult.data) {
-          setLatestCheckin(latestResult.data);
-        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        if (isMounted) setError('Não foi possível carregar seus dados.');
+        if (isMounted) setCheckinsError('Não foi possível carregar seus dados.');
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) setCheckinsLoading(false);
       }
     };
     fetchCheckinData();
@@ -81,8 +77,8 @@ const Dashboard = () => {
     return hasManiaIndicators;
   }, [checkins]);
 
-  if (loading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-card rounded-lg shadow h-64"></div><div className="bg-card rounded-lg shadow h-64"></div></div>; }
-  if (error) { return <div className="p-4 text-center text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">{error}</div>; }
+  if (checkinsLoading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-card rounded-lg shadow h-64"></div><div className="bg-card rounded-lg shadow h-64"></div></div>; }
+  if (checkinsError) { return <div className="p-4 text-center text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">{checkinsError}</div>; }
 
   return (
     <div className="p-6 space-y-6">
@@ -118,8 +114,21 @@ const Dashboard = () => {
       )}
 
       {/* Daily Prediction Card */}
-      {user && latestCheckin && (
-        <DailyPredictionCard latestCheckin={latestCheckin} userId={user.id} />
+      {/* Only show if we have user and latest checkin. Loading/Error for this part handled inside or via null */}
+      {user && (
+        <div className="relative">
+           {latestCheckinLoading && !latestCheckin && (
+             <div className="bg-white p-4 rounded-lg shadow h-32 animate-pulse"></div>
+           )}
+           {latestCheckin && (
+             <DailyPredictionCard latestCheckin={latestCheckin} userId={user.id} />
+           )}
+           {latestCheckinError && (
+             <div className="text-sm text-red-500 mt-2">
+               Não foi possível carregar a previsão diária.
+             </div>
+           )}
+        </div>
       )}
 
       {/* Predictions Grid - Multiple prediction cards */}
