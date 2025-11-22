@@ -75,6 +75,8 @@ const DataGenerator = () => {
         if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
           errorMessage = 'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.';
           showToast = true; // Show toast for critical server configuration errors
+        } else if (err.details?.type === 'INVALID_JSON') {
+          errorMessage = 'Resposta inválida do servidor. O servidor não retornou dados válidos.';
         } else if (err.status === 401) {
           errorMessage = 'Sessão expirada. Por favor, faça login novamente.';
         } else if (err.status === 403) {

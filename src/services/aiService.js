@@ -23,12 +23,26 @@ export const predictCrisisRisk = async (formData) => {
 
     if (!response.ok) {
       // Tenta ler o erro JSON da API se houver
-      const errorBody = await response.json();
-      throw new Error(`API Error (${response.status}): ${errorBody.detail || 'Erro desconhecido na API'}`);
+      let errorMessage = `API Error (${response.status})`;
+      try {
+        const errorBody = await response.json();
+        errorMessage = `API Error (${response.status}): ${errorBody.detail || 'Erro desconhecido na API'}`;
+      } catch (parseError) {
+        console.error("Falha ao parsear erro JSON da API:", parseError);
+        // If JSON parsing fails, provide a generic error message
+        errorMessage = `API Error (${response.status}): Resposta inválida do servidor`;
+      }
+      throw new Error(errorMessage);
     }
 
-    const result = await response.json();
-    return result;
+    // Parse successful response with error handling
+    try {
+      const result = await response.json();
+      return result;
+    } catch (parseError) {
+      console.error("Falha ao parsear resposta JSON da API de predição:", parseError);
+      return { probability: 0, risk_level: "UNKNOWN", error: true, errorMessage: "Resposta inválida do servidor" };
+    }
 
   } catch (error) {
     console.error("Falha na predição de IA:", error);
@@ -66,14 +80,26 @@ export async function getAIDailyPrediction(features, patientId) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Erro da API:', errorData);
-      throw new Error(`A API respondeu com o status ${response.status}`);
+      let errorMessage = `A API respondeu com o status ${response.status}`;
+      try {
+        const errorData = await response.json();
+        console.error('Erro da API:', errorData);
+        errorMessage = errorData.detail || errorMessage;
+      } catch (parseError) {
+        console.error('Falha ao parsear erro JSON:', parseError);
+      }
+      throw new Error(errorMessage);
     }
 
-    const prediction = await response.json();
-    console.log("Predição recebida da API:", prediction);
-    return prediction;
+    // Parse successful response with error handling
+    try {
+      const prediction = await response.json();
+      console.log("Predição recebida da API:", prediction);
+      return prediction;
+    } catch (parseError) {
+      console.error('Falha ao parsear predição JSON:', parseError);
+      throw new Error('Resposta inválida do servidor');
+    }
 
   } catch (error) {
     console.error('Falha ao buscar a predição da IA:', error);

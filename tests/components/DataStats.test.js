@@ -88,6 +88,95 @@ describe('DataStats', () => {
     });
   });
 
+  test('should keep UI functional when backend returns 500 error', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Estatísticas indisponíveis - Erro no servidor. Verifique as configurações do backend.',
+      500
+    );
+    api.get.mockRejectedValue(mockError);
+
+    render(<DataStats />);
+
+    // Wait for error to be displayed
+    await waitFor(() => {
+      expect(screen.getByText(/Estatísticas indisponíveis/i)).toBeInTheDocument();
+    });
+
+    // Ensure the component header is still rendered
+    expect(screen.getByText('Estatísticas do Sistema')).toBeInTheDocument();
+    
+    // Ensure the refresh button is still functional
+    const refreshButton = screen.getByLabelText('Atualizar estatísticas');
+    expect(refreshButton).toBeInTheDocument();
+    expect(refreshButton).not.toBeDisabled();
+
+    // User should see a placeholder message that the rest of dashboard is accessible
+    expect(screen.getByText(/O resto do dashboard continua acessível/i)).toBeInTheDocument();
+  });
+
+  test('should allow user to retry after 500 error', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Erro no servidor',
+      500
+    );
+    
+    // First call fails, second succeeds
+    api.get
+      .mockRejectedValueOnce(mockError)
+      .mockResolvedValueOnce({ total_users: 10, total_checkins: 50 });
+
+    render(<DataStats />);
+
+    // Wait for error
+    await waitFor(() => {
+      expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
+    });
+
+    // Click refresh to retry
+    const refreshButton = screen.getByLabelText('Atualizar estatísticas');
+    fireEvent.click(refreshButton);
+
+    // Wait for successful data
+    await waitFor(() => {
+      expect(screen.getByText('10')).toBeInTheDocument();
+      expect(screen.getByText('50')).toBeInTheDocument();
+    });
+
+    // Error message should be gone
+    expect(screen.queryByText(/Erro no servidor/i)).not.toBeInTheDocument();
+  });
+
+  test('should handle non-JSON response error gracefully', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    const mockError = new ApiError(
+      'Resposta inválida do servidor. O servidor não retornou dados válidos.',
+      500,
+      { type: 'INVALID_JSON' }
+    );
+    api.get.mockRejectedValue(mockError);
+
+    render(<DataStats />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Estatísticas indisponíveis - Resposta inválida do servidor/i)).toBeInTheDocument();
+    });
+
+    // Component should still be functional
+    expect(screen.getByText('Estatísticas do Sistema')).toBeInTheDocument();
+    expect(screen.getByLabelText('Atualizar estatísticas')).toBeInTheDocument();
+  });
+
   test('should refresh statistics when refresh button is clicked', async () => {
     useAuth.mockReturnValue({
       userRole: 'admin'

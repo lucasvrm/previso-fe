@@ -32,7 +32,7 @@ describe('Supabase Client Validation Logic', () => {
         { url: 'ftp://example.supabase.co', reason: 'wrong protocol' }
       ];
 
-      invalidUrls.forEach(({ url, reason }) => {
+      invalidUrls.forEach(({ url }) => {
         const isValid = url.startsWith('https://') && url.includes('supabase');
         expect(isValid).toBe(false);
       });

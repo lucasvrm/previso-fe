@@ -33,6 +33,8 @@ const DataStats = forwardRef((props, ref) => {
       if (err instanceof ApiError) {
         if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
           setError('Estatísticas indisponíveis - Falha na configuração do servidor (Chave de API inválida).');
+        } else if (err.status === 500 && err.details?.type === 'INVALID_JSON') {
+          setError('Estatísticas indisponíveis - Resposta inválida do servidor.');
         } else if (err.status === 401) {
           setError('Sessão expirada. Por favor, faça login novamente.');
         } else if (err.status === 403) {

@@ -102,10 +102,19 @@ export async function apiRequest(endpoint, options = {}) {
       await handleErrorResponse(response);
     }
 
-    // Parse response
+    // Parse response with robust error handling
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      return await response.json();
+      try {
+        return await response.json();
+      } catch (parseError) {
+        console.error('[apiClient] Failed to parse JSON response:', parseError);
+        throw new ApiError(
+          'Resposta inválida do servidor. O servidor não retornou dados válidos.',
+          response.status || 500,
+          { type: 'INVALID_JSON', originalError: parseError.message }
+        );
+      }
     }
 
     return null;
@@ -135,7 +144,7 @@ async function handleErrorResponse(response) {
   let errorMessage = `Erro na API (${status})`;
   let errorDetails = null;
 
-  // Try to parse error response
+  // Try to parse error response with robust error handling
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
     try {
@@ -143,7 +152,26 @@ async function handleErrorResponse(response) {
       errorMessage = errorData.detail || errorData.message || errorMessage;
       errorDetails = errorData;
     } catch (parseError) {
-      console.error('[apiClient] Failed to parse error response:', parseError);
+      console.error('[apiClient] Failed to parse error response as JSON:', parseError);
+      // Log the raw response for debugging but don't expose it to users
+      try {
+        const textResponse = await response.text();
+        console.error('[apiClient] Raw error response:', textResponse.substring(0, 200));
+        // Don't include raw server response in user-facing error message for security
+        errorMessage = `Erro ao processar resposta do servidor (${status})`;
+      } catch (textError) {
+        console.error('[apiClient] Failed to read error response as text:', textError);
+      }
+    }
+  } else {
+    // Non-JSON response - log for debugging but don't expose to user
+    try {
+      const textResponse = await response.text();
+      console.error('[apiClient] Non-JSON error response:', textResponse.substring(0, 200));
+      // Don't include raw server response in user-facing error message for security
+      errorMessage = `Resposta não-JSON do servidor (${status})`;
+    } catch (textError) {
+      console.error('[apiClient] Failed to read non-JSON error response:', textError);
     }
   }
 
