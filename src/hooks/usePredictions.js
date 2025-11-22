@@ -30,7 +30,8 @@ export function usePredictions(userId, metrics = [], windowDays = 3) {
         params.types = metricsKey;
       }
 
-      const result = await api.get(`/data/predictions/${userId}`, { params });
+      // Pass maxRetries: 0 to api.get because we handle retries here in the hook
+      const result = await api.get(`/data/predictions/${userId}`, { params, maxRetries: 0 });
 
       // Normalize data
       let predictions = [];
@@ -52,7 +53,10 @@ export function usePredictions(userId, metrics = [], windowDays = 3) {
       setError(err);
 
       // Determine if we should retry (network errors or server errors)
-      const isRetryable = errorCategory === 'network' || (err.status >= 500 && err.status < 600);
+      // Do NOT retry on 429 (Rate Limit) or 4xx errors
+      const isRateLimit = err.status === 429;
+      const isClientError = err.status >= 400 && err.status < 500;
+      const isRetryable = (errorCategory === 'network' || (err.status >= 500 && err.status < 600)) && !isRateLimit && !isClientError;
 
       if (isRetryable && attempt < 3) {
         const delay = 1000 * Math.pow(2, attempt);

@@ -1,3 +1,4 @@
+// src/pages/Dashboard/Dashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchCheckins } from '../../services/checkinService';
@@ -5,7 +6,7 @@ import { useLatestCheckin } from '../../hooks/useLatestCheckin';
 import DashboardViewer from '../../components/Dashboard/DashboardViewer';
 import PredictionsGrid from '../../components/PredictionsGrid';
 import DailyPredictionCard from '../../components/DailyPredictionCard';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, AlertCircle } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -39,7 +40,7 @@ const Dashboard = () => {
         setCheckins(checkinsResult.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        if (isMounted) setCheckinsError('Não foi possível carregar seus dados.');
+        if (isMounted) setCheckinsError('Não foi possível carregar seus dados. Verifique sua conexão.');
       } finally {
         if (isMounted) setCheckinsLoading(false);
       }
@@ -78,7 +79,6 @@ const Dashboard = () => {
   }, [checkins]);
 
   if (checkinsLoading) { return <div className="p-6 space-y-6 animate-pulse"><div className="bg-card rounded-lg shadow h-64"></div><div className="bg-card rounded-lg shadow h-64"></div></div>; }
-  if (checkinsError) { return <div className="p-4 text-center text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive">{checkinsError}</div>; }
 
   return (
     <div className="p-6 space-y-6">
@@ -91,6 +91,13 @@ const Dashboard = () => {
           Acompanhe sua saúde mental e bem-estar
         </p>
       </div>
+
+      {checkinsError && (
+        <div className="flex items-start gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm font-medium text-red-800 dark:text-red-200">{checkinsError}</p>
+        </div>
+      )}
 
       {/* Mania Alert Card */}
       {maniaAlert && (
@@ -124,8 +131,10 @@ const Dashboard = () => {
              <DailyPredictionCard latestCheckin={latestCheckin} userId={user.id} />
            )}
            {latestCheckinError && (
-             <div className="text-sm text-red-500 mt-2">
-               Não foi possível carregar a previsão diária.
+             <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+               <p className="text-sm text-orange-800">
+                 Não foi possível carregar a previsão diária. (Erro de conexão)
+               </p>
              </div>
            )}
         </div>
