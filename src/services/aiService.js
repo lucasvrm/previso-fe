@@ -1,6 +1,9 @@
 // services/aiService.js
+import api from '../api/apiClient';
+
 // LÊ A VARIÁVEL DE AMBIENTE VITE_AI_API_URL INJETADA PELO VERCEL
-const AI_API_URL = import.meta.env.VITE_AI_API_URL || "http://127.0.0.1:8000";
+// Se não estiver definida, usa o backend principal
+const AI_API_URL = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || "https://bipolar-engine.onrender.com";
 
 /**
  * Envia os dados do dia do paciente para a API de predição.
@@ -13,37 +16,49 @@ export const predictCrisisRisk = async (formData) => {
       features: formData,
     };
 
-    const response = await fetch(`${AI_API_URL}/predict`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    // Se VITE_AI_API_URL estiver definida e for diferente da API principal,
+    // usa fetch direto (pode ser uma API externa sem autenticação)
+    // Caso contrário, usa o api client com autenticação
+    const shouldUseApiClient = !import.meta.env.VITE_AI_API_URL || 
+                                AI_API_URL === (import.meta.env.VITE_API_URL || "https://bipolar-engine.onrender.com");
 
-    if (!response.ok) {
-      // Tenta ler o erro JSON da API se houver
-      let errorMessage = `API Error (${response.status})`;
-      try {
-        const errorBody = await response.json();
-        errorMessage = `API Error (${response.status}): ${errorBody.detail || 'Erro desconhecido na API'}`;
-      } catch (parseError) {
-        console.error("Falha ao parsear erro JSON da API:", parseError);
-        // If JSON parsing fails, provide a generic error message
-        errorMessage = `API Error (${response.status}): Resposta inválida do servidor`;
-      }
-      throw new Error(errorMessage);
-    }
-
-    // Parse successful response with error handling
-    try {
-      const result = await response.json();
+    if (shouldUseApiClient) {
+      // Usa o api client que adiciona autenticação automaticamente
+      const result = await api.post('/predict', payload);
       return result;
-    } catch (parseError) {
-      console.error("Falha ao parsear resposta JSON da API de predição:", parseError);
-      return { probability: 0, risk_level: "UNKNOWN", error: true, errorMessage: "Resposta inválida do servidor" };
-    }
+    } else {
+      // API externa - usa fetch direto
+      const response = await fetch(`${AI_API_URL}/predict`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
+      if (!response.ok) {
+        // Tenta ler o erro JSON da API se houver
+        let errorMessage = `API Error (${response.status})`;
+        try {
+          const errorBody = await response.json();
+          errorMessage = `API Error (${response.status}): ${errorBody.detail || 'Erro desconhecido na API'}`;
+        } catch (parseError) {
+          console.error("Falha ao parsear erro JSON da API:", parseError);
+          // If JSON parsing fails, provide a generic error message
+          errorMessage = `API Error (${response.status}): Resposta inválida do servidor`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse successful response with error handling
+      try {
+        const result = await response.json();
+        return result;
+      } catch (parseError) {
+        console.error("Falha ao parsear resposta JSON da API de predição:", parseError);
+        return { probability: 0, risk_level: "UNKNOWN", error: true, errorMessage: "Resposta inválida do servidor" };
+      }
+    }
   } catch (error) {
     console.error("Falha na predição de IA:", error);
     // Retorna um valor seguro em caso de falha de rede/servidor
@@ -58,11 +73,6 @@ export const predictCrisisRisk = async (formData) => {
  * @returns {Promise<object|null>} O objeto de predição da API ou null em caso de erro.
  */
 export async function getAIDailyPrediction(features, patientId) {
-  // A URL da sua API, que deve vir de uma variável de ambiente.
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
-
-  const endpoint = `${apiUrl}/predict/state`;
-
   const requestBody = {
     patient_id: patientId,
     features: features,
@@ -71,36 +81,10 @@ export async function getAIDailyPrediction(features, patientId) {
   console.log("Enviando para a API de predição:", requestBody);
 
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      let errorMessage = `A API respondeu com o status ${response.status}`;
-      try {
-        const errorData = await response.json();
-        console.error('Erro da API:', errorData);
-        errorMessage = errorData.detail || errorMessage;
-      } catch (parseError) {
-        console.error('Falha ao parsear erro JSON:', parseError);
-      }
-      throw new Error(errorMessage);
-    }
-
-    // Parse successful response with error handling
-    try {
-      const prediction = await response.json();
-      console.log("Predição recebida da API:", prediction);
-      return prediction;
-    } catch (parseError) {
-      console.error('Falha ao parsear predição JSON:', parseError);
-      throw new Error('Resposta inválida do servidor');
-    }
-
+    // Use api.post which handles authentication via Authorization header
+    const prediction = await api.post('/predict/state', requestBody);
+    console.log("Predição recebida da API:", prediction);
+    return prediction;
   } catch (error) {
     console.error('Falha ao buscar a predição da IA:', error);
     return null;
