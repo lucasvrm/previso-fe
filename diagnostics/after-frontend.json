@@ -1,16 +1,17 @@
 {
-  "timestamp": "2025-11-23T20:50:00Z",
+  "timestamp": "2025-11-23T21:00:00Z",
   "lintStatus": "ok",
   "lintWarnings": 1,
   "lintNotes": "1 warning in useLatestCheckin.js (unrelated to this task)",
   "testsStatus": "ok",
-  "testsPassed": 235,
+  "testsPassed": 240,
   "testsFailed": 0,
-  "testSuites": 24,
+  "testSuites": 25,
   "notes": [
-    "All tests passing (235/235, up from 234)",
+    "All tests passing (240/240, up from 234)",
     "Lint passing with same unrelated warning",
-    "Implementation complete: Role now from backend /api/profile"
+    "Implementation complete: Role now from backend /api/profile",
+    "Code review feedback addressed: module-level imports, no duplication"
   ],
   "implementationDetails": {
     "authContext": {
@@ -20,7 +21,8 @@
       "changes": [
         "Reversed priority: backend /api/profile is now tried FIRST",
         "Supabase is now the FALLBACK (was primary before)",
-        "Better error messages explaining what failed and why"
+        "Better error messages explaining what failed and why",
+        "Module-level import of api (no dynamic import)"
       ]
     },
     "adminRoute": {
@@ -29,7 +31,8 @@
       "changes": [
         "Switched from useAdminStats hook to useAuth hook",
         "Simplified logic: loading → no user → no profile → check role",
-        "Shows Access Denied when role is not 'admin'"
+        "Shows Access Denied when role is not 'admin'",
+        "Uses LoadingSpinner component (no duplication)"
       ]
     },
     "sidebar": {
@@ -41,29 +44,50 @@
         "No logic changes - already used userRole correctly"
       ]
     },
+    "loadingSpinner": {
+      "newComponent": "src/components/UI/LoadingSpinner.jsx",
+      "purpose": "Reusable loading spinner to eliminate duplication",
+      "features": [
+        "Supports sizes: sm, md, lg",
+        "Supports fullScreen mode",
+        "Consistent styling across app"
+      ],
+      "tests": "5 new tests added"
+    },
     "tests": {
       "adminRoute": "Updated to mock useAuth instead of useAdminStats",
+      "loadingSpinner": "New component with 5 tests",
       "testCases": [
-        "Loading state",
-        "Profile not loaded yet",
-        "Admin role access granted",
-        "Patient role access denied",
-        "Therapist role access denied",
-        "No user redirect to login"
+        "AdminRoute: Loading state, profile not loaded, admin access, non-admin denied, redirect to login",
+        "LoadingSpinner: Default size, fullScreen, small, large, border color"
       ],
-      "result": "All 235 tests passing"
+      "result": "All 240 tests passing"
     }
   },
   "comparison": {
     "before": {
       "roleSource": "Supabase first, /api/profile fallback",
       "adminRouteUsed": "useAdminStats (/api/admin/stats endpoint)",
-      "testsPassing": 234
+      "testsPassing": 234,
+      "codeDuplication": "Loading spinner duplicated in AdminRoute"
     },
     "after": {
       "roleSource": "/api/profile first, Supabase fallback",
       "adminRouteUsed": "useAuth (profile.role from context)",
-      "testsPassing": 235
+      "testsPassing": 240,
+      "codeDuplication": "Eliminated - LoadingSpinner component created"
     }
+  },
+  "codeReview": {
+    "feedback": "2 issues identified and resolved",
+    "issue1": {
+      "description": "Dynamic import in try-catch impacts performance",
+      "resolution": "Moved api import to module level"
+    },
+    "issue2": {
+      "description": "Loading spinner duplicated in AdminRoute",
+      "resolution": "Extracted LoadingSpinner component with tests"
+    },
+    "remainingIssues": "5 nitpick comments about test selectors (non-blocking)"
   }
 }
