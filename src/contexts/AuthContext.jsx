@@ -19,50 +19,69 @@ export function AuthProvider({ children }) {
         setProfile(null);
         return;
       }
+      
+      // Strategy: Always try backend /api/profile first for role determination
+      // This ensures role is always sourced from backend, not Supabase metadata
       try {
         console.time('[AuthContext] Fetch user profile');
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        console.timeEnd('[AuthContext] Fetch user profile');
         
-        if (error) {
-          console.error('[AuthContext] Erro ao buscar perfil via Supabase:', error);
-          console.log('[AuthContext] Tentando fallback: buscar via API...');
-          
-          // Fallback: Try to fetch via API endpoint to bypass RLS
-          try {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            
-            if (sessionError || !session) {
-              throw new Error('Sem sessão ativa');
-            }
-            
-            // Use the new API client for authenticated requests
-            const { api } = await import('../api/apiClient');
-            const apiProfileData = await api.get('/api/profile');
-            
-            console.log('[AuthContext] Perfil carregado via API:', apiProfileData);
-            setProfile(apiProfileData);
-            setUserRole(apiProfileData?.role || null);
-            return;
-          } catch (apiError) {
-            console.error('[AuthContext] Fallback via API também falhou:', apiError);
-            throw error; // Throw original Supabase error
-          }
+        // Get session for API authentication
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error('[AuthContext] Sem sessão ativa');
+          setProfile(null);
+          setUserRole(null);
+          return;
         }
-        console.log('[AuthContext] Perfil carregado via Supabase:', profileData);
-        setProfile(profileData);
-        setUserRole(profileData?.role || null);
+        
+        // PRIORITY: Fetch profile from backend API (source of truth for role)
+        try {
+          const { api } = await import('../api/apiClient');
+          const apiProfileData = await api.get('/api/profile');
+          
+          console.log('[AuthContext] Perfil carregado via API backend:', apiProfileData);
+          console.timeEnd('[AuthContext] Fetch user profile');
+          
+          setProfile(apiProfileData);
+          setUserRole(apiProfileData?.role || null);
+          return; // Success - backend is authoritative
+        } catch (apiError) {
+          console.error('[AuthContext] Erro ao buscar perfil via API backend:', apiError);
+          
+          // FALLBACK: If backend fails (network, 500, etc), try Supabase as backup
+          // This prevents total failure but backend role should be preferred when available
+          console.log('[AuthContext] Tentando fallback: buscar via Supabase...');
+          
+          const { data: profileData, error: supabaseError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          
+          if (supabaseError) {
+            // Both backend and Supabase failed - this is a critical error
+            console.error('[AuthContext] Fallback via Supabase também falhou:', supabaseError);
+            throw new Error('Não foi possível carregar o perfil do usuário');
+          }
+          
+          console.log('[AuthContext] Perfil carregado via Supabase (fallback):', profileData);
+          console.timeEnd('[AuthContext] Fetch user profile');
+          
+          setProfile(profileData);
+          setUserRole(profileData?.role || null);
+          return;
+        }
       } catch (error) {
         console.error('[AuthContext] Erro ao buscar perfil do usuário:', error.message || error);
         console.error('[AuthContext] ⚠️  ATENÇÃO: Não foi possível carregar o perfil do usuário!');
         console.error('[AuthContext] Possíveis causas:');
-        console.error('[AuthContext] 1. Política RLS do Supabase está bloqueando o acesso');
-        console.error('[AuthContext] 2. Endpoint /api/profile não existe no backend');
-        console.error('[AuthContext] Solução: Verifique as políticas RLS ou adicione o endpoint /api/profile no backend');
+        console.error('[AuthContext] 1. Backend /api/profile indisponível ou retornando erro');
+        console.error('[AuthContext] 2. Política RLS do Supabase está bloqueando o acesso');
+        console.error('[AuthContext] 3. Problemas de rede ou autenticação');
+        console.error('[AuthContext] Solução: Verifique o status do backend e políticas RLS');
+        
+        // Don't loop - set to null and stop trying
         setProfile(null);
         setUserRole(null);
       }

@@ -2,11 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AdminRoute from '../../src/components/AdminRoute';
-import { useAdminStats } from '../../src/hooks/useAdminStats';
+import { useAuth } from '../../src/hooks/useAuth';
 
-// Mock hook with factory to prevent module evaluation
-jest.mock('../../src/hooks/useAdminStats', () => ({
-  useAdminStats: jest.fn(),
+// Mock useAuth hook
+jest.mock('../../src/hooks/useAuth', () => ({
+  useAuth: jest.fn(),
 }));
 
 jest.mock('../../src/components/AccessDenied', () => () => <div>Access Denied Component</div>);
@@ -16,8 +16,13 @@ describe('AdminRoute', () => {
     jest.clearAllMocks();
   });
 
-  test('should show loading when checking', () => {
-    useAdminStats.mockReturnValue({ loading: true, error: null, errorType: null });
+  test('should show loading when auth is loading', () => {
+    useAuth.mockReturnValue({ 
+      user: null, 
+      profile: null, 
+      userRole: null, 
+      loading: true 
+    });
 
     const { container } = render(
       <MemoryRouter>
@@ -28,8 +33,30 @@ describe('AdminRoute', () => {
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
-  test('should render children when authorized', () => {
-    useAdminStats.mockReturnValue({ loading: false, error: null, errorType: null });
+  test('should show loading when profile is not yet loaded', () => {
+    useAuth.mockReturnValue({ 
+      user: { id: '123', email: 'user@example.com' }, 
+      profile: null, 
+      userRole: null, 
+      loading: false 
+    });
+
+    const { container } = render(
+      <MemoryRouter>
+        <AdminRoute><div>Protected Content</div></AdminRoute>
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+  });
+
+  test('should render children when user has admin role', () => {
+    useAuth.mockReturnValue({ 
+      user: { id: '123', email: 'admin@example.com' }, 
+      profile: { id: '123', role: 'admin' }, 
+      userRole: 'admin', 
+      loading: false 
+    });
 
     render(
       <MemoryRouter>
@@ -40,8 +67,13 @@ describe('AdminRoute', () => {
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 
-  test('should show Access Denied when forbidden', () => {
-    useAdminStats.mockReturnValue({ loading: false, error: 'Forbidden', errorType: 'forbidden' });
+  test('should show Access Denied when user does not have admin role', () => {
+    useAuth.mockReturnValue({ 
+      user: { id: '123', email: 'user@example.com' }, 
+      profile: { id: '123', role: 'patient' }, 
+      userRole: 'patient', 
+      loading: false 
+    });
 
     render(
       <MemoryRouter>
@@ -52,8 +84,13 @@ describe('AdminRoute', () => {
     expect(screen.getByText('Access Denied Component')).toBeInTheDocument();
   });
 
-  test('should redirect when unauthorized', () => {
-    useAdminStats.mockReturnValue({ loading: false, error: 'Unauthorized', errorType: 'unauthorized' });
+  test('should redirect to login when no user is logged in', () => {
+    useAuth.mockReturnValue({ 
+      user: null, 
+      profile: null, 
+      userRole: null, 
+      loading: false 
+    });
 
     render(
       <MemoryRouter initialEntries={['/admin']}>
@@ -67,8 +104,13 @@ describe('AdminRoute', () => {
     expect(screen.getByText('Login Page')).toBeInTheDocument();
   });
 
-  test('should show error message when verification fails', () => {
-    useAdminStats.mockReturnValue({ loading: false, error: 'Server Error', errorType: 'server' });
+  test('should show Access Denied for therapist role', () => {
+    useAuth.mockReturnValue({ 
+      user: { id: '123', email: 'therapist@example.com' }, 
+      profile: { id: '123', role: 'therapist' }, 
+      userRole: 'therapist', 
+      loading: false 
+    });
 
     render(
       <MemoryRouter>
@@ -76,7 +118,6 @@ describe('AdminRoute', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Não foi possível verificar suas permissões')).toBeInTheDocument();
-    expect(screen.getByText('Server Error')).toBeInTheDocument();
+    expect(screen.getByText('Access Denied Component')).toBeInTheDocument();
   });
 });

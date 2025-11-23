@@ -4,15 +4,18 @@ import { Home, Settings, BarChart3, User, UserCog, FileText, LogOut, Brain, Tren
 import { useAuth } from '../hooks/useAuth';
 
 const Sidebar = () => {
+  // userRole comes from AuthContext, which fetches from backend /api/profile
+  // This ensures role is determined by backend, not by user metadata
   const { user, userRole, logout } = useAuth();
   const navigate = useNavigate();
 
   // Determine which icon to use based on role
   const UserIcon = userRole === 'therapist' ? UserCog : User;
 
-  // Get display name for role
+  // Get display name for role (backend-sourced)
   const getRoleLabel = () => {
     if (!userRole) return 'Usuário';
+    if (userRole === 'admin') return 'Admin';
     if (userRole === 'therapist') return 'Terapeuta';
     if (userRole === 'patient') return 'Paciente';
     return userRole;
