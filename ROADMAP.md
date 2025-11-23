@@ -7,7 +7,91 @@ Refatorar o layout da Página de Configurações Administrativas para utilizar u
 
 ## 1. Mudanças Implementadas
 
-### 1.0 Correção da Danger Zone e Melhoria de Feedback Visual (NOVO)
+### 0.0 Correção do Envio de Valores Zerados no DataGenerator (NOVO)
+
+**Data de Implementação:** 2025-11-23
+
+**Problema Resolvido:**
+O usuário selecionava "0 terapeutas" mas havia incerteza sobre se o valor zero estava sendo enviado corretamente para a API como número `0` ao invés de `null`, `undefined` ou string vazia.
+
+**Arquivos Modificados:**
+- `src/components/DataGenerator.jsx` - Melhoria na construção do payload
+- `tests/components/DataGenerator.test.js` - Adicionados testes específicos para validação de valores zero
+
+**Implementações Realizadas:**
+
+1. **Conversão Explícita de Valores Numéricos**
+   - **Antes:** `parseInt(data.patients_count, 10) || 0`
+   - **Depois:** Verificação explícita e conversão com `Number()`
+   - **Código implementado:**
+     ```javascript
+     const patientsCountValue = data.patients_count !== undefined && data.patients_count !== '' 
+       ? Number(data.patients_count) 
+       : 0;
+     const therapistsCountValue = data.therapists_count !== undefined && data.therapists_count !== '' 
+       ? Number(data.therapists_count) 
+       : 0;
+     ```
+   - **Benefício:** Garante que `0` seja enviado como número, não como falsy value
+
+2. **Log de Auditoria do Payload**
+   - Adicionado `console.log("Payload enviado:", payload)` antes de cada chamada à API
+   - Log executado sempre (não apenas em modo desenvolvimento)
+   - Permite auditoria em produção dos dados enviados
+
+3. **Formato do JSON Enviado para `/api/admin/generate-data`:**
+   ```javascript
+   {
+     "user_type": "therapist",
+     "patients_count": 0,           // Número 0, não null ou undefined
+     "therapists_count": 0,          // Número 0, não null ou undefined
+     "checkins_per_user": 30,
+     "mood_pattern": "stable",
+     "include_notes": true,
+     "include_medications": true,
+     "include_social_events": false
+   }
+   ```
+
+**Validação Antes/Depois:**
+
+| Cenário | Antes | Depois |
+|---------|-------|--------|
+| Usuário digita "0" em therapists | `parseInt("0") \|\| 0` → `0` (funcionava) | `Number("0")` → `0` (explícito) |
+| Campo vazio ou undefined | `parseInt(undefined) \|\| 0` → `0` | Verificação explícita → `0` |
+| Garantia de tipo | Implícita com `\|\|` operator | Explícita com verificação ternária |
+| Auditoria do payload | Apenas em dev mode | Sempre logado no console |
+
+**Testes Implementados:**
+- ✅ `should send explicit zero values as numbers, not null/undefined`
+  - Verifica que ao digitar "0", o valor enviado é number `0`
+  - Valida tipo com `typeof callArgs.therapists_count === 'number'`
+  - Confirma valor exato com `toBe(0)`
+  
+- ✅ `should handle empty string inputs by converting to 0`
+  - Testa cenário onde campo não é mostrado na UI
+  - Valida conversão de valores default
+  - Garante que tipos são números
+
+**Cobertura de Testes:**
+- Total: 228 testes passando (eram 226)
+- Suítes: 23 passando
+- Build: ✅ Bem-sucedido
+- Linter: ✅ Sem novos erros
+
+**Objetivos Alcançados:**
+- ✅ Valores `patients_count` e `therapists_count` convertidos explicitamente com `Number()`
+- ✅ Zero enviado como número `0`, nunca como `null`, `undefined` ou string vazia
+- ✅ Console.log adicionado para auditoria: `console.log("Payload enviado:", payload)`
+- ✅ Validação de UI confirma que inputs permitem valor `0` e estado do React reflete corretamente
+- ✅ ROADMAP.md atualizado confirmando que `{ "therapists_count": 0 }` é enviado explicitamente
+- ✅ Testes específicos validam comportamento com valores zero
+
+**Status:** ✅ **CONFIRMADO - Frontend envia `{ "therapists_count": 0 }` explicitamente quando solicitado**
+
+---
+
+### 1.0 Correção da Danger Zone e Melhoria de Feedback Visual
 
 **Data de Implementação:** 2025-11-22
 
