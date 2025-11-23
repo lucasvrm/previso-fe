@@ -92,7 +92,7 @@ export function usePredictions(userId, metrics = [], windowDays = 3) {
   }, [userId, metricsKey, windowDays, attempt]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [fetchData]);
 
   const retry = useCallback(() => {

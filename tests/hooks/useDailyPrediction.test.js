@@ -131,7 +131,7 @@ describe('useDailyPrediction', () => {
   });
 
   test('should not fetch when enabled is false', () => {
-    const { result } = renderHook(() => 
+    renderHook(() => 
       useDailyPrediction(mockFeatures, 'user123', { enabled: false })
     );
 

@@ -1,6 +1,5 @@
 import { api, ApiError } from '../../src/api/apiClient';
 import { supabase } from '../../src/api/supabaseClient';
-import axios from 'axios';
 
 // Mock supabase
 jest.mock('../../src/api/supabaseClient', () => ({

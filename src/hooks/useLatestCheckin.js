@@ -61,7 +61,7 @@ export function useLatestCheckin(userId) {
   }, [userId, refreshKey]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
   }, [fetchData]);
 
   const refresh = useCallback(() => {

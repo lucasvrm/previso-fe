@@ -52,7 +52,7 @@ const DailyPredictionCard = ({ latestCheckin, userId }) => {
     hoursSlept: latestCheckin.sleep_data?.hoursSlept || 0,
   } : null;
 
-  const { prediction, state, error, retry } = useDailyPrediction(features, userId);
+  const { prediction, state, error } = useDailyPrediction(features, userId);
 
   // Handle different states
   if (state === 'loading') return <LoadingSpinner />;

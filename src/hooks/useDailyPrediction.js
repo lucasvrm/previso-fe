@@ -83,7 +83,7 @@ export function useDailyPrediction(features, userId, options = {}) {
         try {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorMessage;
-        } catch (parseError) {
+        } catch {
           // Could not parse error response
         }
         
