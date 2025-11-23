@@ -55,19 +55,22 @@ const DataGenerator = () => {
       const therapistsCountValue = data.therapists_count !== undefined && data.therapists_count !== '' 
         ? Number(data.therapists_count) 
         : 0;
+      const checkinsPerUserValue = data.checkins_per_user !== undefined && data.checkins_per_user !== '' 
+        ? Number(data.checkins_per_user) 
+        : 30; // Default to 30 as per form defaults
       
       const payload = {
         user_type: data.userType,
         patients_count: patientsCountValue,
         therapists_count: therapistsCountValue,
-        checkins_per_user: Number(data.checkins_per_user),
+        checkins_per_user: checkinsPerUserValue,
         mood_pattern: data.mood_pattern,
         include_notes: data.include_notes,
         include_medications: data.include_medications,
         include_social_events: data.include_social_events
       };
 
-      // Log payload for auditing (always, not just in dev mode)
+      // Log payload for auditing (as requested in requirements)
       console.log('Payload enviado:', payload);
       
       if (import.meta.env.MODE === 'development') {
