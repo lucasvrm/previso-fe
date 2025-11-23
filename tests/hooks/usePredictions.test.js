@@ -47,15 +47,31 @@ describe('usePredictions', () => {
   });
 
   test('should handle error', async () => {
+    jest.useFakeTimers();
+    
     const error = new Error('Network Error');
+    error.status = 500;
     api.get.mockRejectedValue(error);
 
     const { result } = renderHook(() => usePredictions('user123'));
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    // Wait for first attempt
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(1));
 
-    expect(result.current.error).toBe(error);
+    // Fast-forward through all retries (3 attempts total: 1s, 2s, 4s)
+    for (let i = 0; i < 3; i++) {
+      jest.advanceTimersByTime(5000); // Advance enough for the delay
+      await waitFor(() => expect(api.get).toHaveBeenCalledTimes(i + 2));
+    }
+
+    // After all retries exhausted, should be in error state
+    await waitFor(() => expect(result.current.state).toBe('error'));
+
+    expect(result.current.error).toBeTruthy();
     expect(result.current.data).toBe(null);
+    expect(result.current.hasError).toBe(true);
+    
+    jest.useRealTimers();
   });
 
   test('should retry on network error', async () => {
