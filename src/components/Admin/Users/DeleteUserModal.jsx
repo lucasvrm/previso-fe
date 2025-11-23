@@ -35,7 +35,6 @@ const DeleteUserModal = ({ user, onClose, onUserDeleted }) => {
   };
 
   const isTestUser = user.is_test_patient;
-  const actionType = isTestUser ? 'deletado permanentemente' : 'marcado como deletado (soft delete)';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

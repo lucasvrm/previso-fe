@@ -34,21 +34,24 @@ const AdminConsolePage = () => {
 
       {/* Tab Navigation */}
       <nav className="flex gap-2 border-b border-border">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveSection(id)}
-            className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
-              activeSection === id
-                ? 'text-primary border-primary'
-                : 'text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground'
-            }`}
-            data-testid={`tab-${id}`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
+        {tabs.map(({ id, label, icon }) => {
+          const TabIcon = icon;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveSection(id)}
+              className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
+                activeSection === id
+                  ? 'text-primary border-primary'
+                  : 'text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground'
+              }`}
+              data-testid={`tab-${id}`}
+            >
+              <TabIcon className="h-4 w-4" />
+              {label}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Content Area */}

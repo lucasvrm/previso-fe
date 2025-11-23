@@ -1,17 +1,32 @@
 // src/components/Admin/BulkGenerators/BulkCheckinsGenerator.jsx
 // Bulk check-ins generation component
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { api } from '../../../api/apiClient';
 
 const BulkCheckinsGenerator = () => {
+  // Get date 30 days ago for default
+  const getDefaultStartDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getDefaultEndDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  // Memoize default dates to avoid recalculation on every render
+  const defaultStartDate = useMemo(() => getDefaultStartDate(), []);
+  const defaultEndDate = useMemo(() => getDefaultEndDate(), []);
+
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm({
     defaultValues: {
       target_scope: 'all_test_patients',
-      start_date: '',
-      end_date: '',
+      start_date: defaultStartDate,
+      end_date: defaultEndDate,
       frequency: 'one_per_day',
       mood_pattern: 'random'
     }
@@ -69,17 +84,6 @@ const BulkCheckinsGenerator = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Get date 30 days ago for default
-  const getDefaultStartDate = () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().split('T')[0];
-  };
-
-  const getDefaultEndDate = () => {
-    return new Date().toISOString().split('T')[0];
   };
 
   return (
@@ -147,7 +151,6 @@ const BulkCheckinsGenerator = () => {
               id="start_date"
               type="date"
               {...register('start_date', { required: 'Campo obrigatório' })}
-              defaultValue={getDefaultStartDate()}
               className="w-full px-3 py-2 bg-background border border-border rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
               disabled={loading}
             />
@@ -164,7 +167,6 @@ const BulkCheckinsGenerator = () => {
               id="end_date"
               type="date"
               {...register('end_date', { required: 'Campo obrigatório' })}
-              defaultValue={getDefaultEndDate()}
               className="w-full px-3 py-2 bg-background border border-border rounded-md focus:ring-2 focus:ring-primary focus:outline-none"
               disabled={loading}
             />

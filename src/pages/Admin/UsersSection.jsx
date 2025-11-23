@@ -1,7 +1,7 @@
 // src/pages/Admin/UsersSection.jsx
 // Users management section for Admin Console
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../api/apiClient';
 import { Plus, Search, Loader2, AlertCircle } from 'lucide-react';
 import UsersList from '../../components/Admin/Users/UsersList';
@@ -19,7 +19,7 @@ const UsersSection = () => {
     source: 'all'
   });
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -42,11 +42,11 @@ const UsersSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, searchTerm]);
 
   useEffect(() => {
     fetchUsers();
-  }, [filters, searchTerm]);
+  }, [fetchUsers]);
 
   const handleUserCreated = () => {
     setShowCreateModal(false);

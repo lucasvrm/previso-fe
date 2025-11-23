@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { api } from '../../../api/apiClient';
 
 const CreateUserModal = ({ onClose, onUserCreated }) => {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
       email: '',
       username: '',
