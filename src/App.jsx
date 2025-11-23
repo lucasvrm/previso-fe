@@ -17,6 +17,7 @@ import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
 import AITestingPage from './pages/Checkin/AITestingPage'; // <--- CORREÇÃO AQUI
 import AnalysesPage from './pages/Analyses/AnalysesPage';
+import AdminConsolePage from './pages/Admin/AdminConsolePage';
 
 // Admin components for nested settings routes
 import SystemStats from './components/admin/SystemStats';
@@ -133,6 +134,16 @@ function App() {
         <Route path="/analyses" element={<AnalysesPage />} />
         {/* NOVA ROTA: Teste de IA Isolado */}
         <Route path="/ai-test" element={<AITestingPage />} />
+        
+        {/* Admin Console Route */}
+        <Route 
+          path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminConsolePage />
+            </AdminRoute>
+          } 
+        />
       </Route>
       
       {/* Redirecionamento da raiz */}
