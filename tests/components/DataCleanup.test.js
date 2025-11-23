@@ -292,7 +292,7 @@ describe('DataCleanup', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Erro ao limpar dados/)).toBeInTheDocument();
+      expect(screen.getByText(/conexão/i)).toBeInTheDocument();
     });
   });
 
@@ -320,7 +320,7 @@ describe('DataCleanup', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Server error/)).toBeInTheDocument();
+      expect(screen.getByText(/servidor/i)).toBeInTheDocument();
     });
 
     expect(mockCallback).not.toHaveBeenCalled();

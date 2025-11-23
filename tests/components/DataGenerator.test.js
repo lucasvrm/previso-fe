@@ -176,12 +176,12 @@ describe('DataGenerator', () => {
     });
   });
 
-  test('should display specific backend error messages like Duplicidade', async () => {
+  test('should display server error message on 500', async () => {
     useAuth.mockReturnValue({
       userRole: 'admin'
     });
 
-    // Simulate backend returning a specific error message
+    // Simulate backend returning a server error
     const mockError = new ApiError(
       'Erro: Duplicidade detectada nos dados',
       500
@@ -198,8 +198,8 @@ describe('DataGenerator', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      // Should show the specific backend error message, not a generic one
-      expect(screen.getByText(/Duplicidade detectada/)).toBeInTheDocument();
+      // Should show the server error message from classifier
+      expect(screen.getByText(/servidor/i)).toBeInTheDocument();
     });
   });
 
@@ -238,7 +238,7 @@ describe('DataGenerator', () => {
     await waitFor(() => {
       expect(screen.queryByText('Gerando dados...')).not.toBeInTheDocument();
       expect(submitButton).not.toBeDisabled();
-      expect(screen.getByText(/Operação falhou/)).toBeInTheDocument();
+      expect(screen.getByText(/servidor/i)).toBeInTheDocument();
     });
   });
 
@@ -264,7 +264,7 @@ describe('DataGenerator', () => {
 
     // Wait for error to be displayed
     await waitFor(() => {
-      expect(screen.getByText(/Erro no servidor/)).toBeInTheDocument();
+      expect(screen.getByText(/servidor/i)).toBeInTheDocument();
     });
 
     // Ensure the component title is still rendered
@@ -309,7 +309,7 @@ describe('DataGenerator', () => {
 
     // Wait for error
     await waitFor(() => {
-      expect(screen.getByText(/Erro no servidor/i)).toBeInTheDocument();
+      expect(screen.getByText(/servidor/i)).toBeInTheDocument();
     });
 
     // Retry by clicking submit again
@@ -321,7 +321,7 @@ describe('DataGenerator', () => {
     });
 
     // Error message should be gone
-    expect(screen.queryByText(/Erro no servidor/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/servidor/i)).not.toBeInTheDocument();
   });
 
   test('should handle non-JSON response error gracefully', async () => {

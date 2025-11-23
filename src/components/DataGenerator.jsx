@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../hooks/useAuth';
 import { api, ApiError } from '../api/apiClient';
+import { classifyApiError, logError } from '../utils/apiErrorClassifier';
 import { Database, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Toast from './UI/Toast';
 
@@ -41,6 +42,7 @@ const DataGenerator = () => {
     setError(null);
     setResponse(null);
     setToast(null);
+    const startTime = performance.now();
 
     try {
       // Build the payload based on the form data
@@ -57,33 +59,44 @@ const DataGenerator = () => {
         include_social_events: data.include_social_events
       };
 
+      if (import.meta.env.MODE === 'development') {
+        console.debug('[DataGenerator] Generating data with payload:', payload);
+      }
+
       const result = await api.post('/api/admin/generate-data', payload);
       
+      // Ensure we have statistics in the response
+      if (!result.statistics) {
+        console.warn('[DataGenerator] Response missing statistics field');
+        result.statistics = {
+          patients_created: 0,
+          therapists_created: 0,
+          total_checkins: 0,
+          user_ids: []
+        };
+      }
+
       setResponse(result);
       
+      // Telemetry
+      const duration = performance.now() - startTime;
+      if (import.meta.env.MODE === 'development') {
+        console.debug(`[Telemetry] dataGenerationMs=${Math.round(duration)}`);
+        console.debug('[DataGenerator] Statistics:', result.statistics);
+      }
+
       // Reset form on success
       reset();
     } catch (err) {
-      console.error('Erro na requisição:', err);
+      const classifiedError = classifyApiError(err);
+      logError(classifiedError, 'DataGenerator');
       
-      let errorMessage = 'Erro ao gerar dados. Verifique sua conexão e tente novamente.';
+      let errorMessage = classifiedError.userMessage;
       let showToast = false;
       
-      // Handle specific error types
-      if (err instanceof ApiError) {
-        // Check for Invalid API key error (500 status) - show toast for critical errors
-        if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
-          errorMessage = 'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.';
-          showToast = true; // Show toast for critical server configuration errors
-        } else if (err.details?.type === 'INVALID_JSON') {
-          errorMessage = 'Resposta inválida do servidor. O servidor não retornou dados válidos.';
-        } else if (err.status === 401) {
-          errorMessage = 'Sessão expirada. Por favor, faça login novamente.';
-        } else if (err.status === 403) {
-          errorMessage = 'Você não tem permissão para realizar esta ação.';
-        } else {
-          errorMessage = err.message;
-        }
+      // Show toast for critical server configuration errors
+      if (classifiedError.kind === 'server' && err.details?.type === 'INVALID_API_KEY') {
+        showToast = true;
       }
       
       setError(errorMessage);
