@@ -437,4 +437,105 @@ describe('DataGenerator', () => {
       expect(submitButton).toBeDisabled();
     });
   });
+
+  test('should send explicit zero values as numbers, not null/undefined', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    api.post.mockResolvedValue({ 
+      message: 'Dados gerados com sucesso!',
+      statistics: {
+        patients_created: 0,
+        therapists_created: 0,
+        total_checkins: 0,
+        user_ids: []
+      }
+    });
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    // Select "both" to show both inputs
+    const userTypeSelect = screen.getByLabelText(/Tipo de Usuário/);
+    fireEvent.change(userTypeSelect, { target: { value: 'both' } });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Quantidade de Terapeutas/)).toBeInTheDocument();
+    });
+    
+    const patientsInput = screen.getByLabelText(/Quantidade de Pacientes/);
+    const therapistsInput = screen.getByLabelText(/Quantidade de Terapeutas/);
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+
+    // Explicitly set both to 0
+    fireEvent.change(patientsInput, { target: { value: '0' } });
+    fireEvent.change(therapistsInput, { target: { value: '0' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/api/admin/generate-data', 
+        expect.objectContaining({
+          patients_count: 0,
+          therapists_count: 0
+        })
+      );
+    });
+
+    // Verify the values are numbers, not strings or null
+    const callArgs = api.post.mock.calls[0][1];
+    expect(typeof callArgs.patients_count).toBe('number');
+    expect(typeof callArgs.therapists_count).toBe('number');
+    expect(callArgs.patients_count).toBe(0);
+    expect(callArgs.therapists_count).toBe(0);
+  });
+
+  test('should handle empty string inputs by converting to 0', async () => {
+    useAuth.mockReturnValue({
+      userRole: 'admin'
+    });
+
+    api.post.mockResolvedValue({ 
+      message: 'Success',
+      statistics: { patients_created: 0, therapists_created: 0, total_checkins: 30, user_ids: [] }
+    });
+
+    render(<DataGenerator />);
+    
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Tipo de Usuário/)).toBeInTheDocument();
+    });
+    
+    // Select "therapist" to test therapist_count with 0
+    const userTypeSelect = screen.getByLabelText(/Tipo de Usuário/);
+    fireEvent.change(userTypeSelect, { target: { value: 'therapist' } });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Quantidade de Terapeutas/)).toBeInTheDocument();
+    });
+    
+    const therapistsInput = screen.getByLabelText(/Quantidade de Terapeutas/);
+    const daysInput = screen.getByLabelText(/Número de Dias/);
+    const submitButton = screen.getByText('Gerar Dados Sintéticos');
+
+    // Set therapist to 0 (the critical case from the problem statement)
+    fireEvent.change(therapistsInput, { target: { value: '0' } });
+    fireEvent.change(daysInput, { target: { value: '30' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalled();
+    });
+
+    // Should send 0 as a number for therapists
+    // patients_count uses default value of 1 (since the input is not shown)
+    const callArgs = api.post.mock.calls[0][1];
+    expect(callArgs.patients_count).toBe(1); // Default value from form
+    expect(callArgs.therapists_count).toBe(0); // Explicitly set to 0
+    expect(typeof callArgs.patients_count).toBe('number');
+    expect(typeof callArgs.therapists_count).toBe('number');
+  });
 });

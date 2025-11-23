@@ -47,18 +47,32 @@ const DataGenerator = () => {
     try {
       // Build the payload based on the form data
       // Note: patients_count or therapists_count may be undefined if their input is not rendered
-      // (based on userType selection), so we use || 0 as a fallback
+      // (based on userType selection), so we explicitly convert to Number and default to 0
+      // This ensures zero values are sent as the number 0, not null/undefined/empty string
+      const patientsCountValue = data.patients_count !== undefined && data.patients_count !== '' 
+        ? Number(data.patients_count) 
+        : 0;
+      const therapistsCountValue = data.therapists_count !== undefined && data.therapists_count !== '' 
+        ? Number(data.therapists_count) 
+        : 0;
+      const checkinsPerUserValue = data.checkins_per_user !== undefined && data.checkins_per_user !== '' 
+        ? Number(data.checkins_per_user) 
+        : 30; // Default to 30 as per form defaults
+      
       const payload = {
         user_type: data.userType,
-        patients_count: parseInt(data.patients_count, 10) || 0,
-        therapists_count: parseInt(data.therapists_count, 10) || 0,
-        checkins_per_user: parseInt(data.checkins_per_user, 10),
+        patients_count: patientsCountValue,
+        therapists_count: therapistsCountValue,
+        checkins_per_user: checkinsPerUserValue,
         mood_pattern: data.mood_pattern,
         include_notes: data.include_notes,
         include_medications: data.include_medications,
         include_social_events: data.include_social_events
       };
 
+      // Log payload for auditing (as requested in requirements)
+      console.log('Payload enviado:', payload);
+      
       if (import.meta.env.MODE === 'development') {
         console.debug('[DataGenerator] Generating data with payload:', payload);
       }
