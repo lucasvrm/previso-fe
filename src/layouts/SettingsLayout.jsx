@@ -4,12 +4,12 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { BarChart3, Database } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 const SettingsLayout = () => {
   const { userRole } = useAuth();
 
-  // Only show tabs for admin users
+  // Only show admin stats tab for admin users
   const showAdminTabs = userRole === 'admin';
 
   return (
@@ -32,20 +32,6 @@ const SettingsLayout = () => {
             >
               <BarChart3 className="h-4 w-4" />
               Dashboard
-            </NavLink>
-            <NavLink
-              to="/settings/data"
-              className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
-                  isActive
-                    ? 'text-primary border-primary'
-                    : 'text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground'
-                }`
-              }
-              data-testid="tab-data"
-            >
-              <Database className="h-4 w-4" />
-              Dados Sintéticos
             </NavLink>
           </nav>
         )}
