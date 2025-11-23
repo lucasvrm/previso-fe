@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { api, ApiError } from '../../api/apiClient';
+import { classifyApiError, logError } from '../../utils/apiErrorClassifier';
 import { Trash2, Loader2, AlertTriangle, CheckCircle, X } from 'lucide-react';
 import Toast from '../UI/Toast';
 
@@ -30,36 +31,44 @@ const DataCleanup = ({ onCleanupSuccess }) => {
     setSuccess(null);
     setToast(null);
     setLoading(true);
+    const startTime = performance.now();
 
     try {
-      const result = await api.post('/api/admin/cleanup-data', { confirm: true });
+      // Validate payload before sending
+      const payload = { confirm: true };
+      
+      if (import.meta.env.MODE === 'development') {
+        console.debug('[DataCleanup] Sending cleanup request with payload:', payload);
+      }
+
+      const result = await api.post('/api/admin/cleanup-data', payload);
       
       const successMsg = result.message || 'Dados de teste removidos com sucesso!';
       setSuccess(successMsg);
+
+      // Telemetry
+      const duration = performance.now() - startTime;
+      if (import.meta.env.MODE === 'development') {
+        console.debug(`[Telemetry] cleanupMs=${Math.round(duration)}`);
+      }
 
       // Call the callback to refresh DataStats if provided
       if (onCleanupSuccess && typeof onCleanupSuccess === 'function') {
         onCleanupSuccess();
       }
     } catch (err) {
-      console.error('Erro ao limpar dados:', err);
+      const classifiedError = classifyApiError(err);
+      logError(classifiedError, 'DataCleanup');
       
-      let errorMessage = 'Erro ao limpar dados. Verifique sua conexão e tente novamente.';
+      let errorMessage = classifiedError.userMessage;
       let showToast = false;
       
-      // Handle specific error types
-      if (err instanceof ApiError) {
-        // Check for Invalid API key error (500 status) - show toast for critical errors
-        if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
-          errorMessage = 'Falha na configuração do servidor (Chave de API inválida). Verifique as variáveis de ambiente do Backend.';
-          showToast = true; // Show toast for critical server configuration errors
-        } else if (err.status === 401) {
-          errorMessage = 'Sessão expirada. Por favor, faça login novamente.';
-        } else if (err.status === 403) {
-          errorMessage = 'Você não tem permissão para realizar esta ação.';
-        } else {
-          errorMessage = err.message;
-        }
+      // Handle specific error cases
+      if (classifiedError.kind === 'validation') {
+        // 422 validation error - provide helpful message
+        errorMessage = classifiedError.detail || 'Parâmetros inválidos. Verifique os dados enviados.';
+      } else if (classifiedError.kind === 'server' && err.details?.type === 'INVALID_API_KEY') {
+        showToast = true; // Show toast for critical server configuration errors
       }
       
       setError(errorMessage);

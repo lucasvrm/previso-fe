@@ -5,13 +5,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api/apiClient';
 import { supabase } from '../api/supabaseClient';
+import { classifyApiError, logError } from '../utils/apiErrorClassifier';
 
 /**
  * Custom hook for fetching admin statistics with automatic retry and error handling
  * @param {Object} options - Hook options
  * @param {boolean} options.enabled - Whether to fetch on mount (default: true)
  * @param {number} options.maxRetries - Maximum retry attempts (default: 3)
- * @returns {Object} { data, loading, error, retry, errorType }
+ * @returns {Object} { data, loading, error, retry, errorType, refetch }
  */
 export function useAdminStats(options = {}) {
   const { enabled = true, maxRetries = 3 } = options;
@@ -19,14 +20,24 @@ export function useAdminStats(options = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [errorType, setErrorType] = useState(null); // 'unauthorized' | 'forbidden' | 'server' | 'network'
+  const [errorType, setErrorType] = useState(null); // 'unauthorized' | 'forbidden' | 'server' | 'network' | 'cors'
+  const [lastFetchTime, setLastFetchTime] = useState(null);
   
   const navigate = useNavigate();
 
   const fetchStats = useCallback(async () => {
+    // Avoid redundant fetches if recently loaded (within 5 seconds)
+    if (lastFetchTime && (Date.now() - lastFetchTime < 5000)) {
+      if (import.meta.env.MODE === 'development') {
+        console.debug('[useAdminStats] Skipping fetch - recent data available');
+      }
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setErrorType(null);
+    const startTime = performance.now();
 
     try {
       // First, verify session exists
@@ -50,44 +61,39 @@ export function useAdminStats(options = {}) {
       });
       setError(null);
       setErrorType(null);
+      setLastFetchTime(Date.now());
+
+      // Telemetry
+      const duration = performance.now() - startTime;
+      if (import.meta.env.MODE === 'development') {
+        console.debug(`[Telemetry] adminStatsLoadMs=${Math.round(duration)}`);
+      }
+
     } catch (err) {
-      console.error('[useAdminStats] Error fetching statistics:', err);
+      const classifiedError = classifyApiError(err);
+      logError(classifiedError, 'useAdminStats');
       
-      // Handle specific error types
-      if (err instanceof ApiError) {
-        if (err.status === 401 || err.details?.type === 'NO_SESSION') {
-          setError('Sessão expirada. Por favor, faça login novamente.');
-          setErrorType('unauthorized');
-          // Clear session and redirect to login
-          await supabase.auth.signOut();
-          navigate('/login', { replace: true });
-        } else if (err.status === 403) {
-          setError('Você não tem permissão para visualizar estas estatísticas.');
-          setErrorType('forbidden');
-        } else if (err.status === 500 && err.details?.type === 'INVALID_API_KEY') {
-          setError('Estatísticas indisponíveis - Falha na configuração do servidor (Chave de API inválida).');
-          setErrorType('server');
-        } else if (err.status === 500 && err.details?.type === 'INVALID_JSON') {
-          setError('Estatísticas indisponíveis - Resposta inválida do servidor.');
-          setErrorType('server');
-        } else if (err.status >= 500) {
-          setError('Estatísticas indisponíveis - Erro no servidor. Verifique as configurações do backend.');
-          setErrorType('server');
-        } else if (err.status === 0) {
-          setError('Estatísticas indisponíveis - Erro de conexão. Tente novamente.');
-          setErrorType('network');
-        } else {
-          setError(err.message || 'Erro ao carregar estatísticas.');
-          setErrorType('server');
-        }
-      } else {
-        setError('Estatísticas indisponíveis - Erro de conexão. Tente novamente.');
-        setErrorType('network');
+      // Map classified error to errorType for backward compatibility
+      const errorKindToType = {
+        unauth: 'unauthorized',
+        forbidden: 'forbidden',
+        server: 'server',
+        network: 'network',
+        cors: 'cors',
+      };
+      
+      setErrorType(errorKindToType[classifiedError.kind] || 'network');
+      setError(classifiedError.userMessage);
+
+      // Handle unauthorized - redirect to login
+      if (classifiedError.kind === 'unauth') {
+        await supabase.auth.signOut();
+        navigate('/login', { replace: true });
       }
     } finally {
       setLoading(false);
     }
-  }, [navigate, maxRetries]);
+  }, [navigate, maxRetries, lastFetchTime]);
 
   // Fetch on mount if enabled
   useEffect(() => {
@@ -96,11 +102,18 @@ export function useAdminStats(options = {}) {
     }
   }, [enabled, fetchStats]);
 
+  // Manual refetch function (ignores lastFetchTime check)
+  const refetch = useCallback(async () => {
+    setLastFetchTime(null); // Reset to allow immediate fetch
+    await fetchStats();
+  }, [fetchStats]);
+
   return {
     data,
     loading,
     error,
     errorType,
     retry: fetchStats,
+    refetch, // Force refetch ignoring cache
   };
 }
