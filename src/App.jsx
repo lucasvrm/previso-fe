@@ -15,13 +15,12 @@ import TrendsPage from './pages/Trends/TrendsPage';
 import ClinicalReports from './pages/Therapist/ClinicalReports';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CheckinWizard from './pages/Checkin/CheckinWizard';
-import AITestingPage from './pages/Checkin/AITestingPage'; // <--- CORREÇÃO AQUI
+import AITestingPage from './pages/Checkin/AITestingPage';
 import AnalysesPage from './pages/Analyses/AnalysesPage';
 import AdminConsolePage from './pages/Admin/AdminConsolePage';
 
 // Admin components for nested settings routes
 import SystemStats from './components/admin/SystemStats';
-import DataManagement from './components/admin/DataManagement';
 
 // Componente de proteção
 import ProtectedRoute from './components/ProtectedRoute';
@@ -111,20 +110,12 @@ function App() {
                 : <SettingsPage />
             } 
           />
-          {/* Admin-only nested routes */}
+          {/* Admin-only nested route for system stats */}
           <Route 
             path="dashboard" 
             element={
               <AdminRoute>
                 <SystemStats />
-              </AdminRoute>
-            } 
-          />
-          <Route 
-            path="data" 
-            element={
-              <AdminRoute>
-                <DataManagement />
               </AdminRoute>
             } 
           />
