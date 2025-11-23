@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AccessDenied from './AccessDenied';
+import LoadingSpinner from './UI/LoadingSpinner';
 
 const AdminRoute = ({ children }) => {
   const location = useLocation();
@@ -9,11 +10,7 @@ const AdminRoute = ({ children }) => {
 
   // Show loading state while auth is initializing
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen />;
   }
 
   // If no user is logged in, redirect to login
@@ -24,11 +21,7 @@ const AdminRoute = ({ children }) => {
   // Wait for profile to be loaded before checking role
   // This prevents flash of access denied while profile is loading
   if (!profile) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen />;
   }
 
   // Check if user has admin role from backend profile

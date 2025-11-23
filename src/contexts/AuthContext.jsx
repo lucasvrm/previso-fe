@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { api } from '../api/apiClient';
 
 /* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
@@ -37,7 +38,6 @@ export function AuthProvider({ children }) {
         
         // PRIORITY: Fetch profile from backend API (source of truth for role)
         try {
-          const { api } = await import('../api/apiClient');
           const apiProfileData = await api.get('/api/profile');
           
           console.log('[AuthContext] Perfil carregado via API backend:', apiProfileData);
