@@ -1,0 +1,69 @@
+{
+  "timestamp": "2025-11-23T20:50:00Z",
+  "lintStatus": "ok",
+  "lintWarnings": 1,
+  "lintNotes": "1 warning in useLatestCheckin.js (unrelated to this task)",
+  "testsStatus": "ok",
+  "testsPassed": 235,
+  "testsFailed": 0,
+  "testSuites": 24,
+  "notes": [
+    "All tests passing (235/235, up from 234)",
+    "Lint passing with same unrelated warning",
+    "Implementation complete: Role now from backend /api/profile"
+  ],
+  "implementationDetails": {
+    "authContext": {
+      "roleSource": "Backend /api/profile (priority), Supabase profiles (fallback)",
+      "strategy": "Try backend first, fallback to Supabase only if backend fails",
+      "errorHandling": "No infinite loops - stops after both sources fail",
+      "changes": [
+        "Reversed priority: backend /api/profile is now tried FIRST",
+        "Supabase is now the FALLBACK (was primary before)",
+        "Better error messages explaining what failed and why"
+      ]
+    },
+    "adminRoute": {
+      "roleVerification": "Uses userRole from AuthContext (backend-sourced)",
+      "implementation": "Checks userRole === 'admin' instead of calling /api/admin/stats",
+      "changes": [
+        "Switched from useAdminStats hook to useAuth hook",
+        "Simplified logic: loading → no user → no profile → check role",
+        "Shows Access Denied when role is not 'admin'"
+      ]
+    },
+    "sidebar": {
+      "roleDisplay": "Uses userRole from AuthContext (backend-sourced)",
+      "adminMenuItem": "Shows when userRole === 'admin'",
+      "changes": [
+        "Added explicit 'Admin' label for admin role in getRoleLabel()",
+        "Added comment clarifying role is backend-sourced",
+        "No logic changes - already used userRole correctly"
+      ]
+    },
+    "tests": {
+      "adminRoute": "Updated to mock useAuth instead of useAdminStats",
+      "testCases": [
+        "Loading state",
+        "Profile not loaded yet",
+        "Admin role access granted",
+        "Patient role access denied",
+        "Therapist role access denied",
+        "No user redirect to login"
+      ],
+      "result": "All 235 tests passing"
+    }
+  },
+  "comparison": {
+    "before": {
+      "roleSource": "Supabase first, /api/profile fallback",
+      "adminRouteUsed": "useAdminStats (/api/admin/stats endpoint)",
+      "testsPassing": 234
+    },
+    "after": {
+      "roleSource": "/api/profile first, Supabase fallback",
+      "adminRouteUsed": "useAuth (profile.role from context)",
+      "testsPassing": 235
+    }
+  }
+}
