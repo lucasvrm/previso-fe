@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { classifyApiError, logError } from '../utils/apiErrorClassifier';
+import api from '../api/apiClient';
 
 /**
  * @typedef {'loading' | 'ok' | 'no_data' | 'error'} PredictionState
@@ -45,9 +46,6 @@ export function useDailyPrediction(features, userId, options = {}) {
     const startTime = performance.now();
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://bipolar-engine.onrender.com';
-      const endpoint = `${apiUrl}/predict/state`;
-
       const requestBody = {
         patient_id: userId,
         features: features,
@@ -57,43 +55,8 @@ export function useDailyPrediction(features, userId, options = {}) {
         console.debug('[useDailyPrediction] Fetching prediction:', requestBody);
       }
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      // Handle 204 No Content - no prediction available
-      if (response.status === 204) {
-        setState('no_data');
-        setPrediction(null);
-        setError(null);
-        
-        if (import.meta.env.MODE === 'development') {
-          console.debug('[useDailyPrediction] No prediction data available (204)');
-        }
-        return;
-      }
-
-      // Handle other non-OK responses
-      if (!response.ok) {
-        let errorMessage = `API respondeu com status ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorMessage;
-        } catch {
-          // Could not parse error response
-        }
-        
-        const err = new Error(errorMessage);
-        err.status = response.status;
-        throw err;
-      }
-
-      // Parse successful response
-      const data = await response.json();
+      // Use api.post which handles authentication via Authorization header
+      const data = await api.post('/predict/state', requestBody);
       
       // Check if response is empty or invalid
       if (!data || Object.keys(data).length === 0) {
@@ -129,7 +92,7 @@ export function useDailyPrediction(features, userId, options = {}) {
 
   useEffect(() => {
     if (enabled) {
-      fetchPrediction();
+      fetchPrediction(); // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [enabled, fetchPrediction]);
 
