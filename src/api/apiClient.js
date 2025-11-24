@@ -15,7 +15,39 @@ export class ApiError extends Error {
   }
 }
 
-let hasRedirected401 = false;
+/**
+ * Track 401 redirects using sessionStorage to persist across page reloads
+ * but reset when browser tab is closed (new session)
+ */
+const REDIRECT_FLAG_KEY = 'previso_401_redirect_flag';
+const REDIRECT_FLAG_TIMEOUT = 5000; // Reset after 5 seconds
+
+function get401RedirectFlag() {
+  const flag = sessionStorage.getItem(REDIRECT_FLAG_KEY);
+  if (!flag) return false;
+  
+  const timestamp = parseInt(flag, 10);
+  const now = Date.now();
+  
+  // Auto-reset if more than 5 seconds have passed
+  if (now - timestamp > REDIRECT_FLAG_TIMEOUT) {
+    sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+    return false;
+  }
+  
+  return true;
+}
+
+function set401RedirectFlag() {
+  sessionStorage.setItem(REDIRECT_FLAG_KEY, Date.now().toString());
+}
+
+/**
+ * Reset redirect flag - should be called after successful login
+ */
+export function resetRedirectFlag() {
+  sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+}
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -37,8 +69,8 @@ axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
-    if (status === 401 && !hasRedirected401) {
-      hasRedirected401 = true;
+    if (status === 401 && !get401RedirectFlag()) {
+      set401RedirectFlag();
       // Force redirect to login
       window.location.href = '/login';
     }
