@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
-import { api } from '../api/apiClient';
+import { api, resetRedirectFlag } from '../api/apiClient';
 
 /* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
@@ -176,6 +176,15 @@ export function AuthProvider({ children }) {
             console.log('[AuthContext] Auth state changed:', _event);
           }
           setUser(session?.user ?? null);
+          
+          // Reset 401 redirect flag on successful sign in
+          if (_event === 'SIGNED_IN' && session?.user) {
+            resetRedirectFlag();
+            if (import.meta.env.MODE === 'development') {
+              console.debug('[AuthContext] Reset 401 redirect flag after successful login');
+            }
+          }
+          
           // Fetch profile without blocking (consistent with initial auth flow)
           if (session?.user?.id) {
             fetchUserProfile(session.user.id);

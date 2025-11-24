@@ -15,7 +15,66 @@ export class ApiError extends Error {
   }
 }
 
-let hasRedirected401 = false;
+/**
+ * Configuration for 401 redirect handling
+ */
+const REDIRECT_FLAG_KEY = 'previso_401_redirect_flag';
+// Parse and validate timeout from env, ensuring it's a positive integer
+const envTimeout = Number.parseInt(import.meta.env.VITE_REDIRECT_TIMEOUT, 10);
+const REDIRECT_FLAG_TIMEOUT = (Number.isInteger(envTimeout) && envTimeout > 0) ? envTimeout : 5000; // Default 5 seconds if invalid/missing
+
+/**
+ * Track 401 redirects using sessionStorage to persist across page reloads
+ * but reset when browser tab is closed (new session)
+ */
+function get401RedirectFlag() {
+  try {
+    const flag = sessionStorage.getItem(REDIRECT_FLAG_KEY);
+    if (!flag) return false;
+    
+    const timestamp = Number.parseInt(flag, 10);
+    
+    // Validate parsed number using Number.isNaN for strict NaN checking
+    if (Number.isNaN(timestamp)) {
+      sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+      return false;
+    }
+    
+    const now = Date.now();
+    
+    // Auto-reset if more than configured timeout has passed
+    if (now - timestamp > REDIRECT_FLAG_TIMEOUT) {
+      sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    // sessionStorage might not be available (private browsing, disabled, etc.)
+    console.warn('[apiClient] sessionStorage not available for redirect flag:', error);
+    return false;
+  }
+}
+
+function set401RedirectFlag() {
+  try {
+    sessionStorage.setItem(REDIRECT_FLAG_KEY, Date.now().toString());
+  } catch (error) {
+    // sessionStorage might be full or disabled
+    console.warn('[apiClient] Failed to set redirect flag:', error);
+  }
+}
+
+/**
+ * Reset redirect flag - should be called after successful login
+ */
+export function resetRedirectFlag() {
+  try {
+    sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+  } catch (error) {
+    console.warn('[apiClient] Failed to reset redirect flag:', error);
+  }
+}
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -37,8 +96,8 @@ axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
-    if (status === 401 && !hasRedirected401) {
-      hasRedirected401 = true;
+    if (status === 401 && !get401RedirectFlag()) {
+      set401RedirectFlag();
       // Force redirect to login
       window.location.href = '/login';
     }
