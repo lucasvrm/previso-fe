@@ -58,7 +58,7 @@ export function useLatestCheckin(userId) {
         setData(null);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshKey is intentionally used to trigger refetch when refresh() is called
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshKey intentionally triggers refetch; including it as a dep would be correct but ESLint incorrectly flags it as unnecessary
   }, [userId, refreshKey]);
 
   useEffect(() => {

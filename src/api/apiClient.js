@@ -19,7 +19,7 @@ export class ApiError extends Error {
  * Configuration for 401 redirect handling
  */
 const REDIRECT_FLAG_KEY = 'previso_401_redirect_flag';
-const REDIRECT_FLAG_TIMEOUT = parseInt(import.meta.env.VITE_REDIRECT_TIMEOUT, 10) || 5000; // Default 5 seconds, configurable via env
+const REDIRECT_FLAG_TIMEOUT = Number.parseInt(import.meta.env.VITE_REDIRECT_TIMEOUT, 10) || 5000; // Default 5 seconds, configurable via env
 
 /**
  * Track 401 redirects using sessionStorage to persist across page reloads
@@ -30,7 +30,7 @@ function get401RedirectFlag() {
     const flag = sessionStorage.getItem(REDIRECT_FLAG_KEY);
     if (!flag) return false;
     
-    const timestamp = parseInt(flag, 10);
+    const timestamp = Number.parseInt(flag, 10);
     
     // Validate parsed number using Number.isNaN for strict NaN checking
     if (Number.isNaN(timestamp)) {
