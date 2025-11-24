@@ -58,15 +58,18 @@ export function useLatestCheckin(userId) {
         setData(null);
       }
     }
-  }, [userId, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps -- refreshKey is intentionally used to trigger refetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshKey is intentionally used to trigger refetch when refresh() is called
+  }, [userId, refreshKey]);
 
   useEffect(() => {
-    fetchData(); // eslint-disable-line react-hooks/set-state-in-effect
+    fetchData();
   }, [fetchData]);
 
+  // Trigger refetch when refresh() is called by incrementing refreshKey
+  // setRefreshKey is stable from useState, so no dependencies needed
   const refresh = useCallback(() => {
     setRefreshKey(prev => prev + 1);
-  }, []); // setRefreshKey is stable from useState, no dependencies needed
+  }, []);
 
   return { 
     data, 

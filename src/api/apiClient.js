@@ -16,37 +16,62 @@ export class ApiError extends Error {
 }
 
 /**
+ * Configuration for 401 redirect handling
+ */
+const REDIRECT_FLAG_KEY = 'previso_401_redirect_flag';
+const REDIRECT_FLAG_TIMEOUT = import.meta.env.VITE_REDIRECT_TIMEOUT || 5000; // Default 5 seconds, configurable via env
+
+/**
  * Track 401 redirects using sessionStorage to persist across page reloads
  * but reset when browser tab is closed (new session)
  */
-const REDIRECT_FLAG_KEY = 'previso_401_redirect_flag';
-const REDIRECT_FLAG_TIMEOUT = 5000; // Reset after 5 seconds
-
 function get401RedirectFlag() {
-  const flag = sessionStorage.getItem(REDIRECT_FLAG_KEY);
-  if (!flag) return false;
-  
-  const timestamp = parseInt(flag, 10);
-  const now = Date.now();
-  
-  // Auto-reset if more than 5 seconds have passed
-  if (now - timestamp > REDIRECT_FLAG_TIMEOUT) {
-    sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+  try {
+    const flag = sessionStorage.getItem(REDIRECT_FLAG_KEY);
+    if (!flag) return false;
+    
+    const timestamp = parseInt(flag, 10);
+    
+    // Validate parsed number
+    if (isNaN(timestamp)) {
+      sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+      return false;
+    }
+    
+    const now = Date.now();
+    
+    // Auto-reset if more than configured timeout has passed
+    if (now - timestamp > REDIRECT_FLAG_TIMEOUT) {
+      sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    // sessionStorage might not be available (private browsing, disabled, etc.)
+    console.warn('[apiClient] sessionStorage not available for redirect flag:', error);
     return false;
   }
-  
-  return true;
 }
 
 function set401RedirectFlag() {
-  sessionStorage.setItem(REDIRECT_FLAG_KEY, Date.now().toString());
+  try {
+    sessionStorage.setItem(REDIRECT_FLAG_KEY, Date.now().toString());
+  } catch (error) {
+    // sessionStorage might be full or disabled
+    console.warn('[apiClient] Failed to set redirect flag:', error);
+  }
 }
 
 /**
  * Reset redirect flag - should be called after successful login
  */
 export function resetRedirectFlag() {
-  sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+  try {
+    sessionStorage.removeItem(REDIRECT_FLAG_KEY);
+  } catch (error) {
+    console.warn('[apiClient] Failed to reset redirect flag:', error);
+  }
 }
 
 // Create axios instance

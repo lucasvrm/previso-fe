@@ -179,6 +179,9 @@ export function AuthProvider({ children }) {
           
           // Reset 401 redirect flag on successful sign in
           if (_event === 'SIGNED_IN' && session?.user) {
+            if (import.meta.env.MODE === 'development') {
+              console.debug('[AuthContext] Resetting 401 redirect flag after successful login');
+            }
             resetRedirectFlag();
           }
           
