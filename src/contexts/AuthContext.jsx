@@ -12,7 +12,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.time('[AuthContext] Total auth initialization');
+    if (import.meta.env.MODE === 'development') {
+      console.time('[AuthContext] Total auth initialization');
+    }
     
     const fetchUserProfile = async (userId) => {
       if (!userId) {
@@ -24,7 +26,9 @@ export function AuthProvider({ children }) {
       // Strategy: Always try backend /api/profile first for role determination
       // This ensures role is always sourced from backend, not Supabase metadata
       try {
-        console.time('[AuthContext] Fetch user profile');
+        if (import.meta.env.MODE === 'development') {
+          console.time('[AuthContext] Fetch user profile');
+        }
         
         // Get session for API authentication
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -40,18 +44,64 @@ export function AuthProvider({ children }) {
         try {
           const apiProfileData = await api.get('/api/profile');
           
-          console.log('[AuthContext] Perfil carregado via API backend:', apiProfileData);
-          console.timeEnd('[AuthContext] Fetch user profile');
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[AuthContext] Perfil carregado via API backend:', apiProfileData);
+            console.timeEnd('[AuthContext] Fetch user profile');
+          }
           
+          // Extract role from multiple possible payload formats
+          // Supports: { role: 'admin' }, { user_role: 'admin' }, 
+          // { data: { role: 'admin' } }, { profile: { role: 'admin' } }
+          const extractedRole = apiProfileData?.role || 
+                                apiProfileData?.user_role || 
+                                apiProfileData?.data?.role || 
+                                apiProfileData?.profile?.role || 
+                                null;
+          
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[AuthContext] Role extraído:', extractedRole);
+          }
+          
+          // If backend returned 200 OK but no role found, try Supabase fallback
+          if (!extractedRole) {
+            console.warn('[AuthContext] Backend retornou sucesso mas sem campo role, tentando fallback Supabase...');
+            
+            const { data: profileData, error: supabaseError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', userId)
+              .single();
+            
+            if (supabaseError) {
+              console.error('[AuthContext] Fallback via Supabase também falhou:', supabaseError);
+              // Backend succeeded but no role, Supabase also failed - set profile but no role
+              setProfile(apiProfileData);
+              setUserRole(null);
+              return;
+            }
+            
+            if (import.meta.env.MODE === 'development') {
+              console.debug('[AuthContext] Perfil carregado via Supabase (fallback):', profileData);
+            }
+            
+            // Merge backend data with Supabase role
+            setProfile({ ...apiProfileData, ...profileData });
+            setUserRole(profileData?.role || null);
+            return;
+          }
+          
+          // Success - backend provided role
           setProfile(apiProfileData);
-          setUserRole(apiProfileData?.role || null);
+          setUserRole(extractedRole);
           return; // Success - backend is authoritative
         } catch (apiError) {
           console.error('[AuthContext] Erro ao buscar perfil via API backend:', apiError);
           
           // FALLBACK: If backend fails (network, 500, etc), try Supabase as backup
           // This prevents total failure but backend role should be preferred when available
-          console.log('[AuthContext] Tentando fallback: buscar via Supabase...');
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[AuthContext] Tentando fallback: buscar via Supabase...');
+          }
           
           const { data: profileData, error: supabaseError } = await supabase
             .from('profiles')
@@ -65,8 +115,10 @@ export function AuthProvider({ children }) {
             throw new Error('Não foi possível carregar o perfil do usuário');
           }
           
-          console.log('[AuthContext] Perfil carregado via Supabase (fallback):', profileData);
-          console.timeEnd('[AuthContext] Fetch user profile');
+          if (import.meta.env.MODE === 'development') {
+            console.debug('[AuthContext] Perfil carregado via Supabase (fallback):', profileData);
+            console.timeEnd('[AuthContext] Fetch user profile');
+          }
           
           setProfile(profileData);
           setUserRole(profileData?.role || null);
@@ -90,19 +142,27 @@ export function AuthProvider({ children }) {
     let subscription = null;
     
     const initAuth = async () => {
-      console.log('[AuthContext] Starting auth initialization...');
-      console.time('[AuthContext] getSession call');
+      if (import.meta.env.MODE === 'development') {
+        console.log('[AuthContext] Starting auth initialization...');
+        console.time('[AuthContext] getSession call');
+      }
       
       // Get the session from Supabase (uses localStorage internally)
       const { data: { session } } = await supabase.auth.getSession();
-      console.timeEnd('[AuthContext] getSession call');
+      
+      if (import.meta.env.MODE === 'development') {
+        console.timeEnd('[AuthContext] getSession call');
+      }
       
       setUser(session?.user ?? null);
       
       // OPTIMIZATION: Set loading to false immediately after getting session
       // This allows the UI to render while profile fetches in parallel
       setLoading(false);
-      console.timeEnd('[AuthContext] Total auth initialization');
+      
+      if (import.meta.env.MODE === 'development') {
+        console.timeEnd('[AuthContext] Total auth initialization');
+      }
       
       // Fetch profile in parallel (don't block on it)
       // Profile will update asynchronously when ready
@@ -112,7 +172,9 @@ export function AuthProvider({ children }) {
 
       const { data: authListener } = supabase.auth.onAuthStateChange(
         async (_event, session) => {
-          console.log('[AuthContext] Auth state changed:', _event);
+          if (import.meta.env.MODE === 'development') {
+            console.log('[AuthContext] Auth state changed:', _event);
+          }
           setUser(session?.user ?? null);
           // Fetch profile without blocking (consistent with initial auth flow)
           if (session?.user?.id) {
