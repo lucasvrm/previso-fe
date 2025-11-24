@@ -156,7 +156,7 @@ describe('Sidebar - Role Label Display', () => {
   });
 
   test('deve usar ícone Shield para admin', () => {
-    const { container } = renderSidebarWithAuth('admin');
+    renderSidebarWithAuth('admin');
     
     // The Shield icon should be rendered (we can't directly test the icon component,
     // but we can verify the role label is shown correctly)
@@ -171,7 +171,7 @@ describe('Sidebar - Role Label Display', () => {
       role: 'admin',
     };
     
-    const { container } = renderSidebarWithAuth(null, profileWithRole);
+    renderSidebarWithAuth(null, profileWithRole);
     
     const roleLabel = screen.getByText('Admin');
     expect(roleLabel).toBeInTheDocument();
