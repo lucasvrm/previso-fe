@@ -6,19 +6,25 @@ import { useAuth } from '../hooks/useAuth';
 const Sidebar = () => {
   // userRole comes from AuthContext, which fetches from backend /api/profile
   // This ensures role is determined by backend, not by user metadata
-  const { user, userRole, logout } = useAuth();
+  // Also consume profile to provide fallback when userRole is not yet set
+  const { user, userRole, profile, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Derive effective role with fallback to profile.role
+  // This ensures immediate display even if userRole hasn't been set yet
+  const effectiveRole = userRole ?? profile?.role ?? null;
+
   // Determine which icon to use based on role
-  const UserIcon = userRole === 'therapist' ? UserCog : User;
+  const UserIcon = effectiveRole === 'admin' ? Shield : 
+                   effectiveRole === 'therapist' ? UserCog : User;
 
   // Get display name for role (backend-sourced)
   const getRoleLabel = () => {
-    if (!userRole) return 'Usuário';
-    if (userRole === 'admin') return 'Admin';
-    if (userRole === 'therapist') return 'Terapeuta';
-    if (userRole === 'patient') return 'Paciente';
-    return userRole;
+    if (!effectiveRole) return 'Usuário';
+    if (effectiveRole === 'admin') return 'Admin';
+    if (effectiveRole === 'therapist') return 'Terapeuta';
+    if (effectiveRole === 'patient') return 'Paciente';
+    return effectiveRole;
   };
 
   const handleLogout = async () => {
@@ -56,7 +62,7 @@ const Sidebar = () => {
               <span className="ms-3">Dashboard</span>
             </NavLink>
           </li>
-          {userRole === 'patient' && (
+          {effectiveRole === 'patient' && (
             <li>
               <NavLink 
                 to="/checkin" 
@@ -73,7 +79,7 @@ const Sidebar = () => {
               </NavLink>
             </li>
           )}
-          {(userRole === 'patient' || userRole === 'therapist') && (
+          {(effectiveRole === 'patient' || effectiveRole === 'therapist') && (
             <li>
               <NavLink 
                 to="/analyses" 
@@ -90,7 +96,7 @@ const Sidebar = () => {
               </NavLink>
             </li>
           )}
-          {userRole === 'therapist' && (
+          {effectiveRole === 'therapist' && (
             <li>
               <NavLink 
                 to="/therapist/reports" 
@@ -122,7 +128,7 @@ const Sidebar = () => {
               <span className="flex-1 ms-3 whitespace-nowrap">Radar de Tendências</span>
             </NavLink>
           </li>
-          {userRole === 'admin' && (
+          {effectiveRole === 'admin' && (
             <li>
               <NavLink 
                 to="/admin" 
