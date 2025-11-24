@@ -19,9 +19,9 @@ export class ApiError extends Error {
  * Configuration for 401 redirect handling
  */
 const REDIRECT_FLAG_KEY = 'previso_401_redirect_flag';
-// Parse and validate timeout from env, ensuring it's a positive number
+// Parse and validate timeout from env, ensuring it's a positive integer
 const envTimeout = Number.parseInt(import.meta.env.VITE_REDIRECT_TIMEOUT, 10);
-const REDIRECT_FLAG_TIMEOUT = (envTimeout > 0) ? envTimeout : 5000; // Default 5 seconds if invalid/missing
+const REDIRECT_FLAG_TIMEOUT = (Number.isInteger(envTimeout) && envTimeout > 0) ? envTimeout : 5000; // Default 5 seconds if invalid/missing
 
 /**
  * Track 401 redirects using sessionStorage to persist across page reloads
